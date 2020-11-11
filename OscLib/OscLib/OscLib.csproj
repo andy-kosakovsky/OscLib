@@ -2,6 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.1</Version>
+    <Authors>Andy Kosakovsky</Authors>
+    <Company />
+    <Description>An implimentation of Open Sound Protocol 1.0 for .NET (with some bells and whistles).</Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
