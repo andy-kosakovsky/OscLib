@@ -2,39 +2,53 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Net;
-using System.Reflection;
-using System.Diagnostics;
 using System.Threading;
 
 namespace OscLib
 {
+    /// <summary>
+    /// Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Link, pattern matching if needed.
+    /// <para> To Do: implement a buffer and delay system to properly adhere to incoming bundles' timestamps. Currently all bundles will be processed as they come. </para>
+    /// </summary>
     public class OscReceiver
     {
-        private const string _rootContainerName = "root";
+        /// <summary> The default name of the root container. </summary>
+        public const string RootContainerName = "root";
 
+        /// <summary> The root container, from which all the larger OSC Address Space stems. </summary>
         protected OscContainer _root;
 
-        // mutex for accessing the address space
+        ///<summary> Controls the access to the OSC Address Space. </summary>
         protected Mutex _accessMutex;
 
+        /// <summary> The root container, from which all the larger OSC Address Space stems. </summary>
         public OscContainer Root { get => _root; }
 
-
+        /// <summary>
+        /// Creates a new OSC Receiver, connecting it to an OSC Link.
+        /// </summary>
+        /// <param name="link"> The OSC Link from which this Receiver will, um, receive. </param>
+        /// <exception cref="ArgumentNullException"> Thrown if provided OSC Link is null. </exception>
         public OscReceiver(OscLink link)
         {
-            _root = new OscContainer(_rootContainerName);
+            if (link == null)
+            {
+                throw new ArgumentNullException(nameof(link));
+            }
+
+            _root = new OscContainer(RootContainerName);
             _accessMutex = new Mutex();
 
             link.MessageReceivedAsData += ReceiveMessage;
-            link.BundleReceivedAsData += ReceiveBundle;
+            link.BundlesReceivedAsData += ReceiveBundle;
         }
 
         
         /// <summary>
-        /// Processes incoming messages, invoking the appropriate OSC Methods
+        /// Processes incoming message batches, invoking the appropriate OSC Methods.
         /// </summary>
-        /// <param name="messages"></param>
-        private void Process(OscMessage[] messages)
+        /// <param name="messages"> A batch of OSC messages to process. </param>
+        protected virtual void Process(OscMessage[] messages)
         {
             // get pattern elements
 
@@ -47,10 +61,10 @@ namespace OscLib
 
 
         /// <summary>
-        /// Processes incoming messages, invoking the appropriate OSC Methods
+        /// Processes a single incoming message, invoking the appropriate OSC Methods.
         /// </summary>
-        /// <param name="messages"></param>
-        private void Process(OscMessage message)
+        /// <param name="message"> An OSC message to process. </param>
+        protected virtual void Process(OscMessage message)
         {
             // get pattern elements
 
@@ -181,7 +195,13 @@ namespace OscLib
                          
         }
 
-        public void ReceiveBundle(OscBundle[] bundles, IPEndPoint receivedFrom)
+
+        /// <summary>
+        /// Processes an incoming batch of bundles. Invoked when the connected OSC Link receives bundles.
+        /// </summary>
+        /// <param name="bundles"> A batch of OSC bundles to process. </param>
+        /// <param name="receivedFrom"> The IP end point from which the bundles were received. </param>
+        public virtual void ReceiveBundle(OscBundle[] bundles, IPEndPoint receivedFrom)
         {
             try
             {
@@ -199,7 +219,13 @@ namespace OscLib
 
         }
 
-        public void ReceiveMessage(OscMessage message, IPEndPoint receivedFrom)
+
+        /// <summary>
+        /// Processes an incoming message. Invoked when the connected OSC Link receives a message.
+        /// </summary>
+        /// <param name="message"> An OSC message to process. </param>
+        /// <param name="receivedFrom"> The IP end point from which the message was received. </param>
+        public virtual void ReceiveMessage(OscMessage message, IPEndPoint receivedFrom)
         {
             try
             {
@@ -213,12 +239,18 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Adds an OSC Method to the provided address
+        /// Adds an OSC Method to the specified address in the OSC Address Space.
         /// </summary>
-        /// <param name="addressPattern"></param>
-        /// <param name="method"></param>
+        /// <param name="addressPattern"> The address of this OSC Method. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the method's name. </param>
+        /// <param name="method"> The method delegate that will be attached to the OSC Method, to be invoked when the method is triggered by an OSC message. </param>
+        /// <exception cref="ArgumentException"> Thrown when the address pattern is invalid. </exception>
         public void AddMethod(OscString addressPattern, OscMethodDelegate method)
         {
+            if (addressPattern.Length < 1)
+            {
+                throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern is invalid.");
+            }
+
             try
             {
                 _accessMutex.WaitOne();
@@ -275,11 +307,17 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Creates an OSC Method Container at the provided address
+        /// Adds an OSC Container to the specified address in the OSC Address Space.
         /// </summary>
-        /// <param name="addressPattern"></param>
+        /// <param name="addressPattern"> The address of this OSC Container. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the container's name. </param>
+        /// <exception cref="ArgumentException"> Thrown when the address pattern is invalid. </exception>
         public void AddContainer(OscString addressPattern)
         {
+            if (addressPattern.Length < 1)
+            {
+                throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern is invalid.");
+            }
+
             try
             {
                 _accessMutex.WaitOne();
@@ -335,14 +373,20 @@ namespace OscLib
 
         }
 
+
+        /// <summary>
+        /// Soon.
+        /// </summary>
+        /// <param name="pattern"></param>
         public void RemoveAddress(OscString pattern)
         {
-
+            //TODO: finish RemoveAddress
 
         }
 
+
         /// <summary>
-        /// Will print the address tree
+        /// Prints the entire OSC Address Space as a tree.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
