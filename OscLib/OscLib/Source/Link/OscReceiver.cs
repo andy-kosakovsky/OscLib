@@ -80,7 +80,7 @@ namespace OscLib
             // array for the container stack. its length equals the maximum depth at which we'll be checking
             OscContainer[] stack = new OscContainer[pattern.Length];
             // a span for layer indices
-            Span<int> indices = stackalloc int[pattern.Length];
+            int[] indices = new int[pattern.Length];
 
             // add root to stack
             stack[currentLayer] = _root;

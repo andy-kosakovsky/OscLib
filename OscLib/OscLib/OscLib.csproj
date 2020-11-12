@@ -12,8 +12,4 @@
     <DocumentationFile>G:\_visualStudioProjects\OscLib\OscLib\OscLib\OscLib.xml</DocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Memory" Version="4.5.4" />
-  </ItemGroup>
-
 </Project>

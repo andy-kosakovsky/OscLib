@@ -243,7 +243,7 @@ namespace OscLib
             }
 
             // allocate a temporary array for keeping track of layers of bundled bundles
-            Span<OscTimestamp> timestampStack = stackalloc OscTimestamp[bundlesTotal];
+           OscTimestamp[] timestampStack = new OscTimestamp[bundlesTotal];
 
             // an array into which we'll be storing all the bundles
             OscBundle[] bundleArray = new OscBundle[bundlesTotal];
@@ -259,14 +259,14 @@ namespace OscLib
             int bundleIndex = 0;
 
             // start the recursive horror
-            GetBundle(binaryData.Length, ref pointer, binaryData, ref bundleArray, ref bundleIndex, ref timestampStack, ref currentTimestamp);
+            GetBundle(binaryData.Length, ref pointer, binaryData, ref bundleArray, ref bundleIndex, timestampStack, ref currentTimestamp);
 
             return bundleArray;
 
         }
 
         // evil recursive shit to get all bundles
-        private static void GetBundle(int length, ref int externalPointer, byte[] binaryData, ref OscBundle[] bundleArray, ref int currentBundleIndex, ref Span<OscTimestamp> timestampStack, ref int currentTimestampIndex)
+        private static void GetBundle(int length, ref int externalPointer, byte[] binaryData, ref OscBundle[] bundleArray, ref int currentBundleIndex, OscTimestamp[] timestampStack, ref int currentTimestampIndex)
         {
             int thisBundleIndex = currentBundleIndex;
 
@@ -301,7 +301,7 @@ namespace OscLib
 
                         timestampStack[currentTimestampIndex] = timestamp;
 
-                        GetBundle(elementLength, ref externalPointer, binaryData, ref bundleArray, ref currentBundleIndex, ref timestampStack, ref currentTimestampIndex);
+                        GetBundle(elementLength, ref externalPointer, binaryData, ref bundleArray, ref currentBundleIndex, timestampStack, ref currentTimestampIndex);
 
                         // go back one timestamp
                         currentTimestampIndex--;
