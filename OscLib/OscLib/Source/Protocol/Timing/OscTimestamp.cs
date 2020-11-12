@@ -5,7 +5,7 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Contains a timestamp in ways understandable both by OSC (NTP-style) and C# (DateTime ticks)
+    /// Describes an OSC Timestamp both as a 64 bit fixed-point NTP timestamp and ticks used by DateTime and TimeSpan.
     /// </summary>
     public readonly struct OscTimestamp
     {       
@@ -21,13 +21,13 @@ namespace OscLib
         /// <summary> Returns a DateTime representation of this timestamp, corresponding to the local time of the system. Creates a new DateTime, so careful with that GC, Eugene. </summary>
         public DateTime DateTime { get => TimeZoneInfo.ConvertTimeFromUtc(new DateTime(_ticks), TimeZoneInfo.Local); }
 
-        /// <summary> Returns a DateTime representation of this timestamp, as UTC time. Creates a new DateTime, so careful with that GC, Eugene. </summary>
+        /// <summary> Returns a DateTime representation of this timestamp, as UTC time. Creates a new DateTime, ditto about being careful with that GC. </summary>
         public DateTime DateTimeUtc { get => new DateTime(_ticks); }
             
         /// <summary>
-        /// Creates an OSC timestamp out of the provided DateTime.
+        /// Creates an OSC Timestamp out of the provided DateTime object.
         /// </summary>
-        /// <param name="time"></param>
+        /// <param name="time"> The DateTime object to create an OSC Timestamp out of. </param>
         public OscTimestamp(DateTime time)
         {
 
@@ -47,9 +47,9 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Creates an OSC timestamp using DateTime or TimeSpan ticks. Ticks need to be UTC in order to produce right results.
+        /// Creates an OSC Timestamp using DateTime or TimeSpan ticks. Ticks need to adhere to UTC in order to produce right results.
         /// </summary>
-        /// <param name="tick">UTC-based tick value.</param>
+        /// <param name="tick"> UTC-based tick value. </param>
         public OscTimestamp(long tick)
         {
 
@@ -73,7 +73,7 @@ namespace OscLib
         /// <summary>
         /// Creates an OSC timestamp out of an NTP-format timestamp. 
         /// </summary>
-        /// <param name="ntpTimestamp">An ulong containing NTP timestamp (seconds in the first 32 bits, fraction in the following 32 bits)</param>
+        /// <param name="ntpTimestamp"> An ulong containing a 64-bit fixed-point NTP-format timestamp. </param>
         public OscTimestamp(ulong ntpTimestamp)
         {
             _ntpTimestamp = ntpTimestamp;
@@ -89,9 +89,9 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Returns timestamp as string (in a "day/month/year hours:minutes:seconds:milliseconds format)
+        /// Returns timestamp as a string, formatted as "day/month/year hours:minutes:seconds:milliseconds".
         /// </summary>
-        /// <returns> </returns>
+        /// <returns></returns>
         public override string ToString()
         {
             return DateTime.ToString("dd/MM/yyyy HH:mm:ss:fff");

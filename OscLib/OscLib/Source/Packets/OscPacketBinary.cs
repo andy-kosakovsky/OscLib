@@ -19,14 +19,13 @@ namespace OscLib
         public int Length { get => _length; }
 
         /// <summary>
-        /// Creates a new OSC packet out of the provided binary data.
+        /// Creates a new OSC packet out of the provided OSC binary data.
         /// </summary>
         /// <param name="binaryData"></param>
         public OscPacketBinary(byte[] binaryData)
         {
             _length = binaryData.Length;
             _binaryData = binaryData;
-
         }
 
         /// <summary>

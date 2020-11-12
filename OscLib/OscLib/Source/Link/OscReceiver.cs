@@ -18,7 +18,7 @@ namespace OscLib
         /// <summary> The root container, from which all the larger OSC Address Space stems. </summary>
         protected OscContainer _root;
 
-        ///<summary> Controls the access to the OSC Address Space. </summary>
+        /// <summary> Controls the access to the OSC Address Space. </summary>
         protected Mutex _accessMutex;
 
         /// <summary> The root container, from which all the larger OSC Address Space stems. </summary>
