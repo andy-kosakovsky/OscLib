@@ -64,7 +64,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates a new OSC message out of an address pattern, without arguments.
+        /// Creates a new OSC message out of an address pattern, without arguments. Assumes that there is no type tag string at all.
         /// </summary>
         /// <param name="addressPattern"> Address pattern attached to this message. </param>   
         /// <exception cref="ArgumentException"> Thrown when address pattern is empty or invalid. </exception>
@@ -85,9 +85,6 @@ namespace OscLib
             _arguments = new object[0];
 
             _length = _addressPattern.OscLength;
-
-            // account for the type tag string
-            _length += OscUtil.GetNextMultipleOfFour(_arguments.Length + 1);
 
         }
 

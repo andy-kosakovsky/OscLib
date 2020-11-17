@@ -94,11 +94,11 @@ namespace OscLib
 
                 arguments = new object[typeTagsTotal];
 
-                if (typeTagsTotal > 0)
-                {
-                    // move the pointer to the next 4-byte point after the end of the type tags
-                    pointer = OscUtil.GetNextMultipleOfFour(typeTagEnd);
+                // move the pointer to the next 4-byte point after the end of the type tags
+                pointer = OscUtil.GetNextMultipleOfFour(typeTagEnd);
 
+                if (typeTagsTotal > 0)
+                {                    
                     // the first element in the array will be the "," type tag separator
                     for (int i = 0; i < typeTagsTotal; i++)
                     {
