@@ -54,7 +54,7 @@ namespace OscLib
         public static OscPacketBinary BundleToBinary(params OscPacketBinary[] packets)
         {
             // set initial length to "#bundle" length + timestamp length
-            int length = OscProtocol.BundleDesignator.Length + OscProtocol.SingleChunk;
+            int length = OscProtocol.BundleDesignator.Length + OscProtocol.DoubleChunk;
             int currentPos = length;
 
 

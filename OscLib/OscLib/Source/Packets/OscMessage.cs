@@ -57,6 +57,9 @@ namespace OscLib
                 _length += OscSerializer.GetArgumentLength(arguments[i]);
             }
 
+            // account for the type tag string
+            _length += OscUtil.GetNextMultipleOfFour(_arguments.Length + 1);
+
         }
 
 
@@ -82,7 +85,10 @@ namespace OscLib
             _arguments = new object[0];
 
             _length = _addressPattern.OscLength;
-         
+
+            // account for the type tag string
+            _length += OscUtil.GetNextMultipleOfFour(_arguments.Length + 1);
+
         }
 
 
