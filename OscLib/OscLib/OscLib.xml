@@ -75,6 +75,9 @@
         <member name="F:OscLib.OscLink._receiveTask">
             <summary> Receives the packets from the UDP client and deserializes them. </summary>
         </member>
+        <member name="F:OscLib.OscLink._receiveTaskOutput">
+            <summary> Holds the latest message sent out by the receive task. </summary>
+        </member>
         <member name="F:OscLib.OscLink._receiveReturnAddress">
             <summary> The "return address" of the last-received packet - that is, the IP end point it came from. </summary>
         </member>
@@ -128,6 +131,12 @@
         </member>
         <member name="P:OscLib.OscLink.UdpClientMaxBufferSize">
             <summary> The maximum buffer size of the internal UDP client, in kb. </summary>
+        </member>
+        <member name="P:OscLib.OscLink.ReceiveTaskStatus">
+            <summary> Shows the status of the receive task. If the task is not running will default to "WaitingToRun". </summary>
+        </member>
+        <member name="P:OscLib.OscLink.ReceiveTaskOutput">
+            <summary> Holds the latest message sent out by the receive task. </summary>
         </member>
         <member name="E:OscLib.OscLink.MessageReceivedAsData">
             <summary> Invoked when this OSC Link receives a message, passes it as deserealized data. </summary>
@@ -392,6 +401,9 @@
         <member name="F:OscLib.OscSender`1._processPacketHeapTask">
             <summary> The Task that performs the packet heap checks and manages it, sending the packets out when necessary. </summary>
         </member>
+        <member name="F:OscLib.OscSender`1._processPacketHeapTaskOutput">
+            <summary> Holds the latest message sent out by the heap processing task. </summary>
+        </member>
         <member name="F:OscLib.OscSender`1._packetReadyCheckerMethod">
             <summary> Checks whether the packet should be sent in the current cycle. </summary> 
         </member>
@@ -403,6 +415,9 @@
         </member>
         <member name="P:OscLib.OscSender`1.ProcessPacketHeapTaskStatus">
             <summary> Shows the current status of the task processing the packet heap. </summary>
+        </member>
+        <member name="P:OscLib.OscSender`1.ProcessPacketHeapTaskOutput">
+            <summary> Holds the latest message sent out by the heap processing task. </summary>
         </member>
         <member name="P:OscLib.OscSender`1.BundlePacketsBeforeSending">
             <summary> Should this Sender bundle the packets before sending, or just send them as separate messages as they come. </summary>
@@ -619,7 +634,7 @@
         </member>
         <member name="M:OscLib.OscMessage.#ctor(OscLib.OscString)">
             <summary>
-            Creates a new OSC message out of an address pattern, without arguments.
+            Creates a new OSC message out of an address pattern, without arguments. Assumes that there is no type tag string at all.
             </summary>
             <param name="addressPattern"> Address pattern attached to this message. </param>   
             <exception cref="T:System.ArgumentException"> Thrown when address pattern is empty or invalid. </exception>

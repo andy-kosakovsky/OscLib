@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,6 +62,9 @@ namespace OscLib
         /// <summary> The Task that performs the packet heap checks and manages it, sending the packets out when necessary. </summary>
         protected Task _processPacketHeapTask;
 
+        /// <summary> Holds the latest message sent out by the heap processing task. </summary>
+        protected string _processPacketHeapTaskOutput;
+
         // delegates
         /// <summary> Checks whether the packet should be sent in the current cycle. </summary> 
         protected PacketReadyChecker<Packet> _packetReadyCheckerMethod;
@@ -77,6 +81,24 @@ namespace OscLib
 
         /// <summary> Shows the current status of the task processing the packet heap. </summary>
         public TaskStatus ProcessPacketHeapTaskStatus { get => _processPacketHeapTask.Status; }
+
+        /// <summary> Holds the latest message sent out by the heap processing task. </summary>
+        public string ProcessPacketHeapTaskOutput
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_processPacketHeapTaskOutput))
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    return _processPacketHeapTaskOutput;
+                }
+
+            }
+
+        }
 
         /// <summary> Should this Sender bundle the packets before sending, or just send them as separate messages as they come. </summary>
         public bool BundlePacketsBeforeSending { get => _bundlePacketsBeforeSending; set => _bundlePacketsBeforeSending = value; }
@@ -517,7 +539,15 @@ namespace OscLib
 
                             for (int i = 0; i <= highestPriority; i++)
                             {
-                                ProcessHeapLevel(i);
+                                try
+                                {
+                                    ProcessHeapLevel(i);
+                                }
+                                catch (Exception e)
+                                {
+                                    _processPacketHeapTaskOutput = "Exception at " + OscTime.Now.ToString() + ", heap level " + i + ": " + e.ToString() + "\nWiping heap level " + i + "... ";
+                                    _packetHeap[i].Clear();
+                                }
                             }
                         }
                         finally

@@ -88,6 +88,9 @@ namespace OscLib
         /// <summary> Receives the packets from the UDP client and deserializes them. </summary>
         protected Task _receiveTask;
 
+        /// <summary> Holds the latest message sent out by the receive task. </summary>
+        protected string _receiveTaskOutput;
+
         /// <summary> The "return address" of the last-received packet - that is, the IP end point it came from. </summary>
         protected IPEndPoint _receiveReturnAddress;
 
@@ -178,6 +181,40 @@ namespace OscLib
 
         /// <summary> The maximum buffer size of the internal UDP client, in kb. </summary>
         public int UdpClientMaxBufferSize { get => _udpClientMaxBufferSize; }
+
+        /// <summary> Shows the status of the receive task. If the task is not running will default to "WaitingToRun". </summary>
+        public TaskStatus ReceiveTaskStatus
+        {
+            get
+            {
+                if (_receiveTask != null)
+                {
+                    return _receiveTask.Status;
+                }
+                else
+                    return TaskStatus.WaitingToRun;
+            }
+
+        }
+
+
+        /// <summary> Holds the latest message sent out by the receive task. </summary>
+        public string ReceiveTaskOutput
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_receiveTaskOutput))
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    return _receiveTaskOutput;
+                }
+
+            }
+
+        }
 
 
         #endregion
@@ -540,14 +577,21 @@ namespace OscLib
                 {
                     if (_udpClient.Available > 0)
                     {
-                        _receiveDataBuffer = _udpClient.Receive(ref _receiveReturnAddress);
+                        try
+                        {
+                            _receiveDataBuffer = _udpClient.Receive(ref _receiveReturnAddress);
 
-                        // per OSC protocol, first symbol of a bundle would always be "#"
-                        // TODO: weak spot, come up with something more stable or with a way to control the task better
-                        if (_receiveDataBuffer[0] == OscProtocol.SymbolBundleStart)
-                            OnBundleReceived(_receiveDataBuffer, _receiveReturnAddress);
-                        else
-                            OnMessageReceived(_receiveDataBuffer, _receiveReturnAddress);
+                            // per OSC protocol, first symbol of a bundle would always be "#"
+                            // TODO: weak spot, come up with something more stable or with a way to control the task better
+                            if (_receiveDataBuffer[0] == OscProtocol.SymbolBundleStart)
+                                OnBundleReceived(_receiveDataBuffer, _receiveReturnAddress);
+                            else
+                                OnMessageReceived(_receiveDataBuffer, _receiveReturnAddress);
+                        }
+                        catch (Exception e)
+                        {
+                            _receiveTaskOutput = "Exception at " + OscTime.Now.ToString() + ": " + e.ToString();
+                        }
 
                     }
                     else
