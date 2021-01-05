@@ -339,7 +339,8 @@
         </member>
         <member name="M:OscLib.OscReceiver.RemoveAddress(OscLib.OscString)">
             <summary>
-            Soon.
+            Removes the specified address (be it a container or a method) from the address space.
+            <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
             </summary>
             <param name="pattern"></param>
         </member>

@@ -375,12 +375,67 @@ namespace OscLib
 
 
         /// <summary>
-        /// Soon.
+        /// Removes the specified address (be it a container or a method) from the address space.
+        /// <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
         /// </summary>
         /// <param name="pattern"></param>
-        public void RemoveAddress(OscString pattern)
+        public void RemoveAddress(OscString addressPattern)
         {
-            //TODO: finish RemoveAddress
+            if (addressPattern.Length < 1)
+            {
+                throw new ArgumentException("OSC Receiver ERROR: Can't remove address, address pattern is invalid.");
+            }
+
+            try
+            {
+                _accessMutex.WaitOne();
+
+                // get the address pattern and check it for any crap we don't need
+                OscString[] pattern = addressPattern.Split(OscProtocol.SymbolAddressSeparator);
+
+                OscContainer container = _root;
+
+                for (int i = 0; i < pattern.Length; i++)
+                {
+                    // bumping into a reserved symbol at this stage means that there was an attempt at pattern matching, and we can't have that just yet
+                    if (pattern[i].ContainsReservedSymbols)
+                    {
+                        throw new ArgumentException("Please no pattern-matching, I beg you.");
+                    }
+                    
+                    // if we're not at the last bit of the address, let's find out whether the next one is here 
+                    if (i != pattern.Length - 1)
+                    {
+                        if (container[pattern[i]] is OscContainer newContainer)
+                        {
+                            container = newContainer;
+                        }
+                        else
+                        {
+                            throw new ArgumentException("OSC Receiver ERROR: Can't delete address " + addressPattern + ", container " + container.Name + " doesn't contain a container named " + pattern[i]);
+                        }
+                    }
+                    else
+                    {
+                        if (!container.ContainsPart(pattern[i]))
+                        {
+                            throw new ArgumentException("OSC Receiver ERROR: Can't delete address " + addressPattern + ", container " + container.Name + " doesn't contain an address " + pattern[i]);
+                        }
+                        else
+                        {
+                            // delete the part
+                            container.RemovePart(pattern[i]);                           
+                        }
+
+                    }
+
+                }
+
+            }
+            finally
+            {
+                _accessMutex.ReleaseMutex();
+            }
 
         }
 
