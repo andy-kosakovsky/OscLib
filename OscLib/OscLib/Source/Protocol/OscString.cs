@@ -3,15 +3,16 @@ using System.Text;
 
 namespace OscLib
 {
+
     /// <summary>
     /// Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Can be accessed via an indexer.
     /// </summary>
-    public readonly struct OscString
+    public struct OscString
     {
         private readonly byte[] _chars;
         private readonly int _oscLength;
         private readonly int _length;
-        private readonly bool _containsReservedSymbols;
+        private Trit _containsReservedSymbols;
 
         /// <summary> The length of this string in bytes when used as an OSC argument or address. </summary> 
         public int OscLength { get => _oscLength; }
@@ -46,7 +47,39 @@ namespace OscLib
         /// <summary>
         /// Whether this string contains special symbols reserved by OSC protocol. 
         /// </summary>
-        public bool ContainsReservedSymbols { get => _containsReservedSymbols; }
+        public bool ContainsReservedSymbols 
+        {
+            get
+            {
+                if (_containsReservedSymbols == Trit.Maybe)
+                {
+                    // let's find out, shall we
+                    bool contains = OscUtil.ContainsReservedSymbols(_chars);
+
+                    if (contains)
+                    {
+                        _containsReservedSymbols = Trit.True;
+                        return true;
+                    }
+                    else
+                    {
+                        _containsReservedSymbols = Trit.False;
+                        return false;
+                    }
+                    
+                }
+                else if (_containsReservedSymbols == Trit.True)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+
+        }
 
         /// <summary>
         /// Indexer access to get the chars, as ASCII bytes.
@@ -65,7 +98,7 @@ namespace OscLib
             _chars = bytes;
             _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             _length = _chars.Length;
-            _containsReservedSymbols = OscUtil.ContainsReservedSymbols(_chars);
+            _containsReservedSymbols = Trit.Maybe;
         }
 
 
@@ -82,7 +115,7 @@ namespace OscLib
 
             _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             _length = _chars.Length;
-            _containsReservedSymbols = OscUtil.ContainsReservedSymbols(_chars);
+            _containsReservedSymbols = Trit.Maybe;
         }
 
 
@@ -96,7 +129,7 @@ namespace OscLib
             
             _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             _length = _chars.Length;
-            _containsReservedSymbols = OscUtil.ContainsReservedSymbols(_chars);
+            _containsReservedSymbols = Trit.Maybe;
         }
 
 
@@ -140,6 +173,7 @@ namespace OscLib
             }
 
             return new OscString(newStringBytes);
+
         }
 
 
@@ -150,6 +184,18 @@ namespace OscLib
         public void CopyTo(byte[] array, int index)
         {
             _chars.CopyTo(array, index);
+        }
+
+        /// <summary>
+        /// Returns a copy of this OSC string.
+        /// </summary>
+        /// <returns></returns>
+        public OscString Copy()
+        {
+            OscString copy = new OscString(this._chars);
+            copy._containsReservedSymbols = _containsReservedSymbols;
+
+            return copy;
         }
 
 

@@ -5,6 +5,17 @@ using System.Text;
 
 namespace OscLib
 {
+   /// <summary>
+   /// A basic implementation of a yes-no-maybe boolean-like thing. 
+   /// </summary>
+    internal enum Trit
+    {
+        True = 1,
+        False = -1,
+        Maybe = 0
+    }
+
+
     /// <summary>
     /// Internal utility class for various helper methods.
     /// </summary>

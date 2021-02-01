@@ -526,6 +526,11 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="T:OscLib.Trit">
+            <summary>
+            A basic implementation of a yes-no-maybe boolean-like thing. 
+            </summary>
+        </member>
         <member name="T:OscLib.OscUtil">
             <summary>
             Internal utility class for various helper methods.
@@ -918,6 +923,12 @@
         <member name="M:OscLib.OscString.CopyTo(System.Byte[],System.Int32)">
             <summary>
             Copies the elements of this string's byte array into the specified one-dimentional byte array, starting from the index provided.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscString.Copy">
+            <summary>
+            Returns a copy of this OSC string.
             </summary>
             <returns></returns>
         </member>
