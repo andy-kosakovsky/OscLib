@@ -9,6 +9,18 @@ namespace OscLib
     /// </summary>
     public struct OscString
     {
+        private static readonly OscString _nullString = new OscString("\0");
+
+        public static OscString NullString
+        {
+            get
+            {
+                return _nullString;
+            }
+        }
+
+
+
         private readonly byte[] _chars;
         private readonly int _oscLength;
         private readonly int _length;
@@ -47,7 +59,7 @@ namespace OscLib
         /// <summary>
         /// Whether this string contains special symbols reserved by OSC protocol. 
         /// </summary>
-        public bool ContainsReservedSymbols 
+        public bool ContainsReservedSymbols
         {
             get
             {
@@ -66,7 +78,7 @@ namespace OscLib
                         _containsReservedSymbols = Trit.False;
                         return false;
                     }
-                    
+
                 }
                 else if (_containsReservedSymbols == Trit.True)
                 {
@@ -126,7 +138,7 @@ namespace OscLib
         public OscString(string addressString)
         {
             _chars = Encoding.ASCII.GetBytes(addressString);
-            
+
             _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             _length = _chars.Length;
             _containsReservedSymbols = Trit.Maybe;
@@ -222,7 +234,7 @@ namespace OscLib
                 }
 
             }
-           
+
             result = new OscString[substringTotal];
 
             for (int i = 0; i < _chars.Length; i++)
@@ -414,7 +426,7 @@ namespace OscLib
         {
             return Encoding.ASCII.GetString(_chars);
         }
-        
+
         /// <summary>
         /// Compares the OSC string to an object.
         /// </summary>
@@ -463,7 +475,7 @@ namespace OscLib
 
         }
 
-         
+
         // used in pattern matching - will return true if char is compared to itself or a special symbol such as * or ?
         private bool CharIsEqual(byte strChar, byte patChar)
         {
@@ -475,7 +487,7 @@ namespace OscLib
             {
                 return (strChar == patChar);
             }
-               
+
         }
 
         private bool CharMatchesSquareBrackets(byte checkChar, ref int pointer, ref OscString pattern)
@@ -516,7 +528,7 @@ namespace OscLib
                         // if we're not at the start, and if we're not by the end of the char array, so we can safely check back and forth
                         if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != OscProtocol.SymbolClosedSquare)))
                         {
-                            if (OscUtil.IsNumberBetween(checkChar, pattern[pointer - 1], pattern[pointer + 1])) 
+                            if (OscUtil.IsNumberBetween(checkChar, pattern[pointer - 1], pattern[pointer + 1]))
                             {
                                 found = true;
                             }
@@ -539,7 +551,7 @@ namespace OscLib
                 pointer++;
 
             }
-            
+
             // if we didn't find the bracket end, something is wrong with the string
             if (bracketEnd < 0)
                 throw new ArgumentException("Pattern Match ERROR: pattern syntax error, square bracket opened at " + bracketStart + " is not closed");
@@ -559,7 +571,7 @@ namespace OscLib
             bool found = false, substringFits = true;
 
             int inputStringStart = strPointer;
-            
+
             // shift patpointer forwards once
             patPointer++;
 
@@ -567,7 +579,7 @@ namespace OscLib
             while (patPointer < pattern.Length)
             {
                 if ((pattern[patPointer] == OscProtocol.SymbolComma) || (pattern[patPointer] == OscProtocol.SymbolClosedCurly))
-                {                                                        
+                {
                     if (substringFits)
                     {
                         found = true;
@@ -576,9 +588,9 @@ namespace OscLib
                     {
                         strPointer = inputStringStart;
                     }
-                 
+
                     substringFits = true;
-                                  
+
                     if (pattern[patPointer] == OscProtocol.SymbolClosedCurly)
                     {
                         curlyEnd = patPointer;
@@ -590,11 +602,11 @@ namespace OscLib
 
                 }
                 else
-                {                    
+                {
                     if ((!found) && (substringFits))
-                    {                       
+                    {
                         if (strPointer < this.Length)
-                        {                           
+                        {
                             if (!CharIsEqual(this[strPointer], pattern[patPointer]))
                             {
                                 substringFits = false;
@@ -611,14 +623,14 @@ namespace OscLib
                     patPointer++;
 
                 }
-             
+
             }
 
             if (curlyEnd < 0)
                 throw new ArgumentException("Pattern Match ERROR: pattern syntax error, curly bracket opened at " + curlyStart + " is not closed");
 
             return found;
-         
+
         }
 
         /// <summary>
@@ -685,6 +697,27 @@ namespace OscLib
             return oscString.ToString();
         }
 
+
+        public static bool IsNullOrEmpty(OscString checkMe)
+        {
+            if (checkMe.Length < 1)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < checkMe.Length; i++)
+            {
+                if (checkMe[i] != '\0')
+                {
+                    return false;
+                }
+            }
+
+            return true;
+
+        }
+       
+    
     }
 
 }
