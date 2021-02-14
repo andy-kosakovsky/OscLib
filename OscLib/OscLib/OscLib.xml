@@ -4,47 +4,6 @@
         <name>OscLib</name>
     </assembly>
     <members>
-        <member name="T:OscLib.OscOnReceiveMessageDataHandler">
-            <summary> 
-            Used to receive a deserialized OSC message from the corresponding OSC Link event. 
-            </summary>
-            <param name="message"> Received OSC message, deserialized. </param>
-            <param name="receivedFrom"> The IP end point from which the message was received. </param>
-        </member>
-        <member name="T:OscLib.OscOnReceiveBundlesDataHandler">
-            <summary>
-            Used to receive a batch of deserialized OSC bundles (consisting of deserialized OSC messages) from the corresponding OSC Link event.
-            </summary>
-            <param name="bundles"> A batch of received OSC bundles, deserialized. </param>
-            <param name="receivedFrom"> The IP end point from which the bundles were received. </param>
-        </member>
-        <member name="T:OscLib.OscOnReceivePacketBinaryHandler">
-            <summary>
-            Used to receive a serialized OSC packet (in its binary form) from a corresponding OSC Link event.
-            </summary>
-            <param name="packet"> Received serialized OSC packet. </param>
-            <param name="receivedFrom"> The IP end point from which the packet was received. </param>
-        </member>
-        <member name="T:OscLib.OscOnSendMessageHandler">
-            <summary>
-            Used to get copies of OSC messages sent by OSC Link, in their deserialized form (for debugging and logging, for example)
-            </summary>
-            <param name="message"> Sent OSC message, deserialized. </param>
-            <param name="sentTo"> The IP end point to which the message was sent. </param>
-        </member>
-        <member name="T:OscLib.OscOnSendBundlesHandler">
-            <summary>
-            Used to get copies of OSC bundles sent by OSC Link, in their deserialized form (for debugging and logging, for example)
-            </summary>
-            <param name="bundles"> Sent OSC bundles, deserialized. </param>
-            <param name="sentTo"> The IP end point to which the message was sent. </param>
-        </member>
-        <member name="T:OscLib.TaskExceptionHandler">
-            <summary>
-            Used to safely extract exceptions from the tasks, preventing it from stopping
-            </summary>
-            <param name="exception"></param>
-        </member>
         <member name="T:OscLib.LinkMode">
             <summary>
             Designates the OSC Link's current mode of operation.
@@ -345,29 +304,13 @@
             Removes the specified address (be it a container or a method) from the address space.
             <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
             </summary>
-            <param name="pattern"></param>
+            <param name="addressPattern"></param>
         </member>
         <member name="M:OscLib.OscReceiver.ToString">
             <summary>
             Prints the entire OSC Address Space as a tree.
             </summary>
             <returns></returns>
-        </member>
-        <member name="T:OscLib.PacketReadyChecker`1">
-            <summary>
-            Checks whether the packet is eligible to be sent, when OscSender is processing its packet heap.
-            </summary>
-            <typeparam name="Packet"> Should implement the IOscPcketBinary interface. </typeparam>
-            <param name="packet"> Packet to be checked for eligibility. </param>
-            <returns> True if packet should be sent, False otherwise. </returns>
-        </member>
-        <member name="T:OscLib.PacketRemover`1">
-            <summary>
-            Checks whether the packet needs to be removed from the packet heap for whatever reason, precluding it from ever being sent.
-            </summary>
-            <typeparam name="Packet"> Should implement the IOscPacketBinary interface. </typeparam>
-            <param name="packet"> Packet to be checked for removal. </param>
-            <returns> True if packet should be removed, False otherwise. </returns>
         </member>
         <member name="T:OscLib.OscSender`1">
             <summary>
@@ -450,13 +393,13 @@
             Deactivates the sender, cancelling the heap processing task and disattaching the sender from the OSC Link.
             </summary>
         </member>
-        <member name="M:OscLib.OscSender`1.SetPacketReadyCheckerMethod(OscLib.PacketReadyChecker{`0})">
+        <member name="M:OscLib.OscSender`1.SetPacketReadyCheckerMethod(OscLib.OscPacketReadyChecker{`0})">
             <summary>
             Provides the method delegate for checking if a packet is eligible to be sent.
             </summary>
             <param name="readyCheckerMethod"> The method to be used for checking packets. </param>
         </member>
-        <member name="M:OscLib.OscSender`1.SetPacketRemoverMethod(OscLib.PacketRemover{`0})">
+        <member name="M:OscLib.OscSender`1.SetPacketRemoverMethod(OscLib.OscPacketRemover{`0})">
             <summary>
             Provides the method delegate for checking if a packet needs to be removed from the heap.
             </summary>
@@ -525,6 +468,69 @@
             Returns an overview of the packet heap, showing the number of packets per priority level.
             </summary>
             <returns></returns>
+        </member>
+        <member name="T:OscLib.OscOnReceiveMessageDataHandler">
+            <summary> 
+            Used to receive a deserialized OSC message from the corresponding OSC Link event. 
+            </summary>
+            <param name="message"> Received OSC message, deserialized. </param>
+            <param name="receivedFrom"> The IP end point from which the message was received. </param>
+        </member>
+        <member name="T:OscLib.OscOnReceiveBundlesDataHandler">
+            <summary>
+            Used to receive a batch of deserialized OSC bundles (consisting of deserialized OSC messages) from the corresponding OSC Link event.
+            </summary>
+            <param name="bundles"> A batch of received OSC bundles, deserialized. </param>
+            <param name="receivedFrom"> The IP end point from which the bundles were received. </param>
+        </member>
+        <member name="T:OscLib.OscOnReceivePacketBinaryHandler">
+            <summary>
+            Used to receive a serialized OSC packet (in its binary form) from a corresponding OSC Link event.
+            </summary>
+            <param name="packet"> Received serialized OSC packet. </param>
+            <param name="receivedFrom"> The IP end point from which the packet was received. </param>
+        </member>
+        <member name="T:OscLib.OscOnSendMessageHandler">
+            <summary>
+            Used to get copies of OSC messages sent by OSC Link, in their deserialized form (for debugging and logging, for example)
+            </summary>
+            <param name="message"> Sent OSC message, deserialized. </param>
+            <param name="sentTo"> The IP end point to which the message was sent. </param>
+        </member>
+        <member name="T:OscLib.OscOnSendBundlesHandler">
+            <summary>
+            Used to get copies of OSC bundles sent by OSC Link, in their deserialized form (for debugging and logging, for example)
+            </summary>
+            <param name="bundles"> Sent OSC bundles, deserialized. </param>
+            <param name="sentTo"> The IP end point to which the message was sent. </param>
+        </member>
+        <member name="T:OscLib.OscTaskExceptionHandler">
+            <summary>
+            Used to safely extract exceptions from the tasks, preventing it from stopping
+            </summary>
+            <param name="exception"></param>
+        </member>
+        <member name="T:OscLib.OscPacketReadyChecker`1">
+            <summary>
+            Checks whether the packet is eligible to be sent, when OscSender is processing its packet heap.
+            </summary>
+            <typeparam name="Packet"> Should implement the IOscPcketBinary interface. </typeparam>
+            <param name="packet"> Packet to be checked for eligibility. </param>
+            <returns> True if packet should be sent, False otherwise. </returns>
+        </member>
+        <member name="T:OscLib.OscPacketRemover`1">
+            <summary>
+            Checks whether the packet needs to be removed from the packet heap for whatever reason, precluding it from ever being sent.
+            </summary>
+            <typeparam name="Packet"> Should implement the IOscPacketBinary interface. </typeparam>
+            <param name="packet"> Packet to be checked for removal. </param>
+            <returns> True if packet should be removed, False otherwise. </returns>
+        </member>
+        <member name="T:OscLib.OscMethodDelegate">
+            <summary>
+            Used in conjunction with the OSC address system to assign actual methods to OSC Methods.
+            </summary>
+            <param name="arguments"> Arguments to be passed from the received OSC Message to the method when invoked. </param>
         </member>
         <member name="T:OscLib.Trit">
             <summary>
@@ -776,12 +782,6 @@
             </summary>
             <param name="arguments"> An array of arguments to pass to the delegate. </param>
         </member>
-        <member name="T:OscLib.OscMethodDelegate">
-            <summary>
-            Used in conjunction with the OSC address system to assign actual methods to OSC Methods.
-            </summary>
-            <param name="arguments"> Arguments to be passed from the received OSC Message to the method when invoked. </param>
-        </member>
         <member name="T:OscLib.OscProtocol">
             <summary>
             Describes the OSC protocol convention on type tags and bundle designators.
@@ -863,6 +863,9 @@
             <summary>
             Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Can be accessed via an indexer.
             </summary>
+        </member>
+        <member name="P:OscLib.OscString.NullString">
+            <summary> Returns a null OscString -- that is, an OSC string containing a single null symbol in it. </summary>
         </member>
         <member name="P:OscLib.OscString.OscLength">
             <summary> The length of this string in bytes when used as an OSC argument or address. </summary> 
@@ -1002,6 +1005,13 @@
             Allows to explicitly convert OscStrings to strings.
             </summary>
             <param name="oscString"> OscString to be converted. </param>
+        </member>
+        <member name="M:OscLib.OscString.IsNullOrEmpty(OscLib.OscString)">
+            <summary>
+            Returns true if the provided OscString is null (only contains null symbols) or empty (doesn't contain any symbols).
+            </summary>
+            <param name="checkMe"> The OscString to be checked. </param>
+            <returns></returns>
         </member>
         <member name="T:OscLib.OscDeserializer">
             <summary>

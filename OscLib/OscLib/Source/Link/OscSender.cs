@@ -8,21 +8,7 @@ using System.Threading.Tasks;
 
 namespace OscLib
 {
-    /// <summary>
-    /// Checks whether the packet is eligible to be sent, when OscSender is processing its packet heap.
-    /// </summary>
-    /// <typeparam name="Packet"> Should implement the IOscPcketBinary interface. </typeparam>
-    /// <param name="packet"> Packet to be checked for eligibility. </param>
-    /// <returns> True if packet should be sent, False otherwise. </returns>
-    public delegate bool PacketReadyChecker<Packet>(Packet packet) where Packet : IOscPacketBinary;
 
-    /// <summary>
-    /// Checks whether the packet needs to be removed from the packet heap for whatever reason, precluding it from ever being sent.
-    /// </summary>
-    /// <typeparam name="Packet"> Should implement the IOscPacketBinary interface. </typeparam>
-    /// <param name="packet"> Packet to be checked for removal. </param>
-    /// <returns> True if packet should be removed, False otherwise. </returns>
-    public delegate bool PacketRemover<Packet>(Packet packet) where Packet : IOscPacketBinary;
 
 
     /// <summary>
@@ -64,10 +50,10 @@ namespace OscLib
 
         // delegates
         /// <summary> Checks whether the packet should be sent in the current cycle. </summary> 
-        protected PacketReadyChecker<Packet> _packetReadyCheckerMethod;
+        protected OscPacketReadyChecker<Packet> _packetReadyCheckerMethod;
 
         /// <summary> Checks whether the packet should be removed in the current cycle. </summary> 
-        protected PacketRemover<Packet> _packetRemoverMethod;
+        protected OscPacketRemover<Packet> _packetRemoverMethod;
 
         #endregion
 
@@ -137,7 +123,7 @@ namespace OscLib
         #region EVENTS
 
         /// <summary> Invoked when an exception happens inside the send task, hopefully preventing it from stopping </summary>
-        public event TaskExceptionHandler SendTaskExceptionRaised;
+        public event OscTaskExceptionHandler SendTaskExceptionRaised;
 
         #endregion
 
@@ -226,7 +212,7 @@ namespace OscLib
         /// Provides the method delegate for checking if a packet is eligible to be sent.
         /// </summary>
         /// <param name="readyCheckerMethod"> The method to be used for checking packets. </param>
-        public void SetPacketReadyCheckerMethod(PacketReadyChecker<Packet> readyCheckerMethod)
+        public void SetPacketReadyCheckerMethod(OscPacketReadyChecker<Packet> readyCheckerMethod)
         {
             _packetReadyCheckerMethod = readyCheckerMethod;
         }
@@ -236,7 +222,7 @@ namespace OscLib
         /// Provides the method delegate for checking if a packet needs to be removed from the heap.
         /// </summary>
         /// <param name="removerMethod"> The method to be used for removing packets. </param>
-        public void SetPacketRemoverMethod(PacketRemover<Packet> removerMethod)
+        public void SetPacketRemoverMethod(OscPacketRemover<Packet> removerMethod)
         {
             _packetRemoverMethod = removerMethod;
         }
