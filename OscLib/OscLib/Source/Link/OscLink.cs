@@ -50,6 +50,13 @@ namespace OscLib
 
 
     /// <summary>
+    /// Used to safely extract exceptions from the receive task, preventing it from stopping
+    /// </summary>
+    /// <param name="exception"></param>
+    public delegate void OscLinkReceiveTaskExceptionHandler(Exception exception);
+
+
+    /// <summary>
     /// Designates the OSC Link's current mode of operation.
     /// </summary>
     /// 
@@ -87,9 +94,6 @@ namespace OscLib
         // receive task
         /// <summary> Receives the packets from the UDP client and deserializes them. </summary>
         protected Task _receiveTask;
-
-        /// <summary> Holds the latest message sent out by the receive task. </summary>
-        protected string _receiveTaskOutput;
 
         /// <summary> The "return address" of the last-received packet - that is, the IP end point it came from. </summary>
         protected IPEndPoint _receiveReturnAddress;
@@ -198,25 +202,6 @@ namespace OscLib
         }
 
 
-        /// <summary> Holds the latest message sent out by the receive task. </summary>
-        public string ReceiveTaskOutput
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_receiveTaskOutput))
-                {
-                    return string.Empty;
-                }
-                else
-                {
-                    return _receiveTaskOutput;
-                }
-
-            }
-
-        }
-
-
         #endregion
 
         #region EVENTS
@@ -236,6 +221,9 @@ namespace OscLib
 
         /// <summary> Invoked when this OSC Link sends a message, passes it as deserialized data </summary>
         public event OscOnSendMessageHandler MessageSent;
+
+        /// <summary> Invoked when there is an exception inside the receive task </summary>
+        public event OscLinkReceiveTaskExceptionHandler ReceiveTaskExceptionRaised;
 
         #endregion
 
@@ -590,7 +578,7 @@ namespace OscLib
                         }
                         catch (Exception e)
                         {
-                            _receiveTaskOutput = "Exception at " + OscTime.Now.ToString() + ": " + e.ToString();
+                            ReceiveTaskExceptionRaised?.Invoke(e);
                         }
 
                     }

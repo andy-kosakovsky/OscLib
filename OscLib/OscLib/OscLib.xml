@@ -39,6 +39,12 @@
             <param name="bundles"> Sent OSC bundles, deserialized. </param>
             <param name="sentTo"> The IP end point to which the message was sent. </param>
         </member>
+        <member name="T:OscLib.OscLinkReceiveTaskExceptionHandler">
+            <summary>
+            Used to safely extract exceptions from the receive task, preventing it from stopping
+            </summary>
+            <param name="exception"></param>
+        </member>
         <member name="T:OscLib.LinkMode">
             <summary>
             Designates the OSC Link's current mode of operation.
@@ -74,9 +80,6 @@
         </member>
         <member name="F:OscLib.OscLink._receiveTask">
             <summary> Receives the packets from the UDP client and deserializes them. </summary>
-        </member>
-        <member name="F:OscLib.OscLink._receiveTaskOutput">
-            <summary> Holds the latest message sent out by the receive task. </summary>
         </member>
         <member name="F:OscLib.OscLink._receiveReturnAddress">
             <summary> The "return address" of the last-received packet - that is, the IP end point it came from. </summary>
@@ -135,9 +138,6 @@
         <member name="P:OscLib.OscLink.ReceiveTaskStatus">
             <summary> Shows the status of the receive task. If the task is not running will default to "WaitingToRun". </summary>
         </member>
-        <member name="P:OscLib.OscLink.ReceiveTaskOutput">
-            <summary> Holds the latest message sent out by the receive task. </summary>
-        </member>
         <member name="E:OscLib.OscLink.MessageReceivedAsData">
             <summary> Invoked when this OSC Link receives a message, passes it as deserealized data. </summary>
         </member>
@@ -152,6 +152,9 @@
         </member>
         <member name="E:OscLib.OscLink.MessageSent">
             <summary> Invoked when this OSC Link sends a message, passes it as deserialized data </summary>
+        </member>
+        <member name="E:OscLib.OscLink.ReceiveTaskExceptionRaised">
+            <summary> Invoked when there is an exception inside the receive task </summary>
         </member>
         <member name="M:OscLib.OscLink.#ctor(System.String,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
             <summary>
