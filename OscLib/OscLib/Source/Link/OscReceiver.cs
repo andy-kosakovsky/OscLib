@@ -378,7 +378,7 @@ namespace OscLib
         /// Removes the specified address (be it a container or a method) from the address space.
         /// <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
         /// </summary>
-        /// <param name="pattern"></param>
+        /// <param name="addressPattern"></param>
         public void RemoveAddress(OscString addressPattern)
         {
             if (addressPattern.Length < 1)

@@ -11,6 +11,8 @@ namespace OscLib
     {
         private static readonly OscString _nullString = new OscString("\0");
 
+
+        /// <summary> Returns a null OscString -- that is, an OSC string containing a single null symbol in it. </summary>
         public static OscString NullString
         {
             get
@@ -698,6 +700,11 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Returns true if the provided OscString is null (only contains null symbols) or empty (doesn't contain any symbols).
+        /// </summary>
+        /// <param name="checkMe"> The OscString to be checked. </param>
+        /// <returns></returns>
         public static bool IsNullOrEmpty(OscString checkMe)
         {
             if (checkMe.Length < 1)

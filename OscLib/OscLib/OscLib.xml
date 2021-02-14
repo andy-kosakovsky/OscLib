@@ -39,9 +39,9 @@
             <param name="bundles"> Sent OSC bundles, deserialized. </param>
             <param name="sentTo"> The IP end point to which the message was sent. </param>
         </member>
-        <member name="T:OscLib.OscLinkReceiveTaskExceptionHandler">
+        <member name="T:OscLib.TaskExceptionHandler">
             <summary>
-            Used to safely extract exceptions from the receive task, preventing it from stopping
+            Used to safely extract exceptions from the tasks, preventing it from stopping
             </summary>
             <param name="exception"></param>
         </member>
@@ -405,9 +405,6 @@
         <member name="F:OscLib.OscSender`1._processPacketHeapTask">
             <summary> The Task that performs the packet heap checks and manages it, sending the packets out when necessary. </summary>
         </member>
-        <member name="F:OscLib.OscSender`1._processPacketHeapTaskOutput">
-            <summary> Holds the latest message sent out by the heap processing task. </summary>
-        </member>
         <member name="F:OscLib.OscSender`1._packetReadyCheckerMethod">
             <summary> Checks whether the packet should be sent in the current cycle. </summary> 
         </member>
@@ -420,9 +417,6 @@
         <member name="P:OscLib.OscSender`1.ProcessPacketHeapTaskStatus">
             <summary> Shows the current status of the task processing the packet heap. </summary>
         </member>
-        <member name="P:OscLib.OscSender`1.ProcessPacketHeapTaskOutput">
-            <summary> Holds the latest message sent out by the heap processing task. </summary>
-        </member>
         <member name="P:OscLib.OscSender`1.BundlePacketsBeforeSending">
             <summary> Should this Sender bundle the packets before sending, or just send them as separate messages as they come. </summary>
         </member>
@@ -431,6 +425,9 @@
         </member>
         <member name="P:OscLib.OscSender`1.PacketMaxLength">
             <summary> Controls the maximum allowed length for outgoing OSC data packets. Minimum 128 bytes. </summary>
+        </member>
+        <member name="E:OscLib.OscSender`1.SendTaskExceptionRaised">
+            <summary> Invoked when an exception happens inside the send task, hopefully preventing it from stopping </summary>
         </member>
         <member name="M:OscLib.OscSender`1.#ctor(System.Int32,System.Int32,System.Int32,System.Boolean)">
             <summary>
