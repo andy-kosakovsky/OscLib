@@ -50,10 +50,10 @@ namespace OscLib
 
 
     /// <summary>
-    /// Used to safely extract exceptions from the receive task, preventing it from stopping
+    /// Used to safely extract exceptions from the tasks, preventing it from stopping
     /// </summary>
     /// <param name="exception"></param>
-    public delegate void OscLinkReceiveTaskExceptionHandler(Exception exception);
+    public delegate void TaskExceptionHandler(Exception exception);
 
 
     /// <summary>
@@ -223,7 +223,7 @@ namespace OscLib
         public event OscOnSendMessageHandler MessageSent;
 
         /// <summary> Invoked when there is an exception inside the receive task </summary>
-        public event OscLinkReceiveTaskExceptionHandler ReceiveTaskExceptionRaised;
+        public event TaskExceptionHandler ReceiveTaskExceptionRaised;
 
         #endregion
 

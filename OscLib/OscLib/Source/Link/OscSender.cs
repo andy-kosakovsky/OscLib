@@ -62,9 +62,6 @@ namespace OscLib
         /// <summary> The Task that performs the packet heap checks and manages it, sending the packets out when necessary. </summary>
         protected Task _processPacketHeapTask;
 
-        /// <summary> Holds the latest message sent out by the heap processing task. </summary>
-        protected string _processPacketHeapTaskOutput;
-
         // delegates
         /// <summary> Checks whether the packet should be sent in the current cycle. </summary> 
         protected PacketReadyChecker<Packet> _packetReadyCheckerMethod;
@@ -82,24 +79,7 @@ namespace OscLib
         /// <summary> Shows the current status of the task processing the packet heap. </summary>
         public TaskStatus ProcessPacketHeapTaskStatus { get => _processPacketHeapTask.Status; }
 
-        /// <summary> Holds the latest message sent out by the heap processing task. </summary>
-        public string ProcessPacketHeapTaskOutput
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_processPacketHeapTaskOutput))
-                {
-                    return string.Empty;
-                }
-                else
-                {
-                    return _processPacketHeapTaskOutput;
-                }
-
-            }
-
-        }
-
+        
         /// <summary> Should this Sender bundle the packets before sending, or just send them as separate messages as they come. </summary>
         public bool BundlePacketsBeforeSending { get => _bundlePacketsBeforeSending; set => _bundlePacketsBeforeSending = value; }
 
@@ -154,6 +134,12 @@ namespace OscLib
 
         #endregion
 
+        #region EVENTS
+
+        /// <summary> Invoked when an exception happens inside the send task, hopefully preventing it from stopping </summary>
+        public event TaskExceptionHandler SendTaskExceptionRaised;
+
+        #endregion
 
         #region CONSTRUCTORS
 
@@ -545,7 +531,9 @@ namespace OscLib
                                 }
                                 catch (Exception e)
                                 {
-                                    _processPacketHeapTaskOutput = "Exception at " + OscTime.Now.ToString() + ", heap level " + i + ": " + e.ToString() + "\nWiping heap level " + i + "... ";
+                                    SendTaskExceptionRaised?.Invoke(e);
+                                    
+                                    // wipe the packet heap level, just in case
                                     _packetHeap[i].Clear();
                                 }
                             }
