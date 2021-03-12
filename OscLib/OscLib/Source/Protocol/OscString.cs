@@ -12,16 +12,15 @@ namespace OscLib
         private static readonly OscString _nullString = new OscString("\0");
 
 
-        /// <summary> Returns a null OscString -- that is, an OSC string containing a single null symbol in it. </summary>
+        /// <summary> Returns a null OscString -- that is, an OSC string containing a single null symbol. </summary>
         public static OscString NullString
         {
             get
             {
                 return _nullString;
             }
+
         }
-
-
 
         private readonly byte[] _chars;
         private readonly int _oscLength;
