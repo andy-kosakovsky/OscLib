@@ -1,5 +1,5 @@
 # OscLib
-An attempt to create a full implementation of Open Sound Control protocol in C#/.Net/Mono/whatever, with an aim towards flexibility, ease of use and as little GC pressure as possible.
+An attempt to create a full implementation of Open Sound Control protocol in C#/.Net/Mono/whatever, with an aim towards flexibility, efficiency, ease of use and as little GC pressure as possible.
 
 Follows the [Open Sound Control 1.0 Specification](http://cnmat.org/OpenSoundControl/OSC-spec.html), for the most part.
 
