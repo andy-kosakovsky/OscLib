@@ -83,7 +83,7 @@ namespace OscLib
             {
                 _connectedLinksAccess.WaitOne();
 
-                if (!_connectedLinks.Contains(link))
+                if (_connectedLinks.Contains(link))
                 {
                     _connectedLinks.Remove(link);
                     link.BundlesReceived -= ReceiveBundles;
