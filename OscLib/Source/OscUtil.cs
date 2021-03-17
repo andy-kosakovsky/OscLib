@@ -66,7 +66,7 @@ namespace OscLib
         /// <returns></returns>
         internal static int GetNextMultipleOfFour(int number)
         {
-            return (((number) / 4) + 1) * 4;
+            return ((number / 4) + 1) * 4;
         }
 
         

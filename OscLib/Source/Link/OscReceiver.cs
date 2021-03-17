@@ -8,7 +8,7 @@ namespace OscLib
 {
     /// <summary>
     /// Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Link, pattern matching if needed.
-    /// <para> To Do: implement a buffer and delay system to properly adhere to incoming bundles' timestamps. Currently all bundles will be processed as they come. </para>
+    /// <para> To Do: implement a buffer and delay system to properly adhere OSC Protocol's rules on timestamps, etc. Currently all bundles will be processed as they come, unless their timestamp is in the past. </para>
     /// </summary>
     public class OscReceiver
     {
@@ -18,29 +18,85 @@ namespace OscLib
         /// <summary> The root container, from which all the larger OSC Address Space stems. </summary>
         protected OscContainer _root;
 
-        /// <summary> Controls the access to the OSC Address Space. </summary>
-        protected Mutex _accessMutex;
+        /// <summary> Controls access to the OSC Address Space when trying to add/remove addresses. </summary>
+        protected Mutex _addressSpaceAccess;
 
-        /// <summary> The root container, from which all the larger OSC Address Space stems. </summary>
+        /// <summary> Controls access to the list of connected links. </summary>
+        protected Mutex _connectedLinksAccess;
+
+        /// <summary> Contains all links this receiver is connected to. </summary>
+        protected List<OscLink> _connectedLinks;
+
+        /// <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
         public OscContainer Root { get => _root; }
 
         /// <summary>
-        /// Creates a new OSC Receiver, connecting it to an OSC Link.
+        /// Creates a new OSC Receiver.
         /// </summary>
-        /// <param name="link"> The OSC Link from which this Receiver will, um, receive. </param>
-        /// <exception cref="ArgumentNullException"> Thrown if provided OSC Link is null. </exception>
-        public OscReceiver(OscLink link)
+        public OscReceiver()
+        {
+            _root = new OscContainer(RootContainerName);
+            _connectedLinks = new List<OscLink>();
+
+            _addressSpaceAccess = new Mutex();
+            _connectedLinksAccess = new Mutex();
+        }
+
+        /// <summary>
+        /// Connects this Receiver to an OSC Link.
+        /// </summary>
+        /// <param name="link">An OSC Link to receive messages from. Make sure its "message/bundle received" events are on, otherwise nothing will happen.</param>
+        /// <exception cref="ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
+        public void Connect(OscLink link)
         {
             if (link == null)
             {
                 throw new ArgumentNullException(nameof(link));
             }
 
-            _root = new OscContainer(RootContainerName);
-            _accessMutex = new Mutex();
+            try
+            {
+                _connectedLinksAccess.WaitOne();
 
-            link.MessageReceivedAsData += ReceiveMessage;
-            link.BundlesReceivedAsData += ReceiveBundle;
+                if (!_connectedLinks.Contains(link))
+                {
+                    _connectedLinks.Add(link);
+                    link.BundlesReceived += ReceiveBundles;
+                    link.MessageReceived += ReceiveMessage;
+                }
+                
+            }
+            finally
+            {
+                _connectedLinksAccess.ReleaseMutex();
+            }
+        }
+
+        public void Disconnect(OscLink link)
+        {
+            if (link == null)
+            {
+                throw new ArgumentNullException(nameof(link));
+            }
+
+            try
+            {
+                _connectedLinksAccess.WaitOne();
+
+                if (!_connectedLinks.Contains(link))
+                {
+                    _connectedLinks.Remove(link);
+                    link.BundlesReceived -= ReceiveBundles;
+                    link.MessageReceived -= ReceiveMessage;
+                }
+
+            }
+            finally
+            {
+                _connectedLinksAccess.ReleaseMutex();
+            }
+
+
         }
 
         
@@ -201,11 +257,11 @@ namespace OscLib
         /// </summary>
         /// <param name="bundles"> A batch of OSC bundles to process. </param>
         /// <param name="receivedFrom"> The IP end point from which the bundles were received. </param>
-        public virtual void ReceiveBundle(OscBundle[] bundles, IPEndPoint receivedFrom)
+        public virtual void ReceiveBundles(OscBundle[] bundles, IPEndPoint receivedFrom)
         {
             try
             {
-                _accessMutex.WaitOne();
+                _addressSpaceAccess.WaitOne();
 
                 for (int i = 0; i < bundles.Length; i++)
                 {
@@ -214,7 +270,7 @@ namespace OscLib
             }
             finally
             {
-                _accessMutex.ReleaseMutex();
+                _addressSpaceAccess.ReleaseMutex();
             }
 
         }
@@ -229,12 +285,12 @@ namespace OscLib
         {
             try
             {
-                _accessMutex.WaitOne();
+                _addressSpaceAccess.WaitOne();
                 Process(message);
             }
             finally
             {
-                _accessMutex.ReleaseMutex();
+                _addressSpaceAccess.ReleaseMutex();
             }
         }
 
@@ -253,7 +309,7 @@ namespace OscLib
 
             try
             {
-                _accessMutex.WaitOne();
+                _addressSpaceAccess.WaitOne();
 
                 // get the address pattern and check it for any crap we don't need
                 OscString[] pattern = addressPattern.Split(OscProtocol.SymbolAddressSeparator);
@@ -301,7 +357,7 @@ namespace OscLib
             }
             finally
             {
-                _accessMutex.ReleaseMutex();
+                _addressSpaceAccess.ReleaseMutex();
             }
 
         }
@@ -320,7 +376,7 @@ namespace OscLib
 
             try
             {
-                _accessMutex.WaitOne();
+                _addressSpaceAccess.WaitOne();
 
             // get the address pattern and check it for any crap we don't need
             OscString[] pattern = addressPattern.Split(OscProtocol.SymbolAddressSeparator);
@@ -368,7 +424,7 @@ namespace OscLib
             }
             finally
             {
-                _accessMutex.ReleaseMutex();
+                _addressSpaceAccess.ReleaseMutex();
             }
 
         }
@@ -388,7 +444,7 @@ namespace OscLib
 
             try
             {
-                _accessMutex.WaitOne();
+                _addressSpaceAccess.WaitOne();
 
                 // get the address pattern and check it for any crap we don't need
                 OscString[] pattern = addressPattern.Split(OscProtocol.SymbolAddressSeparator);
@@ -434,7 +490,7 @@ namespace OscLib
             }
             finally
             {
-                _accessMutex.ReleaseMutex();
+                _addressSpaceAccess.ReleaseMutex();
             }
 
         }
@@ -450,7 +506,7 @@ namespace OscLib
             
             try
             {
-                _accessMutex.WaitOne();
+                _addressSpaceAccess.WaitOne();
 
                 int currentLayer = 0;
 
@@ -516,7 +572,7 @@ namespace OscLib
             }
             finally
             {
-                _accessMutex.ReleaseMutex();
+                _addressSpaceAccess.ReleaseMutex();
 
             }
 

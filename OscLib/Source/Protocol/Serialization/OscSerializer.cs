@@ -10,12 +10,12 @@ namespace OscLib
     public static class OscSerializer
     {
         /// <summary>
-        /// Creates a binary packet of OSC data using the provided address string and arguments.
+        /// Creates a packet of binary OSC data using the provided address pattern and arguments.
         /// </summary>
-        /// <param name="address"> The address string (can be a full address or a pattern) </param>
+        /// <param name="addressPattern"> The address pattern of this message. </param>
         /// <param name="arguments"> The arguments (should be of supported types, obviously) </param>
         /// <returns> An OSC-compliant binary packet containing the message. </returns>
-        public static OscPacketBinary MessageToBinary(OscString address, params object[] arguments)
+        public static OscPacketBytes MessageToBytes(OscString addressPattern, params object[] arguments)
         {
             // + 1 accounts for the "," symbol in the type tag string
             int typeTagBinLength = OscUtil.GetNextMultipleOfFour(arguments.Length + 1);
@@ -27,23 +27,34 @@ namespace OscLib
                 argBinLength += GetArgumentLength(arguments[i]);
             }
             // create binary data array of appropriate length
-            byte[] data = new byte[address.OscLength + typeTagBinLength + argBinLength];
+            byte[] data = new byte[addressPattern.OscLength + typeTagBinLength + argBinLength];
 
-            address.CopyTo(data, 0);
+            addressPattern.CopyTo(data, 0);
 
             // set the first character of the type tag string to be the separator
-            data[address.OscLength] = OscProtocol.SymbolComma;
+            data[addressPattern.OscLength] = OscProtocol.SymbolComma;
 
-            int currentPos = address.OscLength + typeTagBinLength;
+            int currentPos = addressPattern.OscLength + typeTagBinLength;
 
             for (int i = 0; i < arguments.Length; i++)
             {
-                ArgumentToBinary(arguments[i], out data[address.OscLength + i + 1]).CopyTo(data, currentPos);
+                ArgumentToBinary(arguments[i], out data[addressPattern.OscLength + i + 1]).CopyTo(data, currentPos);
                 currentPos += GetArgumentLength(arguments[i]);
             }
 
-            return new OscPacketBinary(data);
+            return new OscPacketBytes(data);
 
+        }
+
+
+        /// <summary>
+        /// Converts the provided OSC Message into binary OSC data and puts it into a packet.
+        /// </summary>
+        /// <param name="message"> T </param>       
+        /// <returns> An OSC-compliant binary packet containing the message. </returns>
+        public static OscPacketBytes MessageToBytes(OscMessage message)
+        {
+            return MessageToBytes(message.AddressPattern, message.Arguments);
         }
 
         /// <summary>
@@ -51,7 +62,7 @@ namespace OscLib
         /// </summary>
         /// <param name="packets"> OSC binary packets to be bundled up. </param>
         /// <returns> An OSC binary packet containing the bundle. </returns>
-        public static OscPacketBinary BundleToBinary(params OscPacketBinary[] packets)
+        public static OscPacketBytes BundleToBytes(params OscPacketBytes[] packets)
         {
             // set initial length to "#bundle" length + timestamp length
             int length = OscProtocol.BundleDesignator.Length + OscProtocol.DoubleChunk;
@@ -77,7 +88,7 @@ namespace OscLib
                 currentPos += packets[i].Length;
             }
 
-            return new OscPacketBinary(data);
+            return new OscPacketBytes(data);
 
         }
 
@@ -87,7 +98,7 @@ namespace OscLib
         /// <param name="timestamp"> The timestamp to stamp the bundle with. </param>
         /// <param name="packets"> OSC binary packets to be bundled up. </param>
         /// <returns> An OSC binary packet containing the bundle. </returns>
-        public static OscPacketBinary BundleToBinary(OscTimestamp timestamp, params OscPacketBinary[] packets )
+        public static OscPacketBytes BundleToBytes(OscTimestamp timestamp, params OscPacketBytes[] packets )
         {
             // set initial length to "#bundle" length + timestamp length
             int length = OscProtocol.BundleDesignator.Length + OscProtocol.DoubleChunk;
@@ -115,16 +126,16 @@ namespace OscLib
 
             }
 
-            return new OscPacketBinary(data);
+            return new OscPacketBytes(data);
 
         }
 
         /// <summary>
         /// Packs the preformatted binary data into an OSC packet and adds the right header. Make sure the data *is* OSC-compliant, that is, use at your own risk.
         /// </summary>
-        /// <param name="binaryData"> The preformatted, OSC-compliant binary data, hopefully. </param>
+        /// <param name="binaryData"> A byte array containing preformatted, OSC-compliant byte data. hopefully. </param>
         /// <returns> An OSC binary packet containing the bundle. </returns>
-        public static OscPacketBinary BundleToBinary(byte[] binaryData)
+        public static OscPacketBytes BundleToBytes(byte[] binaryData)
         {
             byte[] data = new byte[binaryData.Length + OscProtocol.BundleDesignator.Length + OscProtocol.DoubleChunk];
 
@@ -132,7 +143,7 @@ namespace OscLib
             TimestampToBinary(OscTime.Immediately).CopyTo(data, 8);
             binaryData.CopyTo(data, 16);
 
-            return new OscPacketBinary(data);
+            return new OscPacketBytes(data);
 
         }
 

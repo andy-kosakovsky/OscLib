@@ -6,18 +6,18 @@
     <members>
         <member name="T:OscLib.LinkMode">
             <summary>
-            Designates the OSC Link's current mode of operation.
+            Describes the current mode of operation of an OSC Link.
             </summary>
             
         </member>
         <member name="F:OscLib.LinkMode.Closed">
-            <summary> OSC Link is closed and not in operation. </summary>
+            <summary> OSC Link is closed. </summary>
         </member>
-        <member name="F:OscLib.LinkMode.ToTarget">
-            <summary> OSC Link is open and connected to a specific end point, discarding all other communications, only being able to send packets to that end point. </summary>
+        <member name="F:OscLib.LinkMode.Targeted">
+            <summary> OSC Link is open and connected to a specific end point. It will only receive and send packets from and to that end point. </summary>
         </member>
         <member name="F:OscLib.LinkMode.Wide">
-            <summary> OSC Link is open to any end point, and can send packets to any end point it damn well pleases. </summary>
+            <summary> OSC Link is open to communicate with any end point. </summary>
         </member>
         <member name="T:OscLib.OscLink">
             <summary>
@@ -29,10 +29,10 @@
             <summary> This OSC Link's name. </summary>
         </member>
         <member name="F:OscLib.OscLink._udpClient">
-            <summary> The UDP client used internally to send and receive OSC packets. </summary>
+            <summary> Used internally to send and receive OSC packets. </summary>
         </member>
         <member name="F:OscLib.OscLink._udpClientMaxBufferSize">
-            <summary> The maximum buffer size of the internal UDP client, in kb.  </summary>
+            <summary> The maximum buffer size of the internal UDP client, in kb. OSC Link will need to be restarted in order for changes to take effect. </summary>
         </member>
         <member name="F:OscLib.OscLink._targetEndPoint">
             <summary> The target end point of this OSC Link, when operating in targeted mode. </summary>
@@ -41,10 +41,10 @@
             <summary> Receives the packets from the UDP client and deserializes them. </summary>
         </member>
         <member name="F:OscLib.OscLink._receiveReturnAddress">
-            <summary> The "return address" of the last-received packet - that is, the IP end point it came from. </summary>
+            <summary> The "return address" of the last-received packet - that is, the end point it came from. </summary>
         </member>
         <member name="F:OscLib.OscLink._receiveDataBuffer">
-            <summary> The buffer to hold received binary data. </summary>
+            <summary> The buffer to hold received byte data. </summary>
         </member>
         <member name="F:OscLib.OscLink._receiveTaskTokenSource">
             <summary> The source for cancellation tokens controlling the receive task. </summary>
@@ -55,14 +55,14 @@
         <member name="F:OscLib.OscLink._receiveCycleWait">
             <summary> Time between receive task cycles. </summary>
         </member>
-        <member name="F:OscLib.OscLink._callSentPacketEvents">
-            <summary> Whether the events pertaining to sending packets will be called. </summary>
+        <member name="F:OscLib.OscLink._callEventsOnSend">
+            <summary> Controls whether the "bundles/message sent" events get called. </summary>
         </member>
-        <member name="F:OscLib.OscLink._callReceivedDataEvents">
-            <summary> Whether the events pertaining to receiving and deserializing packets will be called. </summary>
+        <member name="F:OscLib.OscLink._callEventsOnReceive">
+            <summary> Controls whether the "message/bundles received" events get called. </summary>
         </member>
-        <member name="F:OscLib.OscLink._callReceivedBinaryEvents">
-            <summary> Whether the events pertaining to receiving packets in binary form will be called. </summary>
+        <member name="F:OscLib.OscLink._callEventsOnReceiveAsBytes">
+            <summary> Controls whether the "packet received as bytes" events get called. </summary>
         </member>
         <member name="F:OscLib.OscLink._mode">
             <summary> Current mode of operation. </summary>
@@ -73,7 +73,7 @@
         <member name="P:OscLib.OscLink.IsOpen">
             <summary> Returns whether this OSC Link is currently open. </summary>
         </member>
-        <member name="P:OscLib.OscLink.OwnEndPoint">
+        <member name="P:OscLib.OscLink.MyEndPoint">
             <summary> Returns the end point at which this OSC Link is located. </summary>
         </member>
         <member name="P:OscLib.OscLink.TargetEndPoint">
@@ -82,81 +82,82 @@
         <member name="P:OscLib.OscLink.Mode">
             <summary> Current mode of operation. </summary>
         </member>
-        <member name="P:OscLib.OscLink.CallReceivedDataEvents">
-            <summary> Controls whether the received messages/bundles will trigger ReceivedAsData events </summary>
+        <member name="P:OscLib.OscLink.CallEventsOnReceive">
+            <summary> Controls whether the "message/bundles received" events get called. </summary>
         </member>
-        <member name="P:OscLib.OscLink.CallReceivedBinaryEvents">
-            <summary> Controls whether the received messages/bundles will trigger ReceivedAsBinary events </summary>
+        <member name="P:OscLib.OscLink.CallEventsOnReceiveAsBytes">
+            <summary> Controls whether the "packet received as bytes" events get called. </summary>
         </member>
-        <member name="P:OscLib.OscLink.CallSentDataEvents">
-            <summary> Controls whether the sent messages/bundles will trigger Sent events </summary>
+        <member name="P:OscLib.OscLink.CallEventsOnSend">
+            <summary> Controls whether the "bundles/message sent" events get called. </summary>
         </member>
         <member name="P:OscLib.OscLink.UdpClientMaxBufferSize">
-            <summary> The maximum buffer size of the internal UDP client, in kb. </summary>
+            <summary> The maximum buffer size of the internal UDP client, in kb. OSC Link will need to be restarted in order for changes to take effect. </summary>
         </member>
         <member name="P:OscLib.OscLink.ReceiveTaskStatus">
-            <summary> Shows the status of the receive task. If the task is not running will default to "WaitingToRun". </summary>
+            <summary> Shows the status of the receive task. Defaults to "WaitingToRun" when the task is not present. </summary>
         </member>
-        <member name="E:OscLib.OscLink.MessageReceivedAsData">
-            <summary> Invoked when this OSC Link receives a message, passes it as deserealized data. </summary>
+        <member name="E:OscLib.OscLink.MessageReceived">
+            <summary> Invoked when this OSC Link receives a message. The message is deserialized. </summary>
         </member>
-        <member name="E:OscLib.OscLink.BundlesReceivedAsData">
-            <summary> Invoked when this OSC Link receives a batch of bundles, passes it as deserealized data. </summary> 
+        <member name="E:OscLib.OscLink.BundlesReceived">
+            <summary> Invoked when this OSC Link receives a bundle or a batch of bundles. Received data is deserialized into a "flat" array containing all valid bundles. </summary> 
         </member>
-        <member name="E:OscLib.OscLink.PacketReceivedAsBinary">
-            <summary> Invoked when this OSC Link receives a message, passes it as serialized, binary data. </summary>
+        <member name="E:OscLib.OscLink.PacketReceivedAsBytes">
+            <summary> Invoked when this OSC Link receives any packet of binary OSC data. The packet is passed as is. </summary>
         </member>
         <member name="E:OscLib.OscLink.BundlesSent">
-            <summary> Invoked when this OSC Link sends a batch of bundles, passes it as deserialized data </summary>
+            <summary> Invoked when this OSC Link sends out an OSC packet containing a bundle or a batch of bundles. On invocation, the bundles are deserialized back into readible form. </summary>
         </member>
         <member name="E:OscLib.OscLink.MessageSent">
-            <summary> Invoked when this OSC Link sends a message, passes it as deserialized data </summary>
+            <summary> Invoked when this OSC Link sends out an OSC packet containing a message. On invocation, the message is deserialized into readible form. </summary>
         </member>
         <member name="E:OscLib.OscLink.ReceiveTaskExceptionRaised">
-            <summary> Invoked when there is an exception inside the receive task </summary>
+            <summary> Invoked when there is an exception inside the receive task. Allows to catch exceptions without crashing the task, if desired. </summary>
         </member>
         <member name="M:OscLib.OscLink.#ctor(System.String,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
             <summary>
             Creates a new OSC Link.
             </summary>
-            <param name="name"> Name of this OSC Link. </param>
-            <param name="udpClientMaxBufferSize"> The maximum buffer size of the internal UDP client, in kilobytes. </param>
-            <param name="callReceivedDataEvents"> Whether the events pertaining to receiving and deserializing packets will be called. </param>
-            <param name="callReceivedBinaryEvents"> Whether the events pertaining to receiving packets in binary form will be called. </param>
-            <param name="callSentPacketEvents"> Whether the events pertaining to sending packets will be called. </param>
+            <param name="name"> The name of this OSC Link. </param>
+            <param name="udpClientMaxBufferSize"> The maximum buffer size of the internal UDP client, in kb. </param>
+            <param name="callEventsOnReceive"> Controls whether the "message/bundles received" events get called. </param>
+            <param name="callEventsOnReceiveAsBytes"> Controls whether the "packet received as bytes" events get called. </param>
+            <param name="callEventsOnSend"> Controls whether the "bundles/message sent" events get called. </param>
         </member>
         <member name="M:OscLib.OscLink.Open">
             <summary>
-            Internal method that takes care of everything that's the same with both modes.
+            Internal method that takes care of everything that's the same in both modes of operation.
             </summary>
         </member>
         <member name="M:OscLib.OscLink.OpenToTarget(System.Net.IPEndPoint)">
             <summary>
-            Opens a link to specific target address and port (only sending and receiving messages from that target), using random available port.
+            Opens the OSC Link to the specified end point, discarding communications from any other end point. The OSC Link will use any random available port.
             </summary>
-            <param name="targetEndPoint"> The target end point with which OSC Link will be communicating. </param>
-            <exception cref="T:System.ArgumentNullException"> Thrown when provided EndPoint is null. </exception>
-            <exception cref="T:System.InvalidOperationException"> Thrown when OSC Link is already open. </exception>
+            <param name="targetEndPoint"> The target end point to which OSC Link will be connected. </param>
+            <exception cref="T:System.ArgumentNullException"> Thrown if the provided EndPoint is null. </exception>
+            <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
         </member>
-        <member name="M:OscLib.OscLink.OpenToTarget(System.Int32,System.Net.IPEndPoint)">
+        <member name="M:OscLib.OscLink.OpenToTarget(System.Net.IPEndPoint,System.Int32)">
             <summary>
-            Opens a link to specific target address and port (only sending and receiving messages from that target), using specified port.
+            Opens the OSC Link to the specified end point, discarding communications from any other end point. The OSC Link will use the specified port.
             </summary>
-            <param name="port"> Port number to open the OSC Link with. </param>
             <param name="targetEndPoint"> The OSC Link will only communicate with this IP end point. </param>
-            <exception cref="T:System.ArgumentNullException"> Thrown when provided IP end point is null. </exception>
-            <exception cref="T:System.InvalidOperationException"> Thrown when OSC Link is already open. </exception>
+            <param name="port"> The port that  </param>
+            <exception cref="T:System.ArgumentNullException"> Thrown if the provided IP end point is null. </exception>
+            <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
             <exception cref="T:System.ArgumentOutOfRangeException"> The port number is out of range. </exception>
             <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket with the provided port number. </exception>
         </member>
         <member name="M:OscLib.OscLink.OpenWide">
             <summary>
-            Opens a link that can send to and receive from any address and port, using a random available port.
+            Opens the OSC Link to send and receive to and from any end point. The OSC Link will use any random available port.
             </summary>
+            <exception cref="T:System.InvalidOperationException" > Thrown if the OSC Link is already open. </exception>
         </member>
         <member name="M:OscLib.OscLink.OpenWide(System.Int32)">
             <summary>
-            Opens a link that can send and receive from any address and port, using a specific port.
+            Opens the OSC Link to send and receive to and from any end point. The OSC Link will use the specified port.
             </summary>
             <param name="port"> Port number for the OSC link. </param>
             <exception cref="T:System.InvalidOperationException"> Thrown when OSC Link is already open. </exception>
@@ -165,16 +166,17 @@
         </member>
         <member name="M:OscLib.OscLink.Close">
             <summary>
-            Closes the OSC link.
+            Closes the OSC Link.
             </summary>
+            <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already closed. </exception>
         </member>
         <member name="M:OscLib.OscLink.SendToTarget``1(``0@)">
             <summary>
             Sends an OSC packet to the target end point of this OSC Link. The packet is passed by reference.
             </summary>
-            <typeparam name="Packet"> The packet should implement the IOscPacketBinary interface. </typeparam>
+            <typeparam name="Packet"> The packet should implement the IOscPacketBytes interface. </typeparam>
             <param name="oscPacket"> OSC binary data packet to be sent. </param>
-            <exception cref="T:System.InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
+            <exception cref="T:System.InvalidOperationException"> Thrown if the OSC link is not in target mode. </exception>
             <exception cref="T:System.ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
         </member>
         <member name="M:OscLib.OscLink.SendToTarget``1(``0)">
@@ -532,6 +534,160 @@
             </summary>
             <param name="arguments"> Arguments to be passed from the received OSC Message to the method when invoked. </param>
         </member>
+        <member name="T:OscLib.OscString">
+            <summary>
+            Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Can be accessed via an indexer.
+            </summary>
+        </member>
+        <member name="P:OscLib.OscString.NullString">
+            <summary> Returns a null OscString -- that is, an OSC string containing a single null symbol. </summary>
+        </member>
+        <member name="P:OscLib.OscString.OscLength">
+            <summary> The length of this string in bytes when used as an OSC argument or address. </summary> 
+        </member>
+        <member name="P:OscLib.OscString.Length">
+            <summary> The length of this string in bytes. </summary>
+        </member>
+        <member name="P:OscLib.OscString.Chars">
+            <summary> Returns a copy of an array containing all chars (their byte representations, that is) that constitute this string. </summary>
+        </member>
+        <member name="P:OscLib.OscString.OscBytes">
+            <summary> Returns a copy of an array containing all chars (their byte representations, that is) that is of the right length to be used as an element in OSC binary packet. </summary>
+        </member>
+        <member name="P:OscLib.OscString.ContainsReservedSymbols">
+            <summary>
+            Whether this string contains special symbols reserved by OSC protocol. 
+            </summary>
+        </member>
+        <member name="P:OscLib.OscString.Item(System.Int32)">
+            <summary>
+            Indexer access to get the chars, as ASCII bytes.
+            </summary>
+            <param name="i"> Index of the char. </param>
+            <returns> A char in byte form. </returns>
+        </member>
+        <member name="M:OscLib.OscString.#ctor(System.Byte[])">
+            <summary>
+            Creates an OSC string out of a byte array.
+            </summary>
+            <param name="bytes"> The source byte array. </param>
+        </member>
+        <member name="M:OscLib.OscString.#ctor(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Creates an OSC string out of a part of a byte array.
+            </summary>
+            <param name="bytes"> The source byte array. </param>
+            <param name="start"> The start index. </param>
+            <param name="length"> The length of the string. </param>
+        </member>
+        <member name="M:OscLib.OscString.#ctor(System.String)">
+            <summary>
+            Creates an OSC string out of a plain old string.
+            </summary>
+            <param name="addressString"> The source plain old string. </param>
+        </member>
+        <member name="M:OscLib.OscString.ScrubReservedSymbols">
+            <summary>
+            Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string
+            </summary>
+        </member>
+        <member name="M:OscLib.OscString.ScrubReservedSymbols(System.String)">
+            <summary>
+            Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string.
+            </summary>
+            <param name="input"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscString.CopyTo(System.Byte[],System.Int32)">
+            <summary>
+            Copies the elements of this string's byte array into the specified one-dimentional byte array, starting from the index provided.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscString.Copy">
+            <summary>
+            Returns a copy of this OSC string.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscString.Split(System.Byte)">
+            <summary>
+            Splits the OSC string into an array of new OSC string, using the provided symbol.
+            </summary>
+            <param name="splitByte"> The ASCII encoding of a symbol by which to split the string. </param>
+            <returns> An array of resulting OSC strings. </returns>
+        </member>
+        <member name="M:OscLib.OscString.GetSubstring(System.Int32,System.Int32)">
+            <summary>
+            Gets a substring from this string.
+            </summary>
+            <param name="start"> The index at which the substring starts. </param>
+            <param name="length"> The length of the substring. </param>
+            <returns> The requested substring. </returns>
+            <exception cref="T:System.ArgumentException"> Thrown when "start" is beyond the string's length, or when "length" is too large. </exception>
+        </member>
+        <member name="M:OscLib.OscString.PatternMatch(OscLib.OscString)">
+            <summary>
+            Compares this string to a pattern, returns whether they match or not.
+            </summary>
+            <param name="pattern"> The pattern to which the string is compared. </param>
+            <returns> True if string matches the pattern, false if not (duh). </returns>
+            <exception cref="T:System.ArgumentException"> Thrown when either the curly brackets or the square brackets aren't closed in the pattern. </exception>
+        </member>
+        <member name="M:OscLib.OscString.ToString">
+            <summary>
+            Returns the OSC string as an actual string.
+            </summary>
+            <returns> A string of a string. </returns>
+        </member>
+        <member name="M:OscLib.OscString.Equals(System.Object)">
+            <summary>
+            Compares the OSC string to an object.
+            </summary>
+            <param name="obj"> Object to compare to. </param>
+            <returns> Whether the OSC string is equal to object. </returns>
+        </member>
+        <member name="M:OscLib.OscString.GetHashCode">
+            <summary>
+            Returns a hash code of the OSC string, so it can be used as a key in dictionaries, for example.
+            </summary>
+            <returns> A hash code. </returns>
+        </member>
+        <member name="M:OscLib.OscString.op_Equality(OscLib.OscString,OscLib.OscString)">
+            <summary>
+            Allows to compare OSC strings to each other.
+            </summary>
+            <param name="stringOne"> First string. </param>
+            <param name="stringTwo"> Second string. </param>
+            <returns> Whether the strings are equal. </returns>        
+        </member>
+        <member name="M:OscLib.OscString.op_Inequality(OscLib.OscString,OscLib.OscString)">
+            <summary>
+            Allows to compare OSC strings to each other. 
+            </summary>
+            <param name="stringOne"> First string. </param>
+            <param name="stringTwo"> Second string. </param>
+            <returns> Whether the strings are unequal. </returns>
+        </member>
+        <member name="M:OscLib.OscString.op_Implicit(System.String)~OscLib.OscString">
+            <summary>
+            Allows to implicitly convert strings to OscStrings.
+            </summary>
+            <param name="addressString"> String to be converted. </param>
+        </member>
+        <member name="M:OscLib.OscString.op_Explicit(OscLib.OscString)~System.String">
+            <summary>
+            Allows to explicitly convert OscStrings to strings.
+            </summary>
+            <param name="oscString"> OscString to be converted. </param>
+        </member>
+        <member name="M:OscLib.OscString.IsNullOrEmpty(OscLib.OscString)">
+            <summary>
+            Returns true if the provided OscString is null (only contains null symbols) or empty (doesn't contain any symbols).
+            </summary>
+            <param name="checkMe"> The OscString to be checked. </param>
+            <returns></returns>
+        </member>
         <member name="T:OscLib.Trit">
             <summary>
             A basic implementation of a yes-no-maybe boolean-like thing. 
@@ -566,15 +722,15 @@
             </summary>
             <param name="data"> Array of bytes to be swapped (needs to be of an even length to work). </param>
         </member>
-        <member name="T:OscLib.IOscPacketBinary">
+        <member name="T:OscLib.IOscPacketBytes">
             <summary>
             Describes a structure that contains an OSC packet in binary form.
             </summary>
         </member>
-        <member name="P:OscLib.IOscPacketBinary.BinaryData">
+        <member name="P:OscLib.IOscPacketBytes.BinaryData">
             <summary> OSC-compliant binary data contained within the packet. </summary>
         </member>
-        <member name="P:OscLib.IOscPacketBinary.Length">
+        <member name="P:OscLib.IOscPacketBytes.Length">
             <summary> Packet length in bytes. </summary>
         </member>
         <member name="T:OscLib.OscBundle">
@@ -657,24 +813,24 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="T:OscLib.OscPacketBinary">
+        <member name="T:OscLib.OscPacketBytes">
             <summary>
             Contains serialized binary data that makes up an OSC packet. 
             </summary>
         </member>
-        <member name="P:OscLib.OscPacketBinary.BinaryData">
+        <member name="P:OscLib.OscPacketBytes.BinaryData">
             <summary> Binary data contained inside this packet. </summary>
         </member>
-        <member name="P:OscLib.OscPacketBinary.Length">
+        <member name="P:OscLib.OscPacketBytes.Length">
             <summary> Length of the data. </summary>
         </member>
-        <member name="M:OscLib.OscPacketBinary.#ctor(System.Byte[])">
+        <member name="M:OscLib.OscPacketBytes.#ctor(System.Byte[])">
             <summary>
             Creates a new OSC packet out of the provided OSC binary data.
             </summary>
             <param name="binaryData"></param>
         </member>
-        <member name="M:OscLib.OscPacketBinary.ToString">
+        <member name="M:OscLib.OscPacketBytes.ToString">
             <summary>
             Returns the binary contents of the packet, formatted to display 16 bytes per line.
             </summary>
@@ -859,160 +1015,6 @@
         <member name="P:OscLib.OscProtocol.LocalIP">
             <summary> Local IP address. </summary>
         </member>
-        <member name="T:OscLib.OscString">
-            <summary>
-            Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Can be accessed via an indexer.
-            </summary>
-        </member>
-        <member name="P:OscLib.OscString.NullString">
-            <summary> Returns a null OscString -- that is, an OSC string containing a single null symbol in it. </summary>
-        </member>
-        <member name="P:OscLib.OscString.OscLength">
-            <summary> The length of this string in bytes when used as an OSC argument or address. </summary> 
-        </member>
-        <member name="P:OscLib.OscString.Length">
-            <summary> The length of this string in bytes. </summary>
-        </member>
-        <member name="P:OscLib.OscString.Chars">
-            <summary> Returns a copy of an array containing all chars (their byte representations, that is) that constitute this string. </summary>
-        </member>
-        <member name="P:OscLib.OscString.OscBytes">
-            <summary> Returns a copy of an array containing all chars (their byte representations, that is) that is of the right length to be used as an element in OSC binary packet. </summary>
-        </member>
-        <member name="P:OscLib.OscString.ContainsReservedSymbols">
-            <summary>
-            Whether this string contains special symbols reserved by OSC protocol. 
-            </summary>
-        </member>
-        <member name="P:OscLib.OscString.Item(System.Int32)">
-            <summary>
-            Indexer access to get the chars, as ASCII bytes.
-            </summary>
-            <param name="i"> Index of the char. </param>
-            <returns> A char in byte form. </returns>
-        </member>
-        <member name="M:OscLib.OscString.#ctor(System.Byte[])">
-            <summary>
-            Creates an OSC string out of a byte array.
-            </summary>
-            <param name="bytes"> The source byte array. </param>
-        </member>
-        <member name="M:OscLib.OscString.#ctor(System.Byte[],System.Int32,System.Int32)">
-            <summary>
-            Creates an OSC string out of a part of a byte array.
-            </summary>
-            <param name="bytes"> The source byte array. </param>
-            <param name="start"> The start index. </param>
-            <param name="length"> The length of the string. </param>
-        </member>
-        <member name="M:OscLib.OscString.#ctor(System.String)">
-            <summary>
-            Creates an OSC string out of a plain old string.
-            </summary>
-            <param name="addressString"> The source plain old string. </param>
-        </member>
-        <member name="M:OscLib.OscString.ScrubReservedSymbols">
-            <summary>
-            Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string
-            </summary>
-        </member>
-        <member name="M:OscLib.OscString.ScrubReservedSymbols(System.String)">
-            <summary>
-            Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string.
-            </summary>
-            <param name="input"></param>
-            <returns></returns>
-        </member>
-        <member name="M:OscLib.OscString.CopyTo(System.Byte[],System.Int32)">
-            <summary>
-            Copies the elements of this string's byte array into the specified one-dimentional byte array, starting from the index provided.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:OscLib.OscString.Copy">
-            <summary>
-            Returns a copy of this OSC string.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:OscLib.OscString.Split(System.Byte)">
-            <summary>
-            Splits the OSC string into an array of new OSC string, using the provided symbol.
-            </summary>
-            <param name="splitByte"> The ASCII encoding of a symbol by which to split the string. </param>
-            <returns> An array of resulting OSC strings. </returns>
-        </member>
-        <member name="M:OscLib.OscString.GetSubstring(System.Int32,System.Int32)">
-            <summary>
-            Gets a substring from this string.
-            </summary>
-            <param name="start"> The index at which the substring starts. </param>
-            <param name="length"> The length of the substring. </param>
-            <returns> The requested substring. </returns>
-            <exception cref="T:System.ArgumentException"> Thrown when "start" is beyond the string's length, or when "length" is too large. </exception>
-        </member>
-        <member name="M:OscLib.OscString.PatternMatch(OscLib.OscString)">
-            <summary>
-            Compares this string to a pattern, returns whether they match or not.
-            </summary>
-            <param name="pattern"> The pattern to which the string is compared. </param>
-            <returns> True if string matches the pattern, false if not (duh). </returns>
-            <exception cref="T:System.ArgumentException"> Thrown when either the curly brackets or the square brackets aren't closed in the pattern. </exception>
-        </member>
-        <member name="M:OscLib.OscString.ToString">
-            <summary>
-            Returns the OSC string as an actual string.
-            </summary>
-            <returns> A string of a string. </returns>
-        </member>
-        <member name="M:OscLib.OscString.Equals(System.Object)">
-            <summary>
-            Compares the OSC string to an object.
-            </summary>
-            <param name="obj"> Object to compare to. </param>
-            <returns> Whether the OSC string is equal to object. </returns>
-        </member>
-        <member name="M:OscLib.OscString.GetHashCode">
-            <summary>
-            Returns a hash code of the OSC string, so it can be used as a key in dictionaries, for example.
-            </summary>
-            <returns> A hash code. </returns>
-        </member>
-        <member name="M:OscLib.OscString.op_Equality(OscLib.OscString,OscLib.OscString)">
-            <summary>
-            Allows to compare OSC strings to each other.
-            </summary>
-            <param name="stringOne"> First string. </param>
-            <param name="stringTwo"> Second string. </param>
-            <returns> Whether the strings are equal. </returns>        
-        </member>
-        <member name="M:OscLib.OscString.op_Inequality(OscLib.OscString,OscLib.OscString)">
-            <summary>
-            Allows to compare OSC strings to each other. 
-            </summary>
-            <param name="stringOne"> First string. </param>
-            <param name="stringTwo"> Second string. </param>
-            <returns> Whether the strings are unequal. </returns>
-        </member>
-        <member name="M:OscLib.OscString.op_Implicit(System.String)~OscLib.OscString">
-            <summary>
-            Allows to implicitly convert strings to OscStrings.
-            </summary>
-            <param name="addressString"> String to be converted. </param>
-        </member>
-        <member name="M:OscLib.OscString.op_Explicit(OscLib.OscString)~System.String">
-            <summary>
-            Allows to explicitly convert OscStrings to strings.
-            </summary>
-            <param name="oscString"> OscString to be converted. </param>
-        </member>
-        <member name="M:OscLib.OscString.IsNullOrEmpty(OscLib.OscString)">
-            <summary>
-            Returns true if the provided OscString is null (only contains null symbols) or empty (doesn't contain any symbols).
-            </summary>
-            <param name="checkMe"> The OscString to be checked. </param>
-            <returns></returns>
-        </member>
         <member name="T:OscLib.OscDeserializer">
             <summary>
             Deserializes OSC binary data, translating it into readable messages and bundles.
@@ -1167,22 +1169,29 @@
             Translates OSC messages and bundles into binary packets, serializing it to be sent over the network.
             </summary>
         </member>
-        <member name="M:OscLib.OscSerializer.MessageToBinary(OscLib.OscString,System.Object[])">
+        <member name="M:OscLib.OscSerializer.MessageToBytes(OscLib.OscString,System.Object[])">
             <summary>
-            Creates a binary packet of OSC data using the provided address string and arguments.
+            Creates a packet of binary OSC data using the provided address pattern and arguments.
             </summary>
-            <param name="address"> The address string (can be a full address or a pattern) </param>
+            <param name="addressPattern"> The address pattern of this message. </param>
             <param name="arguments"> The arguments (should be of supported types, obviously) </param>
             <returns> An OSC-compliant binary packet containing the message. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.BundleToBinary(OscLib.OscPacketBinary[])">
+        <member name="M:OscLib.OscSerializer.MessageToBytes(OscLib.OscMessage)">
+            <summary>
+            Converts the provided OSC Message into binary OSC data and puts it into a packet.
+            </summary>
+            <param name="message"> T </param>       
+            <returns> An OSC-compliant binary packet containing the message. </returns>
+        </member>
+        <member name="M:OscLib.OscSerializer.BundleToBytes(OscLib.OscPacketBytes[])">
             <summary>
             Creates a binary packet of OSC data that is a bundle, containing all provided packets, timestamped for immediate execution on receipt.  
             </summary>
             <param name="packets"> OSC binary packets to be bundled up. </param>
             <returns> An OSC binary packet containing the bundle. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.BundleToBinary(OscLib.OscTimestamp,OscLib.OscPacketBinary[])">
+        <member name="M:OscLib.OscSerializer.BundleToBytes(OscLib.OscTimestamp,OscLib.OscPacketBytes[])">
             <summary>
             Creates a binary packet of OSC data that is a bundle, containing all provided packets, using the provided timestamp.  
             </summary>
@@ -1190,11 +1199,11 @@
             <param name="packets"> OSC binary packets to be bundled up. </param>
             <returns> An OSC binary packet containing the bundle. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.BundleToBinary(System.Byte[])">
+        <member name="M:OscLib.OscSerializer.BundleToBytes(System.Byte[])">
             <summary>
             Packs the preformatted binary data into an OSC packet and adds the right header. Make sure the data *is* OSC-compliant, that is, use at your own risk.
             </summary>
-            <param name="binaryData"> The preformatted, OSC-compliant binary data, hopefully. </param>
+            <param name="binaryData"> A byte array containing preformatted, OSC-compliant byte data. hopefully. </param>
             <returns> An OSC binary packet containing the bundle. </returns>
         </member>
         <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Int32)">

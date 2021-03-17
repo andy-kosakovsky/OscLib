@@ -15,7 +15,7 @@ namespace OscLib
     /// Implements a multi-priority sender queue to work with an OSC Link, for message bundling and orderly sending. OSC Link needs to be in targeted mode when operating.
     /// </summary>
     /// <typeparam name="Packet"> The particular type of the OSC binary packet used with this Sender. Should implement the IOscPacketBinary interface. </typeparam>
-    public class OscSender<Packet> where Packet : IOscPacketBinary
+    public class OscSender<Packet> where Packet : IOscPacketBytes
     {
         #region FIELDS
         /// <summary> OSC Link in use with this Sender. Needs to be in targeted mode. </summary>
@@ -234,7 +234,7 @@ namespace OscLib
         /// <param name="packet"> A reference to the OSC binary data packet to be sent. </param>
         /// <exception cref="InvalidOperationException"> Thrown when attempting to send data while the sender is not active. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> Thrown when the size of the packet is too large to be sent. </exception>
-        public void SendOscPacket(ref Packet packet)
+        public void SendOscPacket(Packet packet)
         {
             if (!_isActive)
             {
@@ -246,9 +246,9 @@ namespace OscLib
                 throw new ArgumentOutOfRangeException(nameof(packet), "OSC Sender Error: Too much OSC data to safely send in one message.");
             }
 
-            if (_oscLink.Mode == LinkMode.ToTarget)
+            if (_oscLink.Mode == LinkMode.Targeted)
             {
-                _oscLink.SendToTarget(ref packet);
+                _oscLink.SendToTarget(packet);
             }
             else
             {
@@ -486,7 +486,7 @@ namespace OscLib
             while (_isActive)
             { 
 
-                if (_oscLink.Mode == LinkMode.ToTarget)
+                if (_oscLink.Mode == LinkMode.Targeted)
                 {
                     // check if we got data to send
                     bool dataFound = false;
@@ -623,7 +623,7 @@ namespace OscLib
 
                         Array.Copy(_cycleBinaryDataHolder, 0, bundleData, 0, byteCounter);
 
-                        OscPacketBinary newBundle = OscSerializer.BundleToBinary(bundleData);
+                        OscPacketBytes newBundle = OscSerializer.BundleToBytes(bundleData);
 
                         _oscLink.SendToTarget(newBundle);
                                           

@@ -176,7 +176,7 @@ namespace OscLib
         /// <param name="oscPacketBinary"> The packet to be deserialized. </param>
         /// <returns> The resultant OSC message. </returns>
         /// <remarks> The method is generic to avoid the struct-as-interface boxing/unboxing shenanigans. </remarks>
-        public static OscMessage GetMessage<Packet>(Packet oscPacketBinary) where Packet : IOscPacketBinary
+        public static OscMessage GetMessage<Packet>(Packet oscPacketBinary) where Packet : IOscPacketBytes
         {
             if (oscPacketBinary.BinaryData[0] != OscProtocol.SymbolAddressSeparator)
             {
