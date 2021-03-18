@@ -22,8 +22,16 @@ namespace OscLib
     internal static class OscUtil
     {
         /// <summary> Returns an end point at a local address on a random open port. </summary> 
-        internal static IPEndPoint LocalEndPoint { get => new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0); } 
+        internal static IPEndPoint GetLocalEndPoint()
+        { 
+            return new IPEndPoint(OscProtocol.LocalIP, 0); 
+        } 
 
+
+        internal static IPEndPoint GetLocalEndPointWithPort(int port)
+        {
+            return new IPEndPoint(OscProtocol.LocalIP, port);
+        }
 
         /// <summary>
         /// Prints array of bytes in hex form as a formatted string sequence.

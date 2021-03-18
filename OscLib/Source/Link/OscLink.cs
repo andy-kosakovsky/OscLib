@@ -233,6 +233,8 @@ namespace OscLib
         /// <param name="targetEndPoint"> The target end point to which OSC Link will be connected. </param>
         /// <exception cref="ArgumentNullException"> Thrown if the provided EndPoint is null. </exception>
         /// <exception cref="InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
+        /// <exception cref="ArgumentOutOfRangeException"> The port number is out of range. </exception>
+        /// <exception cref="SocketException"> Couldn't open a socket. </exception>
         public void OpenToTarget(IPEndPoint targetEndPoint)
         {
 
@@ -265,7 +267,7 @@ namespace OscLib
         /// <exception cref="ArgumentNullException"> Thrown if the provided IP end point is null. </exception>
         /// <exception cref="InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> The port number is out of range. </exception>
-        /// <exception cref="SocketException"> Couldn't open a socket with the provided port number. </exception>
+        /// <exception cref="SocketException"> Couldn't open a socket. </exception>
         public void OpenToTarget(IPEndPoint targetEndPoint, int port)
         {
 
@@ -281,18 +283,7 @@ namespace OscLib
 
             _targetEndPoint = targetEndPoint;
 
-            try
-            {
-                _udpClient = new UdpClient(port);
-            }
-            catch (ArgumentOutOfRangeException e)
-            {
-                throw e;
-            }
-            catch (SocketException e)
-            {
-                throw e;
-            }
+            _udpClient = new UdpClient(port);
 
             _udpClient.Connect(_targetEndPoint);
 
@@ -306,6 +297,7 @@ namespace OscLib
         /// Opens the OSC Link to send and receive to and from any end point. The OSC Link will use any random available port.
         /// </summary>
         /// <exception cref="InvalidOperationException" > Thrown if the OSC Link is already open. </exception>
+        /// <exception cref="SocketException"> Couldn't open a socket. </exception>
         public void OpenWide()
         {
 
@@ -315,9 +307,9 @@ namespace OscLib
             }
 
             _targetEndPoint = null;
-             
+
             _udpClient = new UdpClient();
-            _udpClient.Client.Bind(OscUtil.LocalEndPoint);
+            _udpClient.Client.Bind(OscUtil.GetLocalEndPoint());   
 
             Open();
 
@@ -342,18 +334,9 @@ namespace OscLib
    
             _targetEndPoint = null;
 
-            try
-            {
-                _udpClient = new UdpClient(port);
-            }
-            catch (ArgumentOutOfRangeException e)
-            {
-                throw e;
-            }
-            catch (SocketException e)
-            {
-                throw e;
-            }
+
+            _udpClient = new UdpClient();
+            _udpClient.Client.Bind(OscUtil.GetLocalEndPointWithPort(port));
 
             Open();
 

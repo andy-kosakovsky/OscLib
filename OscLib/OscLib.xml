@@ -137,6 +137,8 @@
             <param name="targetEndPoint"> The target end point to which OSC Link will be connected. </param>
             <exception cref="T:System.ArgumentNullException"> Thrown if the provided EndPoint is null. </exception>
             <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"> The port number is out of range. </exception>
+            <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket. </exception>
         </member>
         <member name="M:OscLib.OscLink.OpenToTarget(System.Net.IPEndPoint,System.Int32)">
             <summary>
@@ -147,13 +149,14 @@
             <exception cref="T:System.ArgumentNullException"> Thrown if the provided IP end point is null. </exception>
             <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
             <exception cref="T:System.ArgumentOutOfRangeException"> The port number is out of range. </exception>
-            <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket with the provided port number. </exception>
+            <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket. </exception>
         </member>
         <member name="M:OscLib.OscLink.OpenWide">
             <summary>
             Opens the OSC Link to send and receive to and from any end point. The OSC Link will use any random available port.
             </summary>
             <exception cref="T:System.InvalidOperationException" > Thrown if the OSC Link is already open. </exception>
+            <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket. </exception>
         </member>
         <member name="M:OscLib.OscLink.OpenWide(System.Int32)">
             <summary>
@@ -170,32 +173,13 @@
             </summary>
             <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already closed. </exception>
         </member>
-        <member name="M:OscLib.OscLink.SendToTarget``1(``0@)">
-            <summary>
-            Sends an OSC packet to the target end point of this OSC Link. The packet is passed by reference.
-            </summary>
-            <typeparam name="Packet"> The packet should implement the IOscPacketBytes interface. </typeparam>
-            <param name="oscPacket"> OSC binary data packet to be sent. </param>
-            <exception cref="T:System.InvalidOperationException"> Thrown if the OSC link is not in target mode. </exception>
-            <exception cref="T:System.ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
-        </member>
         <member name="M:OscLib.OscLink.SendToTarget``1(``0)">
             <summary>
-            Sends an OSC packet to the target end point of this OSC Link. The packet is passed directly.
+            Sends an OSC packet to the target end point of this OSC Link.
             </summary>
             <typeparam name="Packet"> The packet should implement the IOscPacketBinary interface. </typeparam>
             <param name="oscPacket"> OSC binary data packet to be sent. </param>
             <exception cref="T:System.InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
-            <exception cref="T:System.ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
-        </member>
-        <member name="M:OscLib.OscLink.SendToEndPoint``1(``0@,System.Net.IPEndPoint)">
-            <summary>
-            Sends an OSC packet to the specified end point. The packet is passed by reference.
-            </summary>
-            <typeparam name="Packet"> The packet should implement the IOscPacketBinary interface. </typeparam>
-            <param name="oscPacket"> OSC binary data packet to be sent. </param>
-            <param name="endPoint"> The end point to which the packet will be sent. </param>
-            <exception cref="T:System.InvalidOperationException"> Thrown if OSC Link is not in wide mode. </exception>
             <exception cref="T:System.ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
         </member>
         <member name="M:OscLib.OscLink.SendToEndPoint``1(``0,System.Net.IPEndPoint)">
@@ -238,27 +222,38 @@
         <member name="T:OscLib.OscReceiver">
             <summary>
             Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Link, pattern matching if needed.
-            <para> To Do: implement a buffer and delay system to properly adhere to incoming bundles' timestamps. Currently all bundles will be processed as they come. </para>
+            <para> To Do: implement a buffer and delay system to properly adhere OSC Protocol's rules on timestamps, etc. Currently all bundles will be processed as they come, unless their timestamp is in the past. </para>
             </summary>
         </member>
         <member name="F:OscLib.OscReceiver.RootContainerName">
             <summary> The default name of the root container. </summary>
         </member>
         <member name="F:OscLib.OscReceiver._root">
-            <summary> The root container, from which all the larger OSC Address Space stems. </summary>
+            <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
         </member>
-        <member name="F:OscLib.OscReceiver._accessMutex">
-            <summary> Controls the access to the OSC Address Space. </summary>
+        <member name="F:OscLib.OscReceiver._addressSpaceAccess">
+            <summary> Controls access to the OSC Address Space when trying to add/remove addresses. </summary>
+        </member>
+        <member name="F:OscLib.OscReceiver._connectedLinksAccess">
+            <summary> Controls access to the list of connected links. </summary>
+        </member>
+        <member name="F:OscLib.OscReceiver._connectedLinks">
+            <summary> Contains all links this receiver is connected to. </summary>
         </member>
         <member name="P:OscLib.OscReceiver.Root">
-            <summary> The root container, from which all the larger OSC Address Space stems. </summary>
+            <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
         </member>
-        <member name="M:OscLib.OscReceiver.#ctor(OscLib.OscLink)">
+        <member name="M:OscLib.OscReceiver.#ctor">
             <summary>
-            Creates a new OSC Receiver, connecting it to an OSC Link.
+            Creates a new OSC Receiver.
             </summary>
-            <param name="link"> The OSC Link from which this Receiver will, um, receive. </param>
-            <exception cref="T:System.ArgumentNullException"> Thrown if provided OSC Link is null. </exception>
+        </member>
+        <member name="M:OscLib.OscReceiver.Connect(OscLib.OscLink)">
+            <summary>
+            Connects this Receiver to an OSC Link.
+            </summary>
+            <param name="link">An OSC Link to receive messages from. Make sure its "message/bundle received" events are on, otherwise nothing will happen.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
         </member>
         <member name="M:OscLib.OscReceiver.Process(OscLib.OscMessage[])">
             <summary>
@@ -272,7 +267,7 @@
             </summary>
             <param name="message"> An OSC message to process. </param>
         </member>
-        <member name="M:OscLib.OscReceiver.ReceiveBundle(OscLib.OscBundle[],System.Net.IPEndPoint)">
+        <member name="M:OscLib.OscReceiver.ReceiveBundles(OscLib.OscBundle[],System.Net.IPEndPoint)">
             <summary>
             Processes an incoming batch of bundles. Invoked when the connected OSC Link receives bundles.
             </summary>
@@ -407,7 +402,7 @@
             </summary>
             <param name="removerMethod"> The method to be used for removing packets. </param>
         </member>
-        <member name="M:OscLib.OscSender`1.SendOscPacket(`0@)">
+        <member name="M:OscLib.OscSender`1.SendOscPacket(`0)">
             <summary>
             Gets the binary data from the OSC packet and immediately sends it through the OSC Link as a message.
             </summary>
@@ -698,7 +693,7 @@
             Internal utility class for various helper methods.
             </summary>
         </member>
-        <member name="P:OscLib.OscUtil.LocalEndPoint">
+        <member name="M:OscLib.OscUtil.GetLocalEndPoint">
             <summary> Returns an end point at a local address on a random open port. </summary> 
         </member>
         <member name="M:OscLib.OscUtil.ByteArrayToStrings(System.Byte[],System.Int32)">

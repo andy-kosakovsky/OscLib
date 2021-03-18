@@ -15,7 +15,7 @@ namespace OscLib
         /// <summary> The default name of the root container. </summary>
         public const string RootContainerName = "root";
 
-        /// <summary> The root container, from which all the larger OSC Address Space stems. </summary>
+        /// <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
         protected OscContainer _root;
 
         /// <summary> Controls access to the OSC Address Space when trying to add/remove addresses. </summary>
@@ -72,6 +72,12 @@ namespace OscLib
             }
         }
 
+
+        /// <summary>
+        /// Disconnects this Receiver from an OSC Link. 
+        /// </summary>
+        /// <param name="link">The OSC Link to be disconnected.</param>
+        /// <exception cref="ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
         public void Disconnect(OscLink link)
         {
             if (link == null)
@@ -507,7 +513,6 @@ namespace OscLib
             try
             {
                 _addressSpaceAccess.WaitOne();
-
                 int currentLayer = 0;
 
                 List<OscContainer> currentPath = new List<OscContainer>();
@@ -569,10 +574,26 @@ namespace OscLib
                                  
                 }
 
+                _connectedLinksAccess.WaitOne();
+
+                returnString.Append('\n');
+                returnString.Append("OSC Links connected:\n");
+
+                for (int i = 0; i < _connectedLinks.Count; i++)
+                {
+                    returnString.Append('[');
+                    returnString.Append(i);
+                    returnString.Append(']');
+                    returnString.Append(": ");
+                    returnString.Append(_connectedLinks[i].Name);
+                    returnString.Append('\n');
+                }
+
             }
             finally
             {
                 _addressSpaceAccess.ReleaseMutex();
+                _connectedLinksAccess.ReleaseMutex();
 
             }
 
