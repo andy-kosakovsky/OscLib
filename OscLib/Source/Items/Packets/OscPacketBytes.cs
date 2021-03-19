@@ -5,7 +5,7 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Contains serialized binary data that makes up an OSC packet. 
+    /// Contains an OSC packet serialized into binary.
     /// </summary>
     public readonly struct OscPacketBytes : IOscPacketBytes
     {

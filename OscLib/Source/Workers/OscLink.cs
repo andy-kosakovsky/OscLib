@@ -386,16 +386,8 @@ namespace OscLib
                 throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + " needs to be in TARGET MODE (current mode: " + _mode.ToString() + ").");
             }
 
-            try
-            {
-                _udpClient.Send(oscPacket.BinaryData, oscPacket.Length);
-               
-            }
-            catch (ArgumentNullException e)
-            {
-                throw e;
-            }
-
+            _udpClient.Send(oscPacket.BinaryData, oscPacket.Length);
+              
             OnDataSent(oscPacket.BinaryData, TargetEndPoint);
 
         }
@@ -417,16 +409,9 @@ namespace OscLib
                 throw new InvalidOperationException("OSC Link Error: OSC Link " + _name + " needs to be in WIDE MODE (current mode: " + _mode.ToString() + ").");
             }
 
-            try
-            {
-                _udpClient.Send(oscPacket.BinaryData, oscPacket.Length, endPoint);
-                
-            }
-            catch (ArgumentNullException)
-            {
-                throw;
-            }
 
+            _udpClient.Send(oscPacket.BinaryData, oscPacket.Length, endPoint);
+                
             OnDataSent(oscPacket.BinaryData, endPoint);
 
         }
@@ -450,7 +435,6 @@ namespace OscLib
                             _receiveDataBuffer = _udpClient.Receive(ref _receiveReturnAddress);
 
                             // per OSC protocol, first symbol of a bundle would always be "#"
-                            // TODO: weak spot, come up with something more stable or with a way to control the task better
                             if (_receiveDataBuffer[0] == OscProtocol.SymbolBundleStart)
                                 OnBundleReceived(_receiveDataBuffer, _receiveReturnAddress);
                             else
@@ -492,7 +476,6 @@ namespace OscLib
             if (_callEventsOnReceiveAsBytes)
             {
                 PacketReceivedAsBytes?.Invoke(new OscPacketBytes(binaryData), receivedFrom);
-
             }
 
         }
