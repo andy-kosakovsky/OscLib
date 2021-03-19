@@ -26,6 +26,11 @@ namespace OscLib
             _binaryData = binaryData;
         }
 
+        public OscPacketBytes(OscMessage message)
+        {
+            _binaryData = OscSerializer.GetBytes(message);
+        }
+
         /// <summary>
         /// Returns the binary contents of the packet, formatted to display 16 bytes per line.
         /// </summary>

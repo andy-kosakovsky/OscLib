@@ -54,7 +54,7 @@ namespace OscLib
 
             for (int i = 0; i < arguments.Length; i++)
             {
-                _length += OscSerializer.GetArgumentLength(arguments[i]);
+                _length += OscSerializer.GetByteLength(arguments[i]);
             }
 
             // account for the type tag string

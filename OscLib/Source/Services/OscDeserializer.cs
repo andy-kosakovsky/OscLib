@@ -12,6 +12,7 @@ namespace OscLib
     public static class OscDeserializer
     {
         // temp byte arrays for holding chunks and avoiding gc messes
+        // TODO: temp byte arrays in OscDeserializer need to be changed to something that is safe to use with concurrency. Currently that's not the case, which leads to (occasional and rare, but still) data mangling.
         private static byte[] _tempByteArray32 = new byte[4];
 
         private static byte[] _tempByteArray64 = new byte[8];

@@ -40,7 +40,7 @@ namespace OscLib
             _ntpEpochStart = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc).Ticks;
             _ticksPerSecond = TimeSpan.TicksPerSecond;
             _immediately = new OscTimestamp((ulong)1);
-            _immediatelyBytes = OscSerializer.TimestampToBinary(_immediately);
+            _immediatelyBytes = OscSerializer.GetBytes(_immediately);
 
             _sessionTimer = new Stopwatch();
 

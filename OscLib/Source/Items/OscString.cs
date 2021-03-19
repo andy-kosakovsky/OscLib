@@ -5,14 +5,14 @@ namespace OscLib
 {
 
     /// <summary>
-    /// Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Can be accessed via an indexer.
+    /// Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Individual chars can be accessed via an indexer.
     /// </summary>
     public struct OscString
     {
         private static readonly OscString _nullString = new OscString("\0");
 
 
-        /// <summary> Returns a null OscString -- that is, an OSC string containing a single null symbol. </summary>
+        /// <summary> Returns a null OscString - that is, an OSC string containing a single null symbol. </summary>
         public static OscString NullString
         {
             get
@@ -33,7 +33,7 @@ namespace OscLib
         /// <summary> The length of this string in bytes. </summary>
         public int Length { get => _length; }
 
-        /// <summary> Returns a copy of an array containing all chars (their byte representations, that is) that constitute this string. </summary>
+        /// <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is) that constitute this string. </summary>
         public byte[] Chars
         {
             get
@@ -45,7 +45,7 @@ namespace OscLib
 
         }
 
-        /// <summary> Returns a copy of an array containing all chars (their byte representations, that is) that is of the right length to be used as an element in OSC binary packet. </summary>
+        /// <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is) that is of the right length to be used as an element in OSC binary packet. </summary>
         public byte[] OscBytes
         {
             get
@@ -58,7 +58,7 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Whether this string contains special symbols reserved by OSC protocol. 
+        /// Whether this string contains special symbols reserved by OSC protocol. Checks when first called, then caches the result.
         /// </summary>
         public bool ContainsReservedSymbols
         {
@@ -95,15 +95,30 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Indexer access to get the chars, as ASCII bytes.
+        /// Indexer access to the characters of this string, as ASCII codes.
         /// </summary>
         /// <param name="i"> Index of the char. </param>
-        /// <returns> A char in byte form. </returns>
-        public byte this[int i] { get => _chars[i]; }
+        /// <returns> A char as an ASCII code. Will return "0" (ASCII null) when out of range. </returns>
+        public byte this[int i] 
+        {
+            get
+            {
+                if ((i >= 0) && (i < _chars.Length))
+                {
+                    return _chars[i];
+                }
+                else
+                {
+                    return 0;
+                }
+
+            }
+
+        }
 
 
         /// <summary>
-        /// Creates an OSC string out of a byte array.
+        /// Creates an OSC String out of a byte array.
         /// </summary>
         /// <param name="bytes"> The source byte array. </param>
         public OscString(byte[] bytes)
@@ -116,7 +131,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates an OSC string out of a part of a byte array.
+        /// Creates an OSC String out of a part of a byte array.
         /// </summary>
         /// <param name="bytes"> The source byte array. </param>
         /// <param name="start"> The start index. </param>
@@ -135,10 +150,10 @@ namespace OscLib
         /// <summary>
         /// Creates an OSC string out of a plain old string.
         /// </summary>
-        /// <param name="addressString"> The source plain old string. </param>
-        public OscString(string addressString)
+        /// <param name="sourceString"> The source plain old string. </param>
+        public OscString(string sourceString)
         {
-            _chars = Encoding.ASCII.GetBytes(addressString);
+            _chars = Encoding.ASCII.GetBytes(sourceString);
 
             _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             _length = _chars.Length;
@@ -147,7 +162,22 @@ namespace OscLib
 
 
         /// <summary>
-        /// Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string
+        /// Internal constructor for copying strings while preserving the information about them containing special symbols.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="specialSymbols"></param>
+        private OscString(byte[] bytes, Trit specialSymbols)
+        {
+            _chars = bytes;
+            _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
+            _length = _chars.Length;
+
+            _containsReservedSymbols = specialSymbols;
+        }
+
+
+        /// <summary>
+        /// Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string.
         /// </summary>
         public OscString ScrubReservedSymbols()
         {
@@ -162,7 +192,7 @@ namespace OscLib
                 }
             }
 
-            return new OscString(newStringBytes);
+            return new OscString(newStringBytes, Trit.False);
 
         }
 
@@ -185,7 +215,7 @@ namespace OscLib
                 }
             }
 
-            return new OscString(newStringBytes);
+            return new OscString(newStringBytes, Trit.False);
 
         }
 
@@ -199,24 +229,22 @@ namespace OscLib
             _chars.CopyTo(array, index);
         }
 
+
         /// <summary>
         /// Returns a copy of this OSC string.
         /// </summary>
         /// <returns></returns>
         public OscString Copy()
-        {
-            OscString copy = new OscString(this._chars);
-            copy._containsReservedSymbols = _containsReservedSymbols;
-
-            return copy;
+        { 
+            return new OscString(this._chars, _containsReservedSymbols);
         }
 
 
         /// <summary>
-        /// Splits the OSC string into an array of new OSC string, using the provided symbol.
+        /// Splits the OSC String into an array of new OSC Strings, using the provided symbol.
         /// </summary>
         /// <param name="splitByte"> The ASCII encoding of a symbol by which to split the string. </param>
-        /// <returns> An array of resulting OSC strings. </returns>
+        /// <returns> An array of resulting OSC Strings. </returns>
         public OscString[] Split(byte splitByte)
         {
             OscString[] result;
@@ -280,7 +308,7 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown when "start" is beyond the string's length, or when "length" is too large. </exception>
         public OscString GetSubstring(int start, int length)
         {
-            if (start >= this._length)
+            if ((start >= this._length) || (start < 0))
                 throw new ArgumentException("OSC String ERROR: Cannot get a substring, it starts beyond the length of the string.");
 
             if (start + length > _length)
@@ -417,7 +445,8 @@ namespace OscLib
 
         }
 
-        // overrides etc.
+        
+        #region OVERRIDES AND OPERATORS
 
         /// <summary>
         /// Returns the OSC string as an actual string.
@@ -441,7 +470,7 @@ namespace OscLib
             }
             else if (obj is string stringString)
             {
-                return (this == (OscString)stringString);
+                return (this == stringString);
             }
             else
                 return false;
@@ -456,40 +485,125 @@ namespace OscLib
         {
             unchecked
             {
-
+                
                 if (_chars == null)
                     return 0;
 
                 if (_chars.Length == 0)
                     return 0;
 
-                int hash = 1;
+                // polynomial
+                int prime = 251;
+                int hash = 0;
 
                 for (int i = 0; i < _chars.Length; i++)
                 {
-                    hash += _chars[i] + 1;
+                    hash += _chars[i] * prime;
+                    prime *= prime;
                 }
 
-                return hash;
-
+                // all my homies use magic numbers 
+                return hash % 1566083941;
             }
 
         }
 
 
         // used in pattern matching - will return true if char is compared to itself or a special symbol such as * or ?
-        private bool CharIsEqual(byte strChar, byte patChar)
+        
+
+
+        /// <summary>
+        /// Allows to compare OSC strings to each other.
+        /// </summary>
+        /// <param name="stringOne"> First string. </param>
+        /// <param name="stringTwo"> Second string. </param>
+        /// <returns> Whether the strings are equal. </returns>        
+        public static bool operator ==(OscString stringOne, OscString stringTwo)
         {
-            if (patChar == OscProtocol.SymbolQuestion)
+
+            if (stringOne.Length != stringTwo.Length)
+                return false;
+
+            for (int i = 0; i < stringOne.Length; i++)
+            {
+                if (stringOne[i] != stringTwo[i])
+                    return false;
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Allows to compare OSC strings to each other. 
+        /// </summary>
+        /// <param name="stringOne"> First string. </param>
+        /// <param name="stringTwo"> Second string. </param>
+        /// <returns> Whether the strings are unequal. </returns>
+        public static bool operator !=(OscString stringOne, OscString stringTwo)
+        {
+            if (stringOne.Length != stringTwo.Length)
+                return true;
+
+
+            for (int i = 0; i < stringOne.Length; i++)
+            {
+                if (stringOne[i] != stringTwo[i])
+                    return true;
+            }
+
+            return false;
+
+        }
+
+
+        /// <summary>
+        /// Allows to implicitly convert strings to OscStrings.
+        /// </summary>
+        /// <param name="addressString"> String to be converted. </param>
+        public static implicit operator OscString(string addressString)
+        {
+            return new OscString(addressString);
+        }
+
+
+        /// <summary>
+        /// Allows to explicitly convert OscStrings to strings.
+        /// </summary>
+        /// <param name="oscString"> OscString to be converted. </param>
+        public static explicit operator string(OscString oscString)
+        {
+            return oscString.ToString();
+        }
+
+        #endregion // OVERRIDES AND OPERATORS
+
+
+        /// <summary>
+        /// Returns true if the provided OscString is null (only contains null symbols) or empty (doesn't contain any symbols).
+        /// </summary>
+        /// <param name="checkMe"> The OscString to be checked. </param>
+        /// <returns></returns>
+        public static bool IsNullOrEmpty(OscString checkMe)
+        {
+            if (checkMe.Length < 1)
             {
                 return true;
             }
-            else
+
+            for (int i = 0; i < checkMe.Length; i++)
             {
-                return (strChar == patChar);
+                if (checkMe[i] != '\0')
+                {
+                    return false;
+                }
             }
 
+            return true;
+
         }
+
 
         private bool CharMatchesSquareBrackets(byte checkChar, ref int pointer, ref OscString pattern)
         {
@@ -634,96 +748,20 @@ namespace OscLib
 
         }
 
-        /// <summary>
-        /// Allows to compare OSC strings to each other.
-        /// </summary>
-        /// <param name="stringOne"> First string. </param>
-        /// <param name="stringTwo"> Second string. </param>
-        /// <returns> Whether the strings are equal. </returns>        
-        public static bool operator ==(OscString stringOne, OscString stringTwo)
+        private bool CharIsEqual(byte strChar, byte patChar)
         {
-
-            if (stringOne.Length != stringTwo.Length)
-                return false;
-
-            for (int i = 0; i < stringOne.Length; i++)
-            {
-                if (stringOne[i] != stringTwo[i])
-                    return false;
-            }
-
-            return true;
-
-        }
-
-        /// <summary>
-        /// Allows to compare OSC strings to each other. 
-        /// </summary>
-        /// <param name="stringOne"> First string. </param>
-        /// <param name="stringTwo"> Second string. </param>
-        /// <returns> Whether the strings are unequal. </returns>
-        public static bool operator !=(OscString stringOne, OscString stringTwo)
-        {
-            if (stringOne.Length != stringTwo.Length)
-                return true;
-
-
-            for (int i = 0; i < stringOne.Length; i++)
-            {
-                if (stringOne[i] != stringTwo[i])
-                    return true;
-            }
-
-            return false;
-
-        }
-
-
-        /// <summary>
-        /// Allows to implicitly convert strings to OscStrings.
-        /// </summary>
-        /// <param name="addressString"> String to be converted. </param>
-        public static implicit operator OscString(string addressString)
-        {
-            return new OscString(addressString);
-        }
-
-
-        /// <summary>
-        /// Allows to explicitly convert OscStrings to strings.
-        /// </summary>
-        /// <param name="oscString"> OscString to be converted. </param>
-        public static explicit operator string(OscString oscString)
-        {
-            return oscString.ToString();
-        }
-
-
-        /// <summary>
-        /// Returns true if the provided OscString is null (only contains null symbols) or empty (doesn't contain any symbols).
-        /// </summary>
-        /// <param name="checkMe"> The OscString to be checked. </param>
-        /// <returns></returns>
-        public static bool IsNullOrEmpty(OscString checkMe)
-        {
-            if (checkMe.Length < 1)
+            if (patChar == OscProtocol.SymbolQuestion)
             {
                 return true;
             }
-
-            for (int i = 0; i < checkMe.Length; i++)
+            else
             {
-                if (checkMe[i] != '\0')
-                {
-                    return false;
-                }
+                return strChar == patChar;
             }
 
-            return true;
-
         }
-       
-    
+
+
     }
 
 }

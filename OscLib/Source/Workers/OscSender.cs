@@ -590,7 +590,7 @@ namespace OscLib
                                 totalMessages--;
 
                                 // add bytes of message's length to bundle and shift byte counter by a magical 4 (for bytes in int32)
-                                OscSerializer.ArgumentToBinary(currentPacketLength).CopyTo(_cycleBinaryDataHolder, byteCounter);                  
+                                OscSerializer.GetBytes(currentPacketLength).CopyTo(_cycleBinaryDataHolder, byteCounter);                  
                                 byteCounter += 4;
 
                                 // add message data to the data holder

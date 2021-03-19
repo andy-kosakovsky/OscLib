@@ -17,9 +17,12 @@ namespace OscLib
     {
         /// <summary> The length of the bundle header in bytes. That is, the "#bundle " + [timestamp] bit. </summary>
         public const int HeaderLength = 16;
-
         private readonly OscTimestamp _timestamp;
+
+        // TODO: add bundles-in-bundles
         private readonly OscMessage[] _messages;
+        // private readonly OscBundle[] _bundles;
+
         private readonly int _length;
 
         /// <summary> Timestamp attached to this bundle. </summary>

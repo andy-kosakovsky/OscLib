@@ -97,7 +97,7 @@ namespace OscLib
                 {
                     return null;
                 }
-
+             
             }
 
         }
@@ -530,10 +530,11 @@ namespace OscLib
         /// <summary>
         /// Prints out the status of this OSC Link as a nicely formatted string.
         /// </summary>
-        /// <returns></returns>
+        /// <returns> A formatted string containing status information. </returns>
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder("OSCLink name: ");
+
             returnString.Append(_name);
             returnString.Append("; Mode: ");
             returnString.Append(_mode.ToString());
