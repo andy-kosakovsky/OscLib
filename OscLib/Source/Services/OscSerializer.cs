@@ -25,7 +25,7 @@ namespace OscLib
             }
 
             // check if the very first symbol of the address pattern is compliant to the standard
-            if (addressPattern[0] != OscProtocol.SymbolAddressSeparator)
+            if (addressPattern[0] != OscProtocol.Separator)
             {
                 throw new ArgumentException("OSC Serializer ERROR: Cannot convert, provided address pattern doesn't begin with a '/'.");
             }
@@ -45,7 +45,7 @@ namespace OscLib
             addressPattern.CopyTo(data, 0);
 
             // set the first character of the type tag string to be the separator
-            data[addressPattern.OscLength] = OscProtocol.SymbolComma;
+            data[addressPattern.OscLength] = OscProtocol.Comma;
 
             int currentPos = addressPattern.OscLength + typeTagBinLength;
 
@@ -107,24 +107,24 @@ namespace OscLib
         public static OscPacketBytes BundleToBytes(params OscPacketBytes[] packets)
         {
             // set initial length to "#bundle" length + timestamp length
-            int length = OscProtocol.BundleDesignator.Length + OscProtocol.DoubleChunk;
+            int length = OscProtocol.BundleStringLength + OscProtocol.Chunk64;
             int currentPos = length;
 
 
             for (int i = 0; i < packets.Length; i++)
             {
-                length += OscProtocol.SingleChunk + packets[i].Length;
+                length += OscProtocol.Chunk32 + packets[i].Length;
             }
 
             byte[] data = new byte[length];
 
-            OscProtocol.BundleDesignator.CopyTo(data, 0);
+            OscProtocol.CopyBundleStringTo(data, 0);
             OscSerializer.GetBytes(OscTime.Immediately).CopyTo(data, 8);
 
             for (int i = 0; i < packets.Length; i++)
             {
                 GetBytes(packets[i].Length).CopyTo(data, currentPos);
-                currentPos += OscProtocol.SingleChunk;
+                currentPos += OscProtocol.Chunk32;
 
                 packets[i].BinaryData.CopyTo(data, currentPos);
                 currentPos += packets[i].Length;
@@ -143,25 +143,25 @@ namespace OscLib
         public static OscPacketBytes BundleToBytes(OscTimestamp timestamp, params OscPacketBytes[] packets )
         {
             // set initial length to "#bundle" length + timestamp length
-            int length = OscProtocol.BundleDesignator.Length + OscProtocol.DoubleChunk;
+            int length = OscProtocol.BundleStringLength + OscProtocol.Chunk64;
             int currentPos = length;
 
 
             for (int i = 0; i < packets.Length; i++)
             {
-                length += OscProtocol.SingleChunk + packets[i].Length;
+                length += OscProtocol.Chunk32 + packets[i].Length;
             }
 
             byte[] data = new byte[length];
 
-            OscProtocol.BundleDesignator.CopyTo(data, 0);
+            OscProtocol.CopyBundleStringTo(data, 0);
             GetBytes(timestamp).CopyTo(data, 8);
 
             for (int i = 0; i < packets.Length; i++)
             {
 
                 GetBytes(packets[i].Length).CopyTo(data, currentPos);
-                currentPos += OscProtocol.SingleChunk;
+                currentPos += OscProtocol.Chunk32;
 
                 packets[i].BinaryData.CopyTo(data, currentPos);
                 currentPos += packets[i].Length;
@@ -179,9 +179,9 @@ namespace OscLib
         /// <returns> An OSC binary packet containing the bundle. </returns>
         public static OscPacketBytes BundleToBytes(byte[] binaryData)
         {
-            byte[] data = new byte[binaryData.Length + OscProtocol.BundleDesignator.Length + OscProtocol.DoubleChunk];
+            byte[] data = new byte[binaryData.Length + OscProtocol.BundleStringLength + OscProtocol.Chunk64];
 
-            OscProtocol.BundleDesignator.CopyTo(data, 0);
+            OscProtocol.CopyBundleStringTo(data, 0);
             GetBytes(OscTime.Immediately).CopyTo(data, 8);
             binaryData.CopyTo(data, 16);
 
@@ -216,7 +216,7 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytesArg(int arg, out byte typeTag)
         {         
-            typeTag = OscProtocol.TypeTagInteger;
+            typeTag = OscProtocol.TypeTagInt32;
 
             return GetBytes(arg);
         }
@@ -251,7 +251,7 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytesArg(float arg, out byte typeTag)
         {
-            typeTag = OscProtocol.TypeTagFloat;
+            typeTag = OscProtocol.TypeTagFloat32;
 
             return GetBytes(arg);
         }
@@ -286,7 +286,7 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytesArg(double arg, out byte typeTag)
         {
-            typeTag = OscProtocol.TypeTagDouble;
+            typeTag = OscProtocol.TypeTagFloat64;
 
             return GetBytes(arg);
         }
@@ -479,7 +479,7 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytesArg(long arg, out byte typeTag)
         {
-            typeTag = OscProtocol.TypeTagLong;
+            typeTag = OscProtocol.TypeTagInt64;
 
             return GetBytes(arg);
         }
@@ -520,7 +520,7 @@ namespace OscLib
                 OscUtil.SwapEndian(data);
             }
 
-            typeTag = OscProtocol.TypeTagTimestamp;
+            typeTag = OscProtocol.TypeTagTime;
 
             return data;
         }
@@ -590,16 +590,16 @@ namespace OscLib
             switch (arg)
             {
                 case int _:
-                    return OscProtocol.SingleChunk;
+                    return OscProtocol.Chunk32;
 
                 case long _:
-                    return OscProtocol.DoubleChunk;
+                    return OscProtocol.Chunk64;
 
                 case float _:
-                    return OscProtocol.SingleChunk;
+                    return OscProtocol.Chunk32;
 
                 case double _:
-                    return OscProtocol.DoubleChunk;
+                    return OscProtocol.Chunk64;
 
                 case string argString:
                     return GetByteLength(argString);
@@ -611,13 +611,13 @@ namespace OscLib
                     return GetByteLength(argByte);
 
                 case bool _:
-                    return OscProtocol.SingleChunk;
+                    return OscProtocol.Chunk32;
 
                 case char _:
-                    return OscProtocol.SingleChunk;
+                    return OscProtocol.Chunk32;
 
                 case OscTimestamp _:
-                    return OscProtocol.DoubleChunk;
+                    return OscProtocol.Chunk64;
 
                 default:
                     throw new ArgumentException("Command Error: Argument " + arg.ToString() + " of unsupported type.");

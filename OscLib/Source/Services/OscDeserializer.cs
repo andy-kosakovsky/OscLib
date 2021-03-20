@@ -55,7 +55,7 @@ namespace OscLib
                 }
                 else if (!typeTagsFound)
                 {
-                    if (binaryData[i] == OscProtocol.SymbolComma)
+                    if (binaryData[i] == OscProtocol.Comma)
                     {
                         typeTagsFound = true;
                         typeTagStart = i;
@@ -105,19 +105,19 @@ namespace OscLib
                     {
                         switch (binaryData[typeTagStart + 1 + i])
                         {
-                            case OscProtocol.TypeTagInteger:
+                            case OscProtocol.TypeTagInt32:
                                 arguments[i] = GetInt32(ref pointer, binaryData);
                                 break;
 
-                            case OscProtocol.TypeTagFloat:
+                            case OscProtocol.TypeTagFloat32:
                                 arguments[i] = GetFloat32(ref pointer, binaryData);
                                 break;
 
-                            case OscProtocol.TypeTagDouble:
+                            case OscProtocol.TypeTagFloat64:
                                 arguments[i] = GetFloat64(ref pointer, binaryData);
                                 break;
 
-                            case OscProtocol.TypeTagLong:
+                            case OscProtocol.TypeTagInt64:
                                 arguments[i] = GetInt64(ref pointer, binaryData);
                                 break;
 
@@ -129,11 +129,11 @@ namespace OscLib
                                 arguments[i] = GetBlob(ref pointer, binaryData);
                                 break;
 
-                            case OscProtocol.TypeTagTimestamp:
+                            case OscProtocol.TypeTagTime:
                                 arguments[i] = GetTimestamp(ref pointer, binaryData);
                                 break;
 
-                            case OscProtocol.SymbolComma:
+                            case OscProtocol.Comma:
                                 break;
 
                             default:
@@ -179,7 +179,7 @@ namespace OscLib
         /// <remarks> The method is generic to avoid the struct-as-interface boxing/unboxing shenanigans. </remarks>
         public static OscMessage GetMessage<Packet>(Packet oscPacketBinary) where Packet : IOscPacketBytes
         {
-            if (oscPacketBinary.BinaryData[0] != OscProtocol.SymbolAddressSeparator)
+            if (oscPacketBinary.BinaryData[0] != OscProtocol.Separator)
             {
                 throw new ArgumentException("OSC Deserializer ERROR: Cannot deserialize OSC message, provided OSC Packet is invalid.");
             }
@@ -196,7 +196,7 @@ namespace OscLib
         /// <returns> An array of readable OSC bundles. </returns>
         public static OscBundle[] GetBundles(byte[] binaryData)
         {
-            if (binaryData[0] != OscProtocol.SymbolBundleStart)
+            if (binaryData[0] != OscProtocol.BundleMarker)
             {
                 throw new ArgumentException("OSC Deserializer ERROR: Cannot deserialize OSC bundle, provided byte array is invalid.");
             }
@@ -218,7 +218,7 @@ namespace OscLib
 
             while (pointer < binaryData.Length)
             {
-                if (binaryData[pointer] == OscProtocol.SymbolBundleStart)
+                if (binaryData[pointer] == OscProtocol.BundleMarker)
                 {
                     bundlesTotal++;
 
@@ -228,15 +228,15 @@ namespace OscLib
                 else
                 {
                     // this should catch the very first address separator in an address string - the others will be jumped over
-                    if (binaryData[pointer] == OscProtocol.SymbolAddressSeparator)
+                    if (binaryData[pointer] == OscProtocol.Separator)
                     {
                         // we got a message, so lets jump over it - there won't be any bundles within it
                         // get length of the message - it should be contained in 4 bytes before the current position
-                        pointer += GetInt32(pointer - OscProtocol.SingleChunk, binaryData);
+                        pointer += GetInt32(pointer - OscProtocol.Chunk32, binaryData);
                     }
                     else
                     {
-                        pointer += OscProtocol.SingleChunk;
+                        pointer += OscProtocol.Chunk32;
                     }
 
                 }
@@ -282,14 +282,14 @@ namespace OscLib
                 int elementLength = OscDeserializer.GetInt32(ref externalPointer, binaryData);
 
                 // check if it's a bundle or a message
-                if (binaryData[externalPointer] == OscProtocol.SymbolAddressSeparator)
+                if (binaryData[externalPointer] == OscProtocol.Separator)
                 {
                     messageList.Add(GetMessage(ref externalPointer, binaryData));
                 }
-                else if (binaryData[externalPointer] == OscProtocol.SymbolBundleStart)
+                else if (binaryData[externalPointer] == OscProtocol.BundleMarker)
                 {
                     // shift external pointer forward
-                    externalPointer += OscProtocol.BundleDesignator.Length;
+                    externalPointer += OscProtocol.BundleStringLength;
 
                     // get timestamp
                     OscTimestamp timestamp = GetTimestamp(ref externalPointer, binaryData);
@@ -441,7 +441,7 @@ namespace OscLib
             {
                
                 Array.Copy(data, pointer, _tempByteArray32, 0, 4);
-                pointer += OscProtocol.SingleChunk;
+                pointer += OscProtocol.Chunk32;
 
                 for (int i = 0; i < _tempByteArray32.Length; i++)
                 {

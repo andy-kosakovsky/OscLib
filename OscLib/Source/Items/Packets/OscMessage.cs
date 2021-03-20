@@ -37,7 +37,7 @@ namespace OscLib
             }
 
             // check if address string is right
-            if (addressPattern[0] != OscProtocol.SymbolAddressSeparator)
+            if (addressPattern[0] != OscProtocol.Separator)
             {
                 throw new ArgumentException("OscMessage ERROR: Cannot create an OSC Message, address pattern is invalid");
             }
@@ -76,7 +76,7 @@ namespace OscLib
             }
 
             // check if address string is right
-            if (addressPattern[0] != OscProtocol.SymbolAddressSeparator)
+            if (addressPattern[0] != OscProtocol.Separator)
             {
                 throw new ArgumentException("OscMessage ERROR: Cannot create an OSC Message, address pattern is invalid");
             }

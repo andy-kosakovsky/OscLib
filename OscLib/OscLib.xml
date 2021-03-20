@@ -108,11 +108,11 @@
         </member>
         <member name="T:OscLib.OscString">
             <summary>
-            Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Can be accessed via an indexer.
+            Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Individual chars can be accessed via an indexer.
             </summary>
         </member>
         <member name="P:OscLib.OscString.NullString">
-            <summary> Returns a null OscString -- that is, an OSC string containing a single null symbol. </summary>
+            <summary> Returns a null OscString - that is, an OSC string containing a single null symbol. </summary>
         </member>
         <member name="P:OscLib.OscString.OscLength">
             <summary> The length of this string in bytes when used as an OSC argument or address. </summary> 
@@ -121,32 +121,32 @@
             <summary> The length of this string in bytes. </summary>
         </member>
         <member name="P:OscLib.OscString.Chars">
-            <summary> Returns a copy of an array containing all chars (their byte representations, that is) that constitute this string. </summary>
+            <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is) that constitute this string. </summary>
         </member>
         <member name="P:OscLib.OscString.OscBytes">
-            <summary> Returns a copy of an array containing all chars (their byte representations, that is) that is of the right length to be used as an element in OSC binary packet. </summary>
+            <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is) that is of the right length to be used as an element in OSC binary packet. </summary>
         </member>
         <member name="P:OscLib.OscString.ContainsReservedSymbols">
             <summary>
-            Whether this string contains special symbols reserved by OSC protocol. 
+            Whether this string contains special symbols reserved by OSC protocol. Checks when first called, then caches the result.
             </summary>
         </member>
         <member name="P:OscLib.OscString.Item(System.Int32)">
             <summary>
-            Indexer access to the characters of this string, as ASCII bytes.
+            Indexer access to the characters of this string, as ASCII codes.
             </summary>
             <param name="i"> Index of the char. </param>
-            <returns> A char in byte form. Will return "0" when out of range. </returns>
+            <returns> A char as an ASCII code. Will return "0" (ASCII null) when out of range. </returns>
         </member>
         <member name="M:OscLib.OscString.#ctor(System.Byte[])">
             <summary>
-            Creates an OSC string out of a byte array.
+            Creates an OSC String out of a byte array.
             </summary>
             <param name="bytes"> The source byte array. </param>
         </member>
         <member name="M:OscLib.OscString.#ctor(System.Byte[],System.Int32,System.Int32)">
             <summary>
-            Creates an OSC string out of a part of a byte array.
+            Creates an OSC String out of a part of a byte array.
             </summary>
             <param name="bytes"> The source byte array. </param>
             <param name="start"> The start index. </param>
@@ -156,11 +156,18 @@
             <summary>
             Creates an OSC string out of a plain old string.
             </summary>
-            <param name="addressString"> The source plain old string. </param>
+            <param name="sourceString"> The source plain old string. </param>
+        </member>
+        <member name="M:OscLib.OscString.#ctor(System.Byte[],OscLib.Trit)">
+            <summary>
+            Internal constructor for copying strings while preserving the information about them containing special symbols.
+            </summary>
+            <param name="bytes"></param>
+            <param name="specialSymbols"></param>
         </member>
         <member name="M:OscLib.OscString.ScrubReservedSymbols">
             <summary>
-            Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string
+            Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string.
             </summary>
         </member>
         <member name="M:OscLib.OscString.ScrubReservedSymbols(System.String)">
@@ -184,10 +191,10 @@
         </member>
         <member name="M:OscLib.OscString.Split(System.Byte)">
             <summary>
-            Splits the OSC string into an array of new OSC string, using the provided symbol.
+            Splits the OSC String into an array of new OSC Strings, using the provided symbol.
             </summary>
             <param name="splitByte"> The ASCII encoding of a symbol by which to split the string. </param>
-            <returns> An array of resulting OSC strings. </returns>
+            <returns> An array of resulting OSC Strings. </returns>
         </member>
         <member name="M:OscLib.OscString.GetSubstring(System.Int32,System.Int32)">
             <summary>
@@ -646,20 +653,29 @@
             Serializes data into bytes according to OSC Protocol.
             </summary>
         </member>
-        <member name="M:OscLib.OscSerializer.MessageToBytes(OscLib.OscString,System.Object[])">
+        <member name="M:OscLib.OscSerializer.GetBytesMessage(OscLib.OscString,System.Object[])">
             <summary>
-            Creates a byte array of OSC binary data using the provided address pattern and arguments.
+            Creates a byte array of OSC binary data containing an OSC Message using the provided address pattern and arguments.
             </summary>
             <param name="addressPattern"> The address pattern of this message. </param>
             <param name="arguments"> The arguments (should be of supported types, obviously) </param>
             <returns> A byte array containing the serialized message. </returns>
+            <exception cref="T:System.ArgumentNullException"> Thrown if the address pattern is null or empty. </exception>
+            <exception cref="T:System.ArgumentException"> Thrown if the address pattern doesn't start with a "/" symbol, as required per OSC Protocol. </exception>
         </member>
-        <member name="M:OscLib.OscSerializer.MessageToBytes(OscLib.OscMessage)">
+        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscMessage)">
             <summary>
             Creates a byte array of OSC binary data using the provided OSC Message.
             </summary>
-            <param name="message"> T </param>       
-            <returns> An OSC-compliant binary packet containing the message. </returns>
+            <param name="message"> OSC Message to be serialized. </param>       
+            <returns> An OSC Protocol-compliant byte array containing the serialized message. </returns>
+        </member>
+        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscBundle)">
+            <summary>
+            Creates a byte array of OSC binary data using the provided OSC Bundle.
+            </summary>
+            <param name="bundle"> OSC Bundle to be serialized. </param>
+            <returns> An OSC Protocol-compliant byte array containing the serialized bundle. </returns>
         </member>
         <member name="M:OscLib.OscSerializer.BundleToBytes(OscLib.OscPacketBytes[])">
             <summary>
@@ -683,172 +699,175 @@
             <param name="binaryData"> A byte array containing preformatted, OSC-compliant byte data. hopefully. </param>
             <returns> An OSC binary packet containing the bundle. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Int32)">
+        <member name="M:OscLib.OscSerializer.GetBytes(System.Int32)">
             <summary>
-            Converts an integer into a byte array, swapping its endianness in the process.
+            Converts an integer into a byte array, swapping its endianness if needed.
             </summary>
-            <param name="arg"> Integer to be converted. </param>
+            <param name="arg"> An integer to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Int32,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Int32,System.Byte@)">
             <summary>
-            Converts an integer into a byte array, swapping its endianness in the process, and returns the OSC type tag.
+            Converts an integer into a byte array, swapping its endianness if needed. Provides the OSC float32 type tag.
             </summary>
-            <param name="arg"> Integer to be converted. </param>
+            <param name="arg"> An integer to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Single)">
+        <member name="M:OscLib.OscSerializer.GetBytes(System.Single)">
             <summary>
-            Converts a float into a byte array, swapping its endianness in the process.
+            Converts a float into a byte array, swapping its endianness if needed.
             </summary>
-            <param name="arg"> Float to be converted. </param>
+            <param name="arg"> A float to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Single,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Single,System.Byte@)">
             <summary>
-            Converts a float into a byte array, swapping its endianness in the process, and returns the OSC type tag.
+            Converts a float into a byte array, swapping its endianness if needed. Provides the OSC float32 type tag.
             </summary>
-            <param name="arg"> Float to be converted. </param>
+            <param name="arg"> A float to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Double)">
+        <member name="M:OscLib.OscSerializer.GetBytes(System.Double)">
             <summary>
-            Converts a double into a byte array, swapping its endianness in the process.
+            Converts a double into a byte array, swapping its endianness if needed.
             </summary>
             <param name="arg"> Double to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Double,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Double,System.Byte@)">
             <summary>
-            Converts a double into a byte array, swapping its endianness in the process, and returns the OSC type tag.
+            Converts a double into a byte array, swapping its endianness if needed. Provides the OSC float64 type tag.
             </summary>
             <param name="arg"> Double to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.String)">
+        <member name="M:OscLib.OscSerializer.GetBytes(System.String)">
             <summary>
             Converts a string into an ASCII byte array.
             </summary>
             <param name="arg"> String to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.String,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(System.String,System.Byte@)">
             <summary>
-            Converts a string into an ASCII byte array.
+            Converts a string into an ASCII byte array. Provides the OSC-string type tag.
             </summary>
             <param name="arg"> String to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.GetArgumentLength(System.String)">
+        <member name="M:OscLib.OscSerializer.GetByteLength(System.String)">
             <summary>
             Returns the OSC protocol-compliant byte length of the string.
             </summary>
             <param name="arg"> String to be measured. </param>
             <returns> OSC length of the string. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(OscLib.OscString)">
+        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscString)">
             <summary>
-            Converts a string into an ASCII byte array.
+            Converts an OSC String into an ASCII byte array.
             </summary>
             <param name="arg"> String to be converted. </param>
             <returns> A byte array. </returns>
         </member>
         <member name="M:OscLib.OscSerializer.ArgumentToBinary(OscLib.OscString,System.Byte@)">
             <summary>
-            Converts a string into an ASCII byte array, and returns the OSC type tag.
+            Converts a string into an ASCII byte array. Provides the OSC-string type tag.
             </summary>
             <param name="arg"> String to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.GetArgumentLength(OscLib.OscString)">
+        <member name="M:OscLib.OscSerializer.GetByteLength(OscLib.OscString)">
             <summary>
             Returns the OSC protocol-compliant byte length of the string.
             </summary>
             <param name="arg"> String to be measured. </param>
             <returns> OSC length of the string. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Byte[])">
+        <member name="M:OscLib.OscSerializer.GetBytes(System.Byte[])">
             <summary>
             Converts a byte array into a OSC protocol-compliant binary blob.
             </summary>
             <param name="arg"> Byte array to be converted. </param>
             <returns> A binary blob - still a byte array but correctly formatted. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Byte[],System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Byte[],System.Byte@)">
             <summary>
-            Converts a byte array into a OSC protocol-compliant binary blob, and returns the type tag.
+            Converts a byte array into a OSC protocol-compliant binary blob. Provides the OSC-blob type tag.
             </summary>
             <param name="arg"> Byte array to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A binary blob - still a byte array but correctly formatted. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.GetArgumentLength(System.Byte[])">
+        <member name="M:OscLib.OscSerializer.GetByteLength(System.Byte[])">
             <summary>
             Returns the OSC protocol-compliant length of the byte array.
             </summary>
             <param name="arg"> Byte array to be measured. </param>
             <returns> OSC length of the array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Boolean)">
+        <member name="M:OscLib.OscSerializer.GetBytes(System.Boolean)">
             <summary>
             Converts a bool into byte representations of 1 if true and 0 if false.
             </summary>
             <param name="arg"> Bool to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Boolean,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Boolean,System.Byte@)">
             <summary>
-            Converts a bool into byte representations of 1 if true and 0 if false, and returns the type tag.
+            Converts a bool into byte representation. Returns the type tag. Behaviour is dependant on OSC Protocol attributes.
             </summary>
             <param name="arg"> Bool to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Int64)">
+        <member name="M:OscLib.OscSerializer.GetBytes(System.Int64)">
             <summary>
-            Converts a longint into a byte array, swapping its endianness in the process.
+            Converts a longint into a byte array, swapping its endianness if needed.
             </summary>
             <param name="arg"> Longint to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(System.Int64,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Int64,System.Byte@)">
             <summary>
-            Converts an longint into a byte array, swapping its endianness in the process, and returns the OSC type tag.
+            Converts an longint into a byte array, swapping its endianness if needed. Provides an OSC int64 type tag.
             </summary>
             <param name="arg"> Longint to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.TimestampToBinary(OscLib.OscTimestamp)">
+        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscTimestamp)">
             <summary>
             Converts an OSC timestamp into a byte array.
             </summary>
             <param name="timestamp"> Timestamp to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.TimestampToBinary(OscLib.OscTimestamp,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(OscLib.OscTimestamp,System.Byte@)">
             <summary>
-            Converts an OSC timestamp into a byte array, and returns the OSC type tag.
+            Converts an OSC timestamp into a byte array. Provides the OSC timestamp type tag.
             </summary>
             <param name="timestamp"> Timestamp to be converted. </param>
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary``1(``0,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg``1(``0,System.Byte@)">
             <summary>
-            The catch-all method to serialize OSC-supported arguments into byte arrays. 
+            The catch-all method to serialize OSC-supported arguments into byte arrays.  
             </summary>
+            <remarks>
+            Implemented this way to minimize boxing when dealing with objects and vars of unknown type.
+            </remarks>
             <param name="arg"> Argument to be serialized. </param>
             <param name="typeTag"> Will return the OSC type tag for the provided argument. </param>
-            <returns> The byte array containing the argument. </returns>
+            <returns> The byte array containing the argument converted to OSC Protocol-compliant binary. </returns>
             <exception cref="T:System.ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
         </member>
-        <member name="M:OscLib.OscSerializer.GetArgumentLength``1(``0)">
+        <member name="M:OscLib.OscSerializer.GetByteLength``1(``0)">
             <summary>
             The catch-all method to get OSC-supported argument lengths in bytes.
             </summary> 

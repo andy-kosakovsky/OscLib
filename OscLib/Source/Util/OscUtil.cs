@@ -113,31 +113,7 @@ namespace OscLib
 
         }
 
-        internal static bool IsAReservedSymbol(byte symbol)
-        {
-            for (int i = 0; i < OscProtocol.AddressStringSpecialSymbols.Length; i++)
-            {
-                if (symbol == OscProtocol.AddressStringSpecialSymbols[i])
-                    return true;
-            }
-
-            return false;
-
-        }
-
-        internal static bool ContainsReservedSymbols(byte[] array)
-        {
-            for (int i = 0; i < array.Length; i++)
-            {
-                if (OscUtil.IsAReservedSymbol(array[i]))
-                {
-                    return true;
-                }
-
-            }
-
-            return false;
-        }
+       
 
     }
 }

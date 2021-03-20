@@ -435,7 +435,7 @@ namespace OscLib
                             _receiveDataBuffer = _udpClient.Receive(ref _receiveReturnAddress);
 
                             // per OSC protocol, first symbol of a bundle would always be "#"
-                            if (_receiveDataBuffer[0] == OscProtocol.SymbolBundleStart)
+                            if (_receiveDataBuffer[0] == OscProtocol.BundleMarker)
                                 OnBundleReceived(_receiveDataBuffer, _receiveReturnAddress);
                             else
                                 OnMessageReceived(_receiveDataBuffer, _receiveReturnAddress);

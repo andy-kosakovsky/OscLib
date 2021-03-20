@@ -51,7 +51,7 @@ namespace OscLib
             for (int i = 0; i < _messages.Length; i++)
             {
                 // add message length plus the length of the integer containing its length
-                _length += _messages[i].Length + OscProtocol.SingleChunk;
+                _length += _messages[i].Length + OscProtocol.Chunk32;
             }
         }
 

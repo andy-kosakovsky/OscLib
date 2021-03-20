@@ -67,7 +67,7 @@ namespace OscLib
                 if (_containsReservedSymbols == Trit.Maybe)
                 {
                     // let's find out, shall we
-                    bool contains = OscUtil.ContainsReservedSymbols(_chars);
+                    bool contains = OscProtocol.ContainsReservedSymbols(_chars);
 
                     if (contains)
                     {
@@ -177,7 +177,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string.
+        /// Returns a modified copy of this string, swapping any special characters with an "_".
         /// </summary>
         public OscString ScrubReservedSymbols()
         {
@@ -186,7 +186,7 @@ namespace OscLib
 
             for (int i = 0; i < newStringBytes.Length; i++)
             {
-                if (OscUtil.IsAReservedSymbol(newStringBytes[i]))
+                if (OscProtocol.IsAReservedSymbol(newStringBytes[i]))
                 {
                     newStringBytes[i] = (byte)'_';
                 }
@@ -209,7 +209,7 @@ namespace OscLib
 
             for (int i = 0; i < newStringBytes.Length; i++)
             {
-                if (OscUtil.IsAReservedSymbol(newStringBytes[i]))
+                if (OscProtocol.IsAReservedSymbol(newStringBytes[i]))
                 {
                     newStringBytes[i] = (byte)'_';
                 }
@@ -328,7 +328,7 @@ namespace OscLib
         {
             // first, let's cover some common situations
             // if pattern consists of only one "*" symbol then it'll match to anything
-            if ((pattern._chars.Length == 1) && (pattern[0] == OscProtocol.SymbolAsterisk))
+            if ((pattern._chars.Length == 1) && (pattern[0] == OscProtocol.MatchAnySeqence))
             {
                 return true;
             }
@@ -360,7 +360,7 @@ namespace OscLib
 
 
                 // check for '*'
-                if (pattern[patIndex] == OscProtocol.SymbolAsterisk)
+                if (pattern[patIndex] == OscProtocol.MatchAnySeqence)
                 {
                     patRevert = ++patIndex;
                     strRevert = strIndex;
@@ -373,7 +373,7 @@ namespace OscLib
 
                 }
                 // check for []
-                else if (pattern[patIndex] == OscProtocol.SymbolOpenSquare)
+                else if (pattern[patIndex] == OscProtocol.MatchCharArrayOpen)
                 {
                     if (!CharMatchesSquareBrackets(this[strIndex], ref patIndex, ref pattern))
                     {
@@ -393,7 +393,7 @@ namespace OscLib
                     }
                 }
                 // check for {}
-                else if (pattern[patIndex] == OscProtocol.SymbolOpenCurly)
+                else if (pattern[patIndex] == OscProtocol.MatchStringArrayOpen)
                 {
                     if (!StringMatchesCurlyBrackets(ref pattern, ref strIndex, ref patIndex))
                     {
@@ -436,7 +436,7 @@ namespace OscLib
 
             }
 
-            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscProtocol.SymbolAsterisk))
+            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscProtocol.MatchAnySeqence))
             {
                 patIndex++;
             }
@@ -617,7 +617,7 @@ namespace OscLib
 
             while (pointer < pattern.Length)
             {
-                if (pattern[pointer] == OscProtocol.SymbolClosedSquare)
+                if (pattern[pointer] == OscProtocol.MatchCharArrayClose)
                 {
                     bracketEnd = pointer;
                     // make sure the pointer is going past the bracket
@@ -629,7 +629,7 @@ namespace OscLib
                 if (!found)
                 {
 
-                    if (pattern[pointer] == OscProtocol.SymbolExclamation)
+                    if (pattern[pointer] == OscProtocol.MatchNot)
                     {
                         // if it's at the beginning, make sure that it's noted, and keep a space for it in the return array 
                         if (bracketStart == (pointer - 1))
@@ -638,10 +638,10 @@ namespace OscLib
                         }
 
                     }
-                    else if (pattern[pointer] == OscProtocol.SymbolDash)
+                    else if (pattern[pointer] == OscProtocol.MatchRange)
                     {
                         // if we're not at the start, and if we're not by the end of the char array, so we can safely check back and forth
-                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != OscProtocol.SymbolClosedSquare)))
+                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != OscProtocol.MatchCharArrayClose)))
                         {
                             if (OscUtil.IsNumberBetween(checkChar, pattern[pointer - 1], pattern[pointer + 1]))
                             {
@@ -693,7 +693,7 @@ namespace OscLib
 
             while (patPointer < pattern.Length)
             {
-                if ((pattern[patPointer] == OscProtocol.SymbolComma) || (pattern[patPointer] == OscProtocol.SymbolClosedCurly))
+                if ((pattern[patPointer] == OscProtocol.Comma) || (pattern[patPointer] == OscProtocol.MatchStringArrayClose))
                 {
                     if (substringFits)
                     {
@@ -706,7 +706,7 @@ namespace OscLib
 
                     substringFits = true;
 
-                    if (pattern[patPointer] == OscProtocol.SymbolClosedCurly)
+                    if (pattern[patPointer] == OscProtocol.MatchStringArrayClose)
                     {
                         curlyEnd = patPointer;
                         patPointer++;
@@ -750,7 +750,7 @@ namespace OscLib
 
         private bool CharIsEqual(byte strChar, byte patChar)
         {
-            if (patChar == OscProtocol.SymbolQuestion)
+            if (patChar == OscProtocol.MatchAnyChar)
             {
                 return true;
             }
