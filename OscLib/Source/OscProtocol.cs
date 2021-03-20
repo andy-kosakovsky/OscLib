@@ -66,7 +66,7 @@ namespace OscLib
         #region PATTERN MATCHING CONSTS
 
         /// <summary> Stands for any sequence of zero or more characters in pattern matching. </summary>
-        public const byte MatchAnySeqence = (byte)'*';
+        public const byte MatchAnySequence = (byte)'*';
 
         /// <summary> Stands for any single character in pattern matching. </summary>
         public const byte MatchAnyChar = (byte)'?';
@@ -118,7 +118,7 @@ namespace OscLib
             _bundleString = new byte[8] { BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
             _bundleStringLength = _bundleString.Length;
 
-            _addressReservedSymbols = new byte[] { Space, BundleMarker, MatchAnySeqence,
+            _addressReservedSymbols = new byte[] { Space, BundleMarker, MatchAnySequence,
             Comma, Separator, MatchAnyChar, MatchNot, MatchRange, MatchCharArrayOpen, MatchCharArrayClose, MatchStringArrayOpen, MatchStringArrayClose };
 
             _localIP = IPAddress.Parse("127.0.0.1");

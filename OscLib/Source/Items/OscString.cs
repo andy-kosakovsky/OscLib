@@ -328,7 +328,7 @@ namespace OscLib
         {
             // first, let's cover some common situations
             // if pattern consists of only one "*" symbol then it'll match to anything
-            if ((pattern._chars.Length == 1) && (pattern[0] == OscProtocol.MatchAnySeqence))
+            if ((pattern._chars.Length == 1) && (pattern[0] == OscProtocol.MatchAnySequence))
             {
                 return true;
             }
@@ -360,7 +360,7 @@ namespace OscLib
 
 
                 // check for '*'
-                if (pattern[patIndex] == OscProtocol.MatchAnySeqence)
+                if (pattern[patIndex] == OscProtocol.MatchAnySequence)
                 {
                     patRevert = ++patIndex;
                     strRevert = strIndex;
@@ -436,7 +436,7 @@ namespace OscLib
 
             }
 
-            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscProtocol.MatchAnySeqence))
+            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscProtocol.MatchAnySequence))
             {
                 patIndex++;
             }
