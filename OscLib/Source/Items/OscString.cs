@@ -5,12 +5,11 @@ namespace OscLib
 {
 
     /// <summary>
-    /// Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Individual chars can be accessed via an indexer.
+    /// Implements an OSC Protocol-compliant string - ASCII-based, null-terminated, length a multiple of 4 - that can be used with and easily converted to and from standard .NET strings.  
     /// </summary>
     public struct OscString
     {
         private static readonly OscString _nullString = new OscString("\0");
-
 
         /// <summary> Returns a null OscString - that is, an OSC string containing a single null symbol. </summary>
         public static OscString NullString
@@ -27,13 +26,13 @@ namespace OscLib
         private readonly int _length;
         private Trit _containsReservedSymbols;
 
-        /// <summary> The length of this string in bytes when used as an OSC argument or address. </summary> 
+        /// <summary> The number of characters in this string when used as an OSC argument or address - counting the null terminator and extra null symbols that pad it to a multiple of 4. </summary> 
         public int OscLength { get => _oscLength; }
 
-        /// <summary> The length of this string in bytes. </summary>
+        /// <summary> The number of characters in this string. Ignores the null terminator. </summary>
         public int Length { get => _length; }
 
-        /// <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is) that constitute this string. </summary>
+        /// <summary> Returns a copy of an array containing all characters (their ASCII codes as bytes, that is) in this string. </summary>
         public byte[] Chars
         {
             get
@@ -45,7 +44,7 @@ namespace OscLib
 
         }
 
-        /// <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is) that is of the right length to be used as an element in OSC binary packet. </summary>
+        /// <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is). </summary>
         public byte[] OscBytes
         {
             get
@@ -148,7 +147,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates an OSC string out of a plain old string.
+        /// Creates an OSC String out of a plain old string.
         /// </summary>
         /// <param name="sourceString"> The source plain old string. </param>
         public OscString(string sourceString)

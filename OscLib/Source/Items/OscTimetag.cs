@@ -87,7 +87,7 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Returns this timetag as a string, formatted as "day/month/year hours:minutes:seconds:milliseconds".
+        /// Returns this timetag as a string, formatted as "day / month / year  hours : minutes : seconds : milliseconds".
         /// </summary>
         /// <returns></returns>
         public override string ToString()

@@ -8,6 +8,10 @@ namespace OscLib
     /// </summary>
     public readonly struct OscMessage
     {
+        // used to return an empty array of arguments
+        private static readonly object[] _argumentsEmpty = new object[0];
+
+
         private readonly OscString _addressPattern;
         private readonly object[] _arguments;
         private readonly int _length;
@@ -16,7 +20,21 @@ namespace OscLib
         public OscString AddressPattern { get => _addressPattern; }
 
         /// <summary> Arguments of this message. </summary>
-        public object[] Arguments { get => _arguments; }
+        public object[] Arguments
+        {
+            get
+            {
+                if (_arguments == null)
+                {
+                    return _argumentsEmpty;
+                }
+                else
+                {
+                    return _arguments;
+                }
+            }
+
+        }
 
         /// <summary> Length of this message in bytes. </summary>
         public int Length { get => _length; }
@@ -41,24 +59,24 @@ namespace OscLib
             {
                 throw new ArgumentException("OscMessage ERROR: Cannot create an OSC Message, address pattern is invalid");
             }
-
-            if (arguments == null)
-            {
-                throw new ArgumentNullException(nameof(arguments));
-            }
-
+         
             _addressPattern = addressPattern;
             _arguments = arguments;
 
             _length = _addressPattern.OscLength;
 
-            for (int i = 0; i < arguments.Length; i++)
-            {
-                _length += OscSerializer.GetByteLength(arguments[i]);
-            }
 
-            // account for the type tag string
-            _length += OscUtil.GetNextMultipleOfFour(_arguments.Length + 1);
+            if (_arguments != null)
+            {
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    _length += OscSerializer.GetByteLength(arguments[i]);
+                }
+
+                // account for the type tag string
+                _length += OscUtil.GetNextMultipleOfFour(_arguments.Length + 1);
+
+            }
 
         }
 
@@ -82,7 +100,7 @@ namespace OscLib
             }
 
             _addressPattern = addressPattern;
-            _arguments = new object[0];
+            _arguments = null;
 
             _length = _addressPattern.OscLength;
 
@@ -100,18 +118,28 @@ namespace OscLib
             returnString.Append('(');
             returnString.Append(_length);
             returnString.Append(" bytes) ");
-            returnString.Append("MESSAGE (DATA): ");
+            returnString.Append("MESSAGE: ");
             returnString.Append(_addressPattern.ToString());
-            returnString.Append("; Data: ");
 
-
-            for (int i = 0; i < _arguments.Length; i++)
+            if (_arguments != null)
             {
-                if (_arguments[i] is byte[] dataBytes)
-                    returnString.Append(BitConverter.ToString(dataBytes));
-                else
-                    returnString.Append(_arguments[i]);
-                returnString.Append(", ");
+                returnString.Append("; Data: ");
+
+                for (int i = 0; i < _arguments.Length; i++)
+                {
+                    if (_arguments[i] is byte[] dataBytes)
+                    {
+                        returnString.Append(BitConverter.ToString(dataBytes));
+                    }
+                    else
+                    {
+                        returnString.Append(_arguments[i]);
+                    }
+
+                    returnString.Append(", ");
+
+                }
+
             }
 
             returnString.Append('\n');

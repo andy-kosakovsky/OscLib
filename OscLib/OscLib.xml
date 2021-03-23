@@ -108,23 +108,23 @@
         </member>
         <member name="T:OscLib.OscString">
             <summary>
-            Contains an ASCII string recorded as an array of bytes - to avoid dealing with actual strings. Individual chars can be accessed via an indexer.
+            Implements an OSC Protocol-compliant string - ASCII-based, null-terminated, length a multiple of 4 - that can be used with and easily converted to and from standard .NET strings.  
             </summary>
         </member>
         <member name="P:OscLib.OscString.NullString">
             <summary> Returns a null OscString - that is, an OSC string containing a single null symbol. </summary>
         </member>
         <member name="P:OscLib.OscString.OscLength">
-            <summary> The length of this string in bytes when used as an OSC argument or address. </summary> 
+            <summary> The number of characters in this string when used as an OSC argument or address - counting the null terminator and extra null symbols that pad it to a multiple of 4. </summary> 
         </member>
         <member name="P:OscLib.OscString.Length">
-            <summary> The length of this string in bytes. </summary>
+            <summary> The number of characters in this string. Ignores the null terminator. </summary>
         </member>
         <member name="P:OscLib.OscString.Chars">
-            <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is) that constitute this string. </summary>
+            <summary> Returns a copy of an array containing all characters (their ASCII codes as bytes, that is) in this string. </summary>
         </member>
         <member name="P:OscLib.OscString.OscBytes">
-            <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is) that is of the right length to be used as an element in OSC binary packet. </summary>
+            <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is). </summary>
         </member>
         <member name="P:OscLib.OscString.ContainsReservedSymbols">
             <summary>
@@ -154,7 +154,7 @@
         </member>
         <member name="M:OscLib.OscString.#ctor(System.String)">
             <summary>
-            Creates an OSC string out of a plain old string.
+            Creates an OSC String out of a plain old string.
             </summary>
             <param name="sourceString"> The source plain old string. </param>
         </member>
@@ -167,7 +167,7 @@
         </member>
         <member name="M:OscLib.OscString.ScrubReservedSymbols">
             <summary>
-            Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string.
+            Returns a modified copy of this string, swapping any special characters with an "_".
             </summary>
         </member>
         <member name="M:OscLib.OscString.ScrubReservedSymbols(System.String)">
@@ -267,44 +267,44 @@
             <param name="checkMe"> The OscString to be checked. </param>
             <returns></returns>
         </member>
-        <member name="T:OscLib.OscTimestamp">
+        <member name="T:OscLib.OscTimetag">
             <summary>
-            Describes an OSC Timestamp both as a 64 bit fixed-point NTP timestamp and ticks used by DateTime and TimeSpan.
+            Describes an OSC Timetag both as a 64 bit fixed-point NTP timestamp and a tick value useable by DateTime and TimeSpan.
             </summary>
         </member>
-        <member name="P:OscLib.OscTimestamp.NtpTimestamp">
-            <summary> This timestamp represented in NTP format. </summary>
+        <member name="P:OscLib.OscTimetag.NtpTimestamp">
+            <summary> This timetag represented in NTP timestamp format. </summary>
         </member>
-        <member name="P:OscLib.OscTimestamp.Ticks">
-            <summary> This timestamp represented as DateTime ticks, UTC. </summary>
+        <member name="P:OscLib.OscTimetag.Ticks">
+            <summary> This timetag represented as DateTime ticks, UTC. </summary>
         </member>
-        <member name="P:OscLib.OscTimestamp.DateTime">
-            <summary> Returns a DateTime representation of this timestamp, corresponding to the local time of the system. Creates a new DateTime, so careful with that GC, Eugene. </summary>
+        <member name="P:OscLib.OscTimetag.DateTime">
+            <summary> Returns this timetag represented as a DateTime object, corresponding to the time zone of the system. Creates a new instance of a DateTime object. </summary>
         </member>
-        <member name="P:OscLib.OscTimestamp.DateTimeUtc">
-            <summary> Returns a DateTime representation of this timestamp, as UTC time. Creates a new DateTime, ditto about being careful with that GC. </summary>
+        <member name="P:OscLib.OscTimetag.DateTimeUtc">
+            <summary> Returns this timetag represented as a DateTime object, corresponding to UTC time. Creates a new instance of a DateTime object. </summary>
         </member>
-        <member name="M:OscLib.OscTimestamp.#ctor(System.DateTime)">
+        <member name="M:OscLib.OscTimetag.#ctor(System.DateTime)">
             <summary>
-            Creates an OSC Timestamp out of the provided DateTime object.
+            Creates an OSC Timetag out of the provided DateTime object.
             </summary>
-            <param name="time"> The DateTime object to create an OSC Timestamp out of. </param>
+            <param name="time"> The source DateTime object. </param>
         </member>
-        <member name="M:OscLib.OscTimestamp.#ctor(System.Int64)">
+        <member name="M:OscLib.OscTimetag.#ctor(System.Int64)">
             <summary>
-            Creates an OSC Timestamp using DateTime or TimeSpan ticks. Ticks need to adhere to UTC in order to produce right results.
+            Creates an OSC Timetag using DateTime or TimeSpan ticks. Ticks need to adhere to UTC time in order to produce correct results.
             </summary>
             <param name="tick"> UTC-based tick value. </param>
         </member>
-        <member name="M:OscLib.OscTimestamp.#ctor(System.UInt64)">
+        <member name="M:OscLib.OscTimetag.#ctor(System.UInt64)">
             <summary>
-            Creates an OSC timestamp out of an NTP-format timestamp. 
+            Creates an OSC Timetag out of an NTP-format timestamp. 
             </summary>
             <param name="ntpTimestamp"> An ulong containing a 64-bit fixed-point NTP-format timestamp. </param>
         </member>
-        <member name="M:OscLib.OscTimestamp.ToString">
+        <member name="M:OscLib.OscTimetag.ToString">
             <summary>
-            Returns timestamp as a string, formatted as "day/month/year hours:minutes:seconds:milliseconds".
+            Returns this timetag as a string, formatted as "day / month / year  hours : minutes : seconds : milliseconds".
             </summary>
             <returns></returns>
         </member>
@@ -321,41 +321,45 @@
         </member>
         <member name="T:OscLib.OscBundle">
             <summary>
-            Represents a deserialized OSC message bundle.
-            In a slight deviation from the spec, this struct CANNOT contain other bundles.
+            Represents a deserialized OSC packet bundle.
+            May contain both messages and bundles. Bundles inside a bundle should be time-tagged 
             </summary>
-            <remarks>
-            the idea behind this is that when deserializing incoming bundles, the bundles contained within other bundles are extracted (should their 
-            timestamps not be less than that of the enveloping bundle). They are then dealt with according to their timestamps and the configuration
-            of the OscReceiver. 
-            The reason for it working the way it works is to 1) have both messages and bundles represented as structs, and 2) avoid using interfaces.
-            All to do with boxing/unboxing and avoiding the dreaded gc pressure as much as possible.  
-            </remarks>
         </member>
         <member name="F:OscLib.OscBundle.HeaderLength">
             <summary> The length of the bundle header in bytes. That is, the "#bundle " + [timestamp] bit. </summary>
         </member>
-        <member name="P:OscLib.OscBundle.Timestamp">
+        <member name="P:OscLib.OscBundle.Timetag">
             <summary> Timestamp attached to this bundle. </summary>
         </member>
         <member name="P:OscLib.OscBundle.Messages">
             <summary> Messages inside this bundle. </summary>
         </member>
+        <member name="P:OscLib.OscBundle.Bundles">
+            <summary> Bundles inside this bundle. </summary>
+        </member>
         <member name="P:OscLib.OscBundle.Length">
             <summary> Length of this bundle in bytes. </summary>
         </member>
-        <member name="M:OscLib.OscBundle.#ctor(OscLib.OscTimestamp,OscLib.OscMessage[])">
+        <member name="M:OscLib.OscBundle.#ctor(OscLib.OscTimetag,OscLib.OscBundle[],OscLib.OscMessage[])">
+            <summary>
+            Creates an OSC Bundle out of an array of messages and an array of bundles.
+            </summary>
+            <param name="timetag"></param>
+            <param name="bundles"></param>
+            <param name="messages"></param>
+        </member>
+        <member name="M:OscLib.OscBundle.#ctor(OscLib.OscTimetag,OscLib.OscMessage[])">
             <summary>
             Creates an OSC bundle out of an array of OSC messages.
             </summary>
-            <param name="timestamp"> A timestamp to stamp the time of this bundle's moment to shine. </param>
-            <param name="messages"> An array of OSC messages to be contained within this bundle. </param>
+            <param name="timetag"> An OSC Timetag of this bundle. </param>
+            <param name="messages"> An array of OSC messages to be packed into this bundle. </param>
         </member>
-        <member name="M:OscLib.OscBundle.#ctor(OscLib.OscTimestamp)">
+        <member name="M:OscLib.OscBundle.#ctor(OscLib.OscTimetag)">
             <summary>
-            Creates an empty OSC Bundle. (Now why would you do that)
+            Creates an empty OSC Bundle. Now why would you do that.
             </summary>
-            <param name="timestamp"> A timestamp to stamp the time of this bundle's moment to shine. </param>
+            <param name="timestamp"> A OSC Timetag of this sad empty bundle. </param>
         </member>
         <member name="M:OscLib.OscBundle.ToString">
             <summary>
@@ -427,17 +431,23 @@
             Describes the OSC protocol convention on type tags and bundle designators.
             </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SingleChunk">
-            <summary> Length in bytes of a single OSC data chunk. </summary>
+        <member name="F:OscLib.OscProtocol.Chunk32">
+            <summary> Length in bytes of a single (32 bits/4 bytes long) OSC data chunk. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.DoubleChunk">
-            <summary> Length in bytes of a double-sized OSC data chunk. </summary>
+        <member name="F:OscLib.OscProtocol.Chunk64">
+            <summary> Length in bytes of a double-sized (64 bits/8 bytes long) OSC data chunk. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.TypeTagInteger">
-            <summary> OSC type tag for Integer data type. </summary>
+        <member name="F:OscLib.OscProtocol.TypeTagInt32">
+            <summary> OSC type tag for Int32 data type. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.TypeTagFloat">
-            <summary> OSC type tag for Float data type. </summary>
+        <member name="F:OscLib.OscProtocol.TypeTagFloat32">
+            <summary> OSC type tag for Float32 data type. </summary>
+        </member>
+        <member name="F:OscLib.OscProtocol.TypeTagInt64">
+            <summary> OSC type tag for Int64/Long data type. </summary>
+        </member>
+        <member name="F:OscLib.OscProtocol.TypeTagFloat64">
+            <summary> OSC type tag for Float64/Double data type. </summary>
         </member>
         <member name="F:OscLib.OscProtocol.TypeTagString">
             <summary> OSC type tag for String data type. </summary>
@@ -445,59 +455,71 @@
         <member name="F:OscLib.OscProtocol.TypeTagBlob">
             <summary> OSC type tag for Blob data type. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.TypeTagTimestamp">
-            <summary> OSC type tag for Timestamp data type. </summary>
+        <member name="F:OscLib.OscProtocol.TypeTagTime">
+            <summary> OSC type tag for OSC Time Tag data type. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.TypeTagDouble">
-            <summary> OSC type tag for Double data type. </summary>
+        <member name="F:OscLib.OscProtocol.BundleMarker">
+            <summary> Designates the start of an OSC Bundle. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.TypeTagLong">
-            <summary> OSC type tag for Long data type. </summary>
+        <member name="F:OscLib.OscProtocol.Separator">
+            <summary> Separates parts of an address string inside OSC Messages. Always should be present at the start of an address string. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolBundleStart">
-            <summary> Designates start of a bundle. </summary>
+        <member name="F:OscLib.OscProtocol.Comma">
+            <summary> Designates the beginning of an OSC type tag string inside messages. Separates strings in string arrays when pattern matching. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolAddressSeparator">
-            <summary> Separates parts of address string. Always should present at the start of an address string. </summary>
+        <member name="F:OscLib.OscProtocol.Space">
+            <summary> Personal space. Not allowed in OSC Method or Container names, otherwise insignificant. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolComma">
-            <summary> Designates the beginning of an OSC type tag string, separates substrings in pattern matching. </summary>
+        <member name="F:OscLib.OscProtocol.MatchAnySequence">
+            <summary> Stands for any sequence of zero or more characters in pattern matching. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolSpace">
-            <summary> Personal space. </summary>
+        <member name="F:OscLib.OscProtocol.MatchAnyChar">
+            <summary> Stands for any single character in pattern matching. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolAsterisk">
-            <summary> A wildcard symbol in pattern matching. </summary>
+        <member name="F:OscLib.OscProtocol.MatchCharArrayOpen">
+            <summary> Opens an array of characters in pattern matching. A match will occur if any of the characters within the array corresponds to a single character. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolQuestion">
-            <summary> An "any symbol" symbol in pattern matching. </summary>
+        <member name="F:OscLib.OscProtocol.MatchCharArrayClose">
+            <summary> Closes an array of characters in pattern matching. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolExclamation">
-            <summary> A reversal symbol in pattern matching.  </summary>
+        <member name="F:OscLib.OscProtocol.MatchNot">
+            <summary> "Reverses" the character array, matching it with any symbol *not* present in it.  </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolDash">
-            <summary> A range symbol in pattern matching. </summary>
+        <member name="F:OscLib.OscProtocol.MatchRange">
+            <summary> A range symbol used inside character arrays. Stands for the entire range of ASCII symbols between the two around it. </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolOpenSquare">
-            <summary> Square brackets used in pattern matching. </summary>
+        <member name="F:OscLib.OscProtocol.MatchStringArrayOpen">
+            <summary> Opens an array of strings in pattern matching. A match will occur if any of the strings within the array matches to a sequence of characters.  </summary>
         </member>
-        <member name="F:OscLib.OscProtocol.SymbolClosedSquare">
-            <summary> Square brackets used in pattern matching. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.SymbolOpenCurly">
-            <summary> Curly brackets used in pattern matching. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.SymbolClosedCurly">
-            <summary> Curly brackets used in pattern matching. </summary>
-        </member>
-        <member name="P:OscLib.OscProtocol.BundleDesignator">
-            <summary> The byte values for the "#bundle " string that designates an OSC bundle (duh). Pls don't change elements, thx. </summary>
-        </member>
-        <member name="P:OscLib.OscProtocol.AddressStringSpecialSymbols">
-            <summary> Reserved symbols that shouldn't be used in OSC Method or Container names - just to have all of them in a nice and tidy array. Pls don't change elements, thx. </summary>
+        <member name="F:OscLib.OscProtocol.MatchStringArrayClose">
+            <summary> Closes an array of strings in pattern matching. </summary>
         </member>
         <member name="P:OscLib.OscProtocol.LocalIP">
             <summary> Local IP address. </summary>
+        </member>
+        <member name="P:OscLib.OscProtocol.BundleStringLength">
+            <summary> Cached length of the "#bundle " string. </summary>
+        </member>
+        <member name="M:OscLib.OscProtocol.IsAReservedSymbol(System.Byte)">
+            <summary>
+            Checks whether the provided byte represents an ASCII symbol reserved by the OSC Protocol.
+            </summary>
+            <param name="symbol"> ASCII symbol as a byte. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscProtocol.ContainsReservedSymbols(System.Byte[])">
+            <summary>
+            Checks whether the byte array contains any ASCII symbols reserved by the OSC Protocol.
+            </summary>
+            <param name="array"> An array presumably containing ASCII symbols as bytes. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscProtocol.CopyBundleStringTo(System.Byte[],System.Int32)">
+            <summary>
+            Copies the bundle string ("#bundle ") to array, starting at the specified index.
+            </summary>
+            <param name="array"> Target array. </param>
+            <param name="index"> Target index. </param>
         </member>
         <member name="T:OscLib.OscDeserializer">
             <summary>
@@ -653,9 +675,9 @@
             Serializes data into bytes according to OSC Protocol.
             </summary>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesMessage(OscLib.OscString,System.Object[])">
+        <member name="M:OscLib.OscSerializer.NewMessageGetBytes(OscLib.OscString,System.Object[])">
             <summary>
-            Creates a byte array of OSC binary data containing an OSC Message using the provided address pattern and arguments.
+            Creates a byte array of OSC binary data out of the provided address pattern and arguments.
             </summary>
             <param name="addressPattern"> The address pattern of this message. </param>
             <param name="arguments"> The arguments (should be of supported types, obviously) </param>
@@ -672,32 +694,32 @@
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscBundle)">
             <summary>
-            Creates a byte array of OSC binary data using the provided OSC Bundle.
+            Creates a byte array of OSC binary data using the provided OSC Bundle. 
             </summary>
             <param name="bundle"> OSC Bundle to be serialized. </param>
             <returns> An OSC Protocol-compliant byte array containing the serialized bundle. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.BundleToBytes(OscLib.OscPacketBytes[])">
+        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscMessage[],System.Int32@)">
             <summary>
-            Creates a binary packet of OSC data that is a bundle, containing all provided packets, timestamped for immediate execution on receipt.  
+            Creates a byte array of OSC binary data out of the provided messages - their lengths included. 
             </summary>
-            <param name="packets"> OSC binary packets to be bundled up. </param>
-            <returns> An OSC binary packet containing the bundle. </returns>
+            <param name="messages"> An array of OSC Messages to pack. </param>
+            <returns></returns>
         </member>
-        <member name="M:OscLib.OscSerializer.BundleToBytes(OscLib.OscTimestamp,OscLib.OscPacketBytes[])">
+        <member name="M:OscLib.OscSerializer.AddBundleHeader(System.Byte[],System.Int32)">
             <summary>
-            Creates a binary packet of OSC data that is a bundle, containing all provided packets, using the provided timestamp.  
+            Adds a bundle header to the target byte array, starting from the specified index. Tags it with the "execute immediately" timetag.
             </summary>
-            <param name="timestamp"> The timestamp to stamp the bundle with. </param>
-            <param name="packets"> OSC binary packets to be bundled up. </param>
-            <returns> An OSC binary packet containing the bundle. </returns>
+            <param name="target"> Target byte array to modify. </param>
+            <param name="index"> Target index. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.BundleToBytes(System.Byte[])">
+        <member name="M:OscLib.OscSerializer.AddBundleHeader(System.Byte[],System.Int32,OscLib.OscTimetag)">
             <summary>
-            Packs the preformatted binary data into an OSC packet and adds the right header. Make sure the data *is* OSC-compliant, that is, use at your own risk.
+            Adds a bundle header to the target byte array, starting from the specified index and using the provided timetag. 
             </summary>
-            <param name="binaryData"> A byte array containing preformatted, OSC-compliant byte data. hopefully. </param>
-            <returns> An OSC binary packet containing the bundle. </returns>
+            <param name="target"> Target byte array to modify. </param>
+            <param name="index"> Target index. </param>
+            <param name="timetag"> To be included in the header. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(System.Int32)">
             <summary>
@@ -773,7 +795,7 @@
             <param name="arg"> String to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.ArgumentToBinary(OscLib.OscString,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscString,System.Byte@)">
             <summary>
             Converts a string into an ASCII byte array. Provides the OSC-string type tag.
             </summary>
@@ -840,14 +862,14 @@
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscTimestamp)">
+        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscTimetag)">
             <summary>
             Converts an OSC timestamp into a byte array.
             </summary>
             <param name="timestamp"> Timestamp to be converted. </param>
             <returns> A byte array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(OscLib.OscTimestamp,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.GetBytesArg(OscLib.OscTimetag,System.Byte@)">
             <summary>
             Converts an OSC timestamp into a byte array. Provides the OSC timestamp type tag.
             </summary>
@@ -887,13 +909,13 @@
             <summary> Provides the current "global" UTC tick. </summary>
         </member>
         <member name="P:OscLib.OscTime.Immediately">
-            <summary> Provides the OSC-compliant "DO IT. DO IT NOW." timestamp. </summary>
+            <summary> Provides the OSC-compliant "DO IT. DO IT NOW." OSC Timetag. </summary>
         </member>
         <member name="P:OscLib.OscTime.ImmediatelyBytes">
-            <summary> Provides a "pre-rendered" byte representation of the OSC-compliant "DO IT NOW" timestamp. </summary>
+            <summary> Provides a "pre-rendered" byte representation of the "DO IT NOW" OSC Timetag. </summary>
         </member>
         <member name="P:OscLib.OscTime.Now">
-            <summary> Provides an OSC timestamp representing the current time (as far as the system is aware). </summary>
+            <summary> Provides an OSC Timetag representing the current time (as far as the system is aware). </summary>
         </member>
         <member name="P:OscLib.OscTime.NtpEpochStart">
             <summary> The start of the current NTP epoch - 00:00 01/01/1900 at the moment. </summary>

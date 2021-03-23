@@ -12,7 +12,7 @@ namespace OscLib
         private static long _sessionStart;
         private static readonly long _ticksPerSecond;
 
-        private static readonly OscTimestamp _immediately;
+        private static readonly OscTimetag _immediately;
         private static readonly byte[] _immediatelyBytes;
 
         private static readonly long _ntpEpochStart;
@@ -23,14 +23,14 @@ namespace OscLib
         /// <summary> Provides the current "global" UTC tick. </summary>
         public static long GlobalTick { get => _sessionTimer.Elapsed.Ticks + _sessionStart; }
 
-        /// <summary> Provides the OSC-compliant "DO IT. DO IT NOW." timestamp. </summary>
-        public static OscTimestamp Immediately { get => _immediately; }
+        /// <summary> Provides the OSC-compliant "DO IT. DO IT NOW." OSC Timetag. </summary>
+        public static OscTimetag Immediately { get => _immediately; }
 
-        /// <summary> Provides a "pre-rendered" byte representation of the OSC-compliant "DO IT NOW" timestamp. </summary>
+        /// <summary> Provides a "pre-rendered" byte representation of the "DO IT NOW" OSC Timetag. </summary>
         public static byte[] ImmediatelyBytes { get => _immediatelyBytes; }
 
-        /// <summary> Provides an OSC timestamp representing the current time (as far as the system is aware). </summary>
-        public static OscTimestamp Now { get => new OscTimestamp(GlobalTick); }
+        /// <summary> Provides an OSC Timetag representing the current time (as far as the system is aware). </summary>
+        public static OscTimetag Now { get => new OscTimetag(GlobalTick); }
 
         /// <summary> The start of the current NTP epoch - 00:00 01/01/1900 at the moment. </summary>
         public static long NtpEpochStart { get => _ntpEpochStart; }
@@ -39,7 +39,7 @@ namespace OscLib
         {
             _ntpEpochStart = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc).Ticks;
             _ticksPerSecond = TimeSpan.TicksPerSecond;
-            _immediately = new OscTimestamp((ulong)1);
+            _immediately = new OscTimetag((ulong)1);
             _immediatelyBytes = OscSerializer.GetBytes(_immediately);
 
             _sessionTimer = new Stopwatch();
@@ -53,11 +53,11 @@ namespace OscLib
         /// </summary>
         /// <param name="seconds"></param>
         /// <returns></returns>
-        public static OscTimestamp AfterSeconds(float seconds)
+        public static OscTimetag AfterSeconds(float seconds)
         {
             long waitTicks = (long)(seconds * _ticksPerSecond);
 
-            return new OscTimestamp(GlobalTick + waitTicks);
+            return new OscTimetag(GlobalTick + waitTicks);
         }
 
     }

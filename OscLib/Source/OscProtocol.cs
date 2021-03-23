@@ -78,10 +78,10 @@ namespace OscLib
         /// <summary> Closes an array of characters in pattern matching. </summary>
         public const byte MatchCharArrayClose = (byte)']';
 
-        /// <summary> "Reverses" the character array, matching with any symbol *not* present in it.  </summary>
+        /// <summary> "Reverses" the character array, matching it with any symbol *not* present in it.  </summary>
         public const byte MatchNot = (byte)'!';
 
-        /// <summary> A range symbol used inside . </summary>
+        /// <summary> A range symbol used inside character arrays. Stands for the entire range of ASCII symbols between the two around it. </summary>
         public const byte MatchRange = (byte)'-';
 
        

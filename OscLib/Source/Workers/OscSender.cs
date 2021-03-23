@@ -618,12 +618,15 @@ namespace OscLib
                     // if we got some bytes to send let's send them
                     if (byteCounter > 0)
                     {
-                        // get the copy of array that is limited to the byteCounter
-                        byte[] bundleData = new byte[byteCounter];
+                        // make an array of the right size, add bundle header, add it into a packet, send. 
 
-                        Array.Copy(_cycleBinaryDataHolder, 0, bundleData, 0, byteCounter);
+                        byte[] bundleData = new byte[byteCounter + OscBundle.HeaderLength];
 
-                        OscPacketBytes newBundle = OscSerializer.BundleToBytes(bundleData);
+                        OscSerializer.AddBundleHeader(bundleData, 0);
+
+                        Array.Copy(_cycleBinaryDataHolder, 0, bundleData, OscBundle.HeaderLength, byteCounter);
+
+                        OscPacketBytes newBundle = new OscPacketBytes(bundleData);
 
                         _oscLink.SendToTarget(newBundle);
                                           

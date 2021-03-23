@@ -29,77 +29,81 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown when encountering an unsupported OSC type tag. </exception>
         public static OscMessage GetMessage(ref int pointer, byte[] binaryData)
         {
+            // should start with an '/'
+            if (binaryData[pointer] != OscProtocol.Separator)
+            {
+                throw new ArgumentException("OSC Deserializer ERROR: OSC Message can't be parsed from pointer position " + pointer);
+            }
 
             OscString addressPattern;
             object[] arguments = null;
 
-            bool typeTagsFound = false, typeTagEndFound = false;
-            bool addressStringEndFound = false;
+            int addressPatternLength = -1, typeTagStart = -1;
 
-            int typeTagStart = 0, typeTagEnd = 0;
-
-            int addressStringEnd = 0;
             int messageStart = pointer;
 
-            // find where the type tags begin and where the address string ends
-            for (int i = messageStart; i < binaryData.Length; i++)
+            // find the address pattern
+            while (pointer < binaryData.Length)
             {
-                // go until we encounter the first null - that's where the address string ends
-                if (!addressStringEndFound)
+                // move pointer forward by a chunk
+                pointer += OscProtocol.Chunk32;
+
+                // preceding chunk ending in a 0 means the pattern ends somewhere within it, or right at the end of the chunk before it.
+                if (binaryData[pointer - 1] == 0)
                 {
-                    if (binaryData[i] == 0)
+                    for (int i = pointer - 2; i >= pointer - OscProtocol.Chunk32; i--)
                     {
-                        addressStringEndFound = true;
-                        addressStringEnd = i;
-                    }
-                }
-                else if (!typeTagsFound)
-                {
-                    if (binaryData[i] == OscProtocol.Comma)
-                    {
-                        typeTagsFound = true;
-                        typeTagStart = i;
+                        if (binaryData[i] != 0)
+                        {
+                            addressPatternLength = i - messageStart + 1;
+                            break;
+                        }
 
                     }
 
-                }
-                else if (!typeTagEndFound)
-                {
-                    if (binaryData[i] == 0)
+                    // if not yet found, the pattern's end is the last byte of the second chunk behind
+                    if (addressPatternLength < 0)
                     {
-                        typeTagEndFound = true;
-                        typeTagEnd = i;
-
-                        break;
+                        addressPatternLength = pointer - messageStart - OscProtocol.Chunk32;
                     }
 
+                    break;
+
                 }
-                
+
             }
 
-            // if address string end is still at zero, that means there is no address string, and something went very wrong. 
-            if (addressStringEnd == 0)
+            // if pattern's length is unknown at this point, something's gone very wrong
+            if (addressPatternLength < 0)
             {
-                throw new ArgumentException("OSC Deserializer Error: Couldn't parse OSC message, message doesn't seem to have an address pattern.");
+                throw new ArgumentException("OSC Deserializer ERROR: OSC Message couldn't be parsed from pointer position " + messageStart);
             }
             else
             {
-                // get the address string
-                addressPattern = new OscString(binaryData, messageStart, (addressStringEnd - messageStart));
+                addressPattern = new OscString(binaryData, messageStart, addressPatternLength); 
             }
 
-            if (typeTagsFound && typeTagEndFound)
+            // check if the address string exists at all
+            if (binaryData[pointer] == OscProtocol.Comma)
             {
+                typeTagStart = pointer;
+
+                // find the end of it
+                while (binaryData[pointer] != 0)
+                {
+                    pointer++;
+                }
+
                 // - 1 is to accomodate for the "," in the beginning
-                int typeTagsTotal = typeTagEnd - typeTagStart - 1;
+                int typeTagsTotal = pointer - typeTagStart - 1;
 
                 arguments = new object[typeTagsTotal];
 
                 // move the pointer to the next 4-byte point after the end of the type tags
-                pointer = OscUtil.GetNextMultipleOfFour(typeTagEnd);
+                pointer = OscUtil.GetNextMultipleOfFour(pointer);
 
                 if (typeTagsTotal > 0)
-                {                    
+                {
                     // the first element in the array will be the "," type tag separator
                     for (int i = 0; i < typeTagsTotal; i++)
                     {
@@ -146,6 +150,7 @@ namespace OscLib
                 }
 
             }
+
 
             if (arguments != null)
             {
@@ -206,7 +211,7 @@ namespace OscLib
             if (binaryData.Length <= OscBundle.HeaderLength)
             {
                 // get timestamp
-                OscTimestamp timestamp = GetTimestamp(8, binaryData);
+                OscTimetag timestamp = GetTimestamp(8, binaryData);
 
                 return new OscBundle[1] { new OscBundle(timestamp) };
 
@@ -244,7 +249,7 @@ namespace OscLib
             }
 
             // allocate a temporary array for keeping track of layers of bundled bundles
-           OscTimestamp[] timestampStack = new OscTimestamp[bundlesTotal];
+           OscTimetag[] timestampStack = new OscTimetag[bundlesTotal];
 
             // an array into which we'll be storing all the bundles
             OscBundle[] bundleArray = new OscBundle[bundlesTotal];
@@ -267,7 +272,7 @@ namespace OscLib
         }
 
         // evil recursive shit to get all bundles
-        private static void GetBundle(int length, ref int externalPointer, byte[] binaryData, ref OscBundle[] bundleArray, ref int currentBundleIndex, OscTimestamp[] timestampStack, ref int currentTimestampIndex)
+        private static void GetBundle(int length, ref int externalPointer, byte[] binaryData, ref OscBundle[] bundleArray, ref int currentBundleIndex, OscTimetag[] timestampStack, ref int currentTimestampIndex)
         {
             int thisBundleIndex = currentBundleIndex;
 
@@ -292,7 +297,7 @@ namespace OscLib
                     externalPointer += OscProtocol.BundleStringLength;
 
                     // get timestamp
-                    OscTimestamp timestamp = GetTimestamp(ref externalPointer, binaryData);
+                    OscTimetag timestamp = GetTimestamp(ref externalPointer, binaryData);
                     
                     // check if the bundle's timestamp is later than the enveloping bundle's timestamp
                     if (timestampStack[currentTimestampIndex].Ticks <= timestamp.Ticks)
@@ -462,7 +467,7 @@ namespace OscLib
         /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
         /// <param name="data"> Byte array containing the data. </param>
         /// <returns> An OscTimestamp. </returns>
-        public static OscTimestamp GetTimestamp(ref int pointer, byte[] data)
+        public static OscTimetag GetTimestamp(ref int pointer, byte[] data)
         {
             // decode the 8-byte timestamp into unsigned longint
             Array.Copy(data, pointer, _tempByteArray64, 0, 8);
@@ -474,7 +479,7 @@ namespace OscLib
 
             ulong ntpTimestamp = BitConverter.ToUInt64(_tempByteArray64, 0);
 
-            return new OscTimestamp(ntpTimestamp);
+            return new OscTimetag(ntpTimestamp);
         }
 
         #endregion
@@ -608,7 +613,7 @@ namespace OscLib
         /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
         /// <param name="data"> Byte array containing the data. </param>
         /// <returns></returns>
-        public static OscTimestamp GetTimestamp(int pointer, byte[] data)
+        public static OscTimetag GetTimestamp(int pointer, byte[] data)
         {
             // decode the 8-byte timestamp into unsigned longint
             Array.Copy(data, pointer, _tempByteArray64, 0, 8);
@@ -618,7 +623,7 @@ namespace OscLib
 
             ulong ntpTimestamp = BitConverter.ToUInt64(_tempByteArray64, 0);
 
-            return new OscTimestamp(ntpTimestamp);
+            return new OscTimetag(ntpTimestamp);
         }
 
 

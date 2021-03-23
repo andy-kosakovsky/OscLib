@@ -10,14 +10,14 @@ namespace OscLib
     public static class OscSerializer
     {
         /// <summary>
-        /// Creates a byte array of OSC binary data containing an OSC Message using the provided address pattern and arguments.
+        /// Creates a byte array of OSC binary data out of the provided address pattern and arguments.
         /// </summary>
         /// <param name="addressPattern"> The address pattern of this message. </param>
         /// <param name="arguments"> The arguments (should be of supported types, obviously) </param>
         /// <returns> A byte array containing the serialized message. </returns>
         /// <exception cref="ArgumentNullException"> Thrown if the address pattern is null or empty. </exception>
         /// <exception cref="ArgumentException"> Thrown if the address pattern doesn't start with a "/" symbol, as required per OSC Protocol. </exception>
-        public static byte[] GetBytesMessage(OscString addressPattern, object[] arguments)
+        public static byte[] NewMessageGetBytes(OscString addressPattern, object[] arguments = null)
         {
             if (OscString.IsNullOrEmpty(addressPattern))
             {
@@ -31,31 +31,46 @@ namespace OscLib
             }
 
             // + 1 accounts for the "," symbol in the type tag string
-            int typeTagBinLength = OscUtil.GetNextMultipleOfFour(arguments.Length + 1);
+            int typeTagBinLength = 0;
             int argBinLength = 0;
 
-            // get the binary length of the arg array
-            for (int i = 0; i < arguments.Length; i++)
+            bool argsPresent = (arguments != null) && (arguments.Length > 0);
+
+            if (argsPresent)
             {
-                argBinLength += GetByteLength(arguments[i]);
+                typeTagBinLength = OscUtil.GetNextMultipleOfFour(arguments.Length + 1);
+
+                // get the binary length of the arg array
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    argBinLength += GetByteLength(arguments[i]);
+                }
+
             }
+            
             // create binary data array of appropriate length
-            byte[] data = new byte[addressPattern.OscLength + typeTagBinLength + argBinLength];
+            byte[] binaryData = new byte[addressPattern.OscLength + typeTagBinLength + argBinLength];
 
-            addressPattern.CopyTo(data, 0);
+            addressPattern.CopyTo(binaryData, 0);
 
-            // set the first character of the type tag string to be the separator
-            data[addressPattern.OscLength] = OscProtocol.Comma;
 
-            int currentPos = addressPattern.OscLength + typeTagBinLength;
-
-            for (int i = 0; i < arguments.Length; i++)
+            if (argsPresent)
             {
-                GetBytesArg(arguments[i], out data[addressPattern.OscLength + i + 1]).CopyTo(data, currentPos);
-                currentPos += GetByteLength(arguments[i]);
+                // set the first character of the type tag string to be the separator
+
+                binaryData[addressPattern.OscLength] = OscProtocol.Comma;
+
+                int currentPos = addressPattern.OscLength + typeTagBinLength;
+
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    GetBytesArg(arguments[i], out binaryData[addressPattern.OscLength + i + 1]).CopyTo(binaryData, currentPos);
+                    currentPos += GetByteLength(arguments[i]);
+                }
+
             }
 
-            return data;
+            return binaryData;
 
         }
 
@@ -67,23 +82,89 @@ namespace OscLib
         /// <returns> An OSC Protocol-compliant byte array containing the serialized message. </returns>
         public static byte[] GetBytes(OscMessage message)
         {
-            return GetBytesMessage(message.AddressPattern, message.Arguments);
+            return NewMessageGetBytes(message.AddressPattern, message.Arguments);
         }
 
+
         /// <summary>
-        /// Creates a byte array of OSC binary data using the provided OSC Bundle.
+        /// Creates a byte array of OSC binary data using the provided OSC Bundle. 
         /// </summary>
         /// <param name="bundle"> OSC Bundle to be serialized. </param>
         /// <returns> An OSC Protocol-compliant byte array containing the serialized bundle. </returns>
         public static byte[] GetBytes(OscBundle bundle)
         {
-            throw new NotImplementedException();
+            byte[] binaryData = new byte[bundle.Length];
+
+            AddBundleHeader(binaryData, 0, bundle.Timetag);
+
+            int pointer = OscBundle.HeaderLength;
+
+            // add messages
+            GetBytes(bundle.Messages, out int msgLength).CopyTo(binaryData, pointer);
+
+            pointer += msgLength;
+
+            // then add bundles 
+            // TODO: maybe it's possible to avoid recursion here? would be nice
+            for (int i = 0; i < bundle.Bundles.Length; i++)
+            {
+                // get length
+                GetBytes(bundle.Bundles[i].Length).CopyTo(binaryData, pointer);
+                pointer += OscProtocol.Chunk32;
+
+                // get bundle
+                GetBytes(bundle.Bundles[i]).CopyTo(binaryData, pointer);
+                pointer += bundle.Bundles[i].Length;
+
+            }
+
+            return binaryData;
+
         }
 
 
-        public static byte[] GetBytes(OscMessage[] messages)
+        /// <summary>
+        /// Creates a byte array of OSC binary data out of the provided messages - their lengths included. 
+        /// </summary>
+        /// <param name="messages"> An array of OSC Messages to pack. </param>
+        /// <returns></returns>
+        public static byte[] GetBytes(OscMessage[] messages, out int length)
         {
-            throw new NotImplementedException();
+            if (messages == null)
+            {
+                throw new ArgumentNullException(nameof(messages));
+            }
+
+            length = 0;
+
+            for (int i = 0; i < messages.Length; i++)
+            {
+                // get length of all messages, plus allow 4 bytes for the "length" integer
+                length += messages[i].Length + OscProtocol.Chunk32;
+            }
+
+            byte[] data = new byte[length];
+
+            int pointer = 0;
+
+            for (int i = 0; i < messages.Length; i++)
+            {
+                // get length of the message
+                GetBytes(messages[i].Length).CopyTo(data, pointer);
+                pointer += OscProtocol.Chunk32;
+
+                // get the message
+                GetBytes(messages[i]).CopyTo(data, pointer);
+                pointer += messages[i].Length;
+
+                if (pointer > data.Length)
+                {
+                    throw new IndexOutOfRangeException("Oh no");
+                }
+            }
+
+            return data;
+            
         }
 
 
@@ -100,95 +181,53 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates a binary packet of OSC data that is a bundle, containing all provided packets, timestamped for immediate execution on receipt.  
+        /// Adds a bundle header to the target byte array, starting from the specified index. Tags it with the "execute immediately" timetag.
         /// </summary>
-        /// <param name="packets"> OSC binary packets to be bundled up. </param>
-        /// <returns> An OSC binary packet containing the bundle. </returns>
-        public static OscPacketBytes BundleToBytes(params OscPacketBytes[] packets)
+        /// <param name="target"> Target byte array to modify. </param>
+        /// <param name="index"> Target index. </param>
+        public static void AddBundleHeader(byte[] target, int index)
         {
-            // set initial length to "#bundle" length + timestamp length
-            int length = OscProtocol.BundleStringLength + OscProtocol.Chunk64;
-            int currentPos = length;
-
-
-            for (int i = 0; i < packets.Length; i++)
+            if (target == null)
             {
-                length += OscProtocol.Chunk32 + packets[i].Length;
+                throw new ArgumentNullException(nameof(target));
             }
 
-            byte[] data = new byte[length];
-
-            OscProtocol.CopyBundleStringTo(data, 0);
-            OscSerializer.GetBytes(OscTime.Immediately).CopyTo(data, 8);
-
-            for (int i = 0; i < packets.Length; i++)
+            if (target.Length <= index + OscBundle.HeaderLength)
             {
-                GetBytes(packets[i].Length).CopyTo(data, currentPos);
-                currentPos += OscProtocol.Chunk32;
-
-                packets[i].BinaryData.CopyTo(data, currentPos);
-                currentPos += packets[i].Length;
+                throw new ArgumentOutOfRangeException(nameof(index), "OSC Serializer ERROR: Can't add bundle header to byte array at index " + index + ", it won't fit. ");
             }
 
-            return new OscPacketBytes(data);
+            OscProtocol.CopyBundleStringTo(target, index);
+            OscTime.ImmediatelyBytes.CopyTo(target, index + 8);
 
         }
+
 
         /// <summary>
-        /// Creates a binary packet of OSC data that is a bundle, containing all provided packets, using the provided timestamp.  
+        /// Adds a bundle header to the target byte array, starting from the specified index and using the provided timetag. 
         /// </summary>
-        /// <param name="timestamp"> The timestamp to stamp the bundle with. </param>
-        /// <param name="packets"> OSC binary packets to be bundled up. </param>
-        /// <returns> An OSC binary packet containing the bundle. </returns>
-        public static OscPacketBytes BundleToBytes(OscTimestamp timestamp, params OscPacketBytes[] packets )
+        /// <param name="target"> Target byte array to modify. </param>
+        /// <param name="index"> Target index. </param>
+        /// <param name="timetag"> To be included in the header. </param>
+        public static void AddBundleHeader(byte[] target, int index, OscTimetag timetag)
         {
-            // set initial length to "#bundle" length + timestamp length
-            int length = OscProtocol.BundleStringLength + OscProtocol.Chunk64;
-            int currentPos = length;
-
-
-            for (int i = 0; i < packets.Length; i++)
+            if (target == null)
             {
-                length += OscProtocol.Chunk32 + packets[i].Length;
+                throw new ArgumentNullException(nameof(target));
             }
 
-            byte[] data = new byte[length];
-
-            OscProtocol.CopyBundleStringTo(data, 0);
-            GetBytes(timestamp).CopyTo(data, 8);
-
-            for (int i = 0; i < packets.Length; i++)
+            if (target.Length <= index + OscBundle.HeaderLength)
             {
-
-                GetBytes(packets[i].Length).CopyTo(data, currentPos);
-                currentPos += OscProtocol.Chunk32;
-
-                packets[i].BinaryData.CopyTo(data, currentPos);
-                currentPos += packets[i].Length;
-
+                throw new ArgumentOutOfRangeException(nameof(index), "OSC Serializer ERROR: Can't add bundle header to byte array at index " + index + ", it won't fit. ");
             }
 
-            return new OscPacketBytes(data);
+            OscProtocol.CopyBundleStringTo(target, index);
+            GetBytes(timetag).CopyTo(target, index + 8);
 
         }
 
-        /// <summary>
-        /// Packs the preformatted binary data into an OSC packet and adds the right header. Make sure the data *is* OSC-compliant, that is, use at your own risk.
-        /// </summary>
-        /// <param name="binaryData"> A byte array containing preformatted, OSC-compliant byte data. hopefully. </param>
-        /// <returns> An OSC binary packet containing the bundle. </returns>
-        public static OscPacketBytes BundleToBytes(byte[] binaryData)
-        {
-            byte[] data = new byte[binaryData.Length + OscProtocol.BundleStringLength + OscProtocol.Chunk64];
 
-            OscProtocol.CopyBundleStringTo(data, 0);
-            GetBytes(OscTime.Immediately).CopyTo(data, 8);
-            binaryData.CopyTo(data, 16);
-
-            return new OscPacketBytes(data);
-
-        }
-
+        
 
         #region INT32
         /// <summary>
@@ -352,7 +391,7 @@ namespace OscLib
         /// <param name="arg"> String to be converted. </param>
         /// <param name="typeTag"> Corresponding OSC type tag. </param>
         /// <returns> A byte array. </returns>
-        public static byte[] ArgumentToBinary(OscString arg, out byte typeTag)
+        public static byte[] GetBytes(OscString arg, out byte typeTag)
         {
             typeTag = OscProtocol.TypeTagString;
 
@@ -493,7 +532,7 @@ namespace OscLib
         /// </summary>
         /// <param name="timestamp"> Timestamp to be converted. </param>
         /// <returns> A byte array. </returns>
-        public static byte[] GetBytes(OscTimestamp timestamp)
+        public static byte[] GetBytes(OscTimetag timestamp)
         {
             byte[] data = BitConverter.GetBytes(timestamp.NtpTimestamp);
 
@@ -511,7 +550,7 @@ namespace OscLib
         /// <param name="timestamp"> Timestamp to be converted. </param>
         /// <param name="typeTag"> Corresponding OSC type tag. </param>
         /// <returns> A byte array. </returns>
-        public static byte[] GetBytesArg(OscTimestamp timestamp, out byte typeTag)
+        public static byte[] GetBytesArg(OscTimetag timestamp, out byte typeTag)
         {
             byte[] data = BitConverter.GetBytes(timestamp.NtpTimestamp);
 
@@ -558,7 +597,7 @@ namespace OscLib
                     return GetBytesArg(argString, out typeTag);
 
                 case OscString oscString:
-                    return ArgumentToBinary(oscString, out typeTag);
+                    return GetBytes(oscString, out typeTag);
                     
                 case byte[] argByte:
                     return GetBytesArg(argByte, out typeTag);
@@ -569,7 +608,7 @@ namespace OscLib
                 case char argChar:
                     return GetBytesArg(argChar.ToString(), out typeTag);
 
-                case OscTimestamp argTimestamp:
+                case OscTimetag argTimestamp:
                     return GetBytesArg(argTimestamp, out typeTag);
 
                 default:
@@ -616,7 +655,7 @@ namespace OscLib
                 case char _:
                     return OscProtocol.Chunk32;
 
-                case OscTimestamp _:
+                case OscTimetag _:
                     return OscProtocol.Chunk64;
 
                 default:
