@@ -12,4 +12,8 @@
     <DocumentationFile>G:\_visualStudioProjects\OscLib\OscLib\OscLib\OscLib.xml</DocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
 </Project>

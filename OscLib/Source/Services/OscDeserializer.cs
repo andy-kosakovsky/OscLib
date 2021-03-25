@@ -182,7 +182,7 @@ namespace OscLib
         /// <param name="oscPacketBinary"> The packet to be deserialized. </param>
         /// <returns> The resultant OSC message. </returns>
         /// <remarks> The method is generic to avoid the struct-as-interface boxing/unboxing shenanigans. </remarks>
-        public static OscMessage GetMessage<Packet>(Packet oscPacketBinary) where Packet : IOscPacketBytes
+        public static OscMessage GetMessage<Packet>(Packet oscPacketBinary) where Packet : IOscPacket
         {
             if (oscPacketBinary.BinaryData[0] != OscProtocol.Separator)
             {
@@ -327,6 +327,7 @@ namespace OscLib
         }
 
         #endregion
+
 
         #region GET ARGUMENTS (WITH EXTERNAL POINTER)
         // methods for decoding arguments

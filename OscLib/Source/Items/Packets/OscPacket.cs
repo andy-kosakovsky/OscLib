@@ -7,7 +7,7 @@ namespace OscLib
     /// <summary>
     /// Contains an OSC packet serialized into binary.
     /// </summary>
-    public readonly struct OscPacketBytes : IOscPacketBytes
+    public readonly struct OscPacket : IOscPacket
     {
         private readonly byte[] _binaryData;
 
@@ -21,12 +21,12 @@ namespace OscLib
         /// Creates a new OSC packet out of the provided OSC binary data.
         /// </summary>
         /// <param name="binaryData"></param>
-        public OscPacketBytes(byte[] binaryData)
+        public OscPacket(byte[] binaryData)
         {
             _binaryData = binaryData;
         }
 
-        public OscPacketBytes(OscMessage message)
+        public OscPacket(OscMessage message)
         {
             _binaryData = OscSerializer.GetBytes(message);
         }

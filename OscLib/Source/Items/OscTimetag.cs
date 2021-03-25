@@ -86,6 +86,7 @@ namespace OscLib
             _ticks = OscTime.NtpEpochStart + (seconds * TimeSpan.TicksPerSecond) + tickFraction + 1;
         }
 
+
         /// <summary>
         /// Returns this timetag as a string, formatted as "day / month / year  hours : minutes : seconds : milliseconds".
         /// </summary>

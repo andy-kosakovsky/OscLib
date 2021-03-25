@@ -17,21 +17,23 @@ namespace OscLib
 
 
     /// <summary>
-    /// Internal utility class for various helper methods.
+    /// Utility class for various helper methods.
     /// </summary>
-    internal static class OscUtil
+    public static class OscUtil
     {
+
         /// <summary> Returns an end point at a local address on a random open port. </summary> 
-        internal static IPEndPoint GetLocalEndPoint()
+        public static IPEndPoint GetLocalEndPoint()
         { 
             return new IPEndPoint(OscProtocol.LocalIP, 0); 
         } 
 
 
-        internal static IPEndPoint GetLocalEndPointWithPort(int port)
+        public static IPEndPoint GetLocalEndPointWithPort(int port)
         {
             return new IPEndPoint(OscProtocol.LocalIP, port);
         }
+
 
         /// <summary>
         /// Prints array of bytes in hex form as a formatted string sequence.
@@ -39,7 +41,7 @@ namespace OscLib
         /// <param name="array"> Source array of bytes. </param>
         /// <param name="bytesPerLine"> How many bytes will be printed in a line. </param>
         /// <returns> A formatted sequence of strings. </returns>
-        internal static string ByteArrayToStrings(byte[] array, int bytesPerLine)
+        public static string ByteArrayToStrings(byte[] array, int bytesPerLine)
         {
             StringBuilder returnString = new StringBuilder();
 
@@ -67,12 +69,13 @@ namespace OscLib
             return returnString.ToString();
         }
 
+
         /// <summary>
         /// Returns the nearest multiple of four larger than the input.
         /// </summary>
         /// <param name="number"> Input number. </param>
         /// <returns></returns>
-        internal static int GetNextMultipleOfFour(int number)
+        public static int GetNextMultipleOfFour(int number)
         {
             return ((number / 4) + 1) * 4;
         }
@@ -84,6 +87,11 @@ namespace OscLib
         /// <param name="data"> Array of bytes to be swapped (needs to be of an even length to work). </param>
         internal static void SwapEndian(byte[] data)
         {
+            if (data.Length % 2 != 0)
+            {
+                throw new ArgumentException("ERROR: Can't swap endianness, provided byte array is not of an even length (length is " + data.Length + ").");
+            }
+
             for (int i = 0; i < data.Length / 2; i++)
             {
                 byte currentValue = data[i];
@@ -93,7 +101,31 @@ namespace OscLib
 
         }
 
-        internal static bool IsNumberBetween(int check, int boundOne, int boundTwo)
+
+        /// <summary>
+        /// Swaps the endiannes of *some* data within the provided byte array.
+        /// </summary>
+        /// <param name="data"> The target array. </param>
+        /// <param name="startIndex"> The index from which to start the swapping. </param>
+        /// <param name="length"> How many bytees to swap around (needs to be even). </param>
+        public static void SwapEndian(byte[] data, int startIndex, int length)
+        {
+            if (length % 2 != 0)
+            {
+                throw new ArgumentException("ERROR: Can't swap endianness, provided length is not even (length is " + length + ").");
+            }
+
+            for (int i = 0; i < (length / 2); i++)
+            {
+                byte currentValue = data[startIndex + i];
+                data[startIndex + i] = data[startIndex + length - 1 - i];
+                data[startIndex + length - 1 - i] = currentValue;
+            }
+           
+        }
+
+
+        public static bool IsNumberBetween(int check, int boundOne, int boundTwo)
         {
             int min, max;
 
@@ -108,12 +140,10 @@ namespace OscLib
                 max = boundTwo;
             }
 
-
             return (check >= min) && (check <= max);
 
-        }
-
-       
+        }     
 
     }
+
 }

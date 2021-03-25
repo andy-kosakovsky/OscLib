@@ -27,7 +27,7 @@ namespace OscLib
     /// </summary>
     /// <param name="packet"> Received serialized OSC packet. </param>
     /// <param name="receivedFrom"> The IP end point from which the packet was received. </param>
-    public delegate void OscOnReceivePacketBinaryHandler(OscPacketBytes packet, IPEndPoint receivedFrom);
+    public delegate void OscOnReceivePacketBinaryHandler(OscPacket packet, IPEndPoint receivedFrom);
 
 
     /// <summary>
@@ -67,7 +67,7 @@ namespace OscLib
     /// <typeparam name="Packet"> Should implement the IOscPcketBinary interface. </typeparam>
     /// <param name="packet"> Packet to be checked for eligibility. </param>
     /// <returns> True if packet should be sent, False otherwise. </returns>
-    public delegate bool OscPacketReadyChecker<Packet>(Packet packet) where Packet : IOscPacketBytes;
+    public delegate bool OscPacketReadyChecker<Packet>(Packet packet) where Packet : IOscPacket;
 
 
     /// <summary>
@@ -76,7 +76,7 @@ namespace OscLib
     /// <typeparam name="Packet"> Should implement the IOscPacketBinary interface. </typeparam>
     /// <param name="packet"> Packet to be checked for removal. </param>
     /// <returns> True if packet should be removed, False otherwise. </returns>
-    public delegate bool OscPacketRemover<Packet>(Packet packet) where Packet : IOscPacketBytes;
+    public delegate bool OscPacketRemover<Packet>(Packet packet) where Packet : IOscPacket;
 
     #endregion
 

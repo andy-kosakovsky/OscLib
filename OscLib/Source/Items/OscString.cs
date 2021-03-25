@@ -157,6 +157,7 @@ namespace OscLib
             _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             _length = _chars.Length;
             _containsReservedSymbols = Trit.Maybe;
+
         }
 
 

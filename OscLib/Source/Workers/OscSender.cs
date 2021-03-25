@@ -15,7 +15,7 @@ namespace OscLib
     /// Implements a multi-priority sender queue to work with an OSC Link, for message bundling and orderly sending. OSC Link needs to be in targeted mode when operating.
     /// </summary>
     /// <typeparam name="Packet"> The particular type of the OSC binary packet used with this Sender. Should implement the IOscPacketBinary interface. </typeparam>
-    public class OscSender<Packet> where Packet : IOscPacketBytes
+    public class OscSender<Packet> where Packet : IOscPacket
     {
         #region FIELDS
         /// <summary> OSC Link in use with this Sender. Needs to be in targeted mode. </summary>
@@ -626,7 +626,7 @@ namespace OscLib
 
                         Array.Copy(_cycleBinaryDataHolder, 0, bundleData, OscBundle.HeaderLength, byteCounter);
 
-                        OscPacketBytes newBundle = new OscPacketBytes(bundleData);
+                        OscPacket newBundle = new OscPacket(bundleData);
 
                         _oscLink.SendToTarget(newBundle);
                                           

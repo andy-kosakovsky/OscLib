@@ -70,7 +70,7 @@ namespace OscLib
             {
                 for (int i = 0; i < arguments.Length; i++)
                 {
-                    _length += OscSerializer.GetByteLength(arguments[i]);
+                    _length += OscSerializer.GetLength(arguments[i]);
                 }
 
                 // account for the type tag string

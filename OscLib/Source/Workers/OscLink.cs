@@ -379,7 +379,7 @@ namespace OscLib
         /// <param name="oscPacket"> OSC binary data packet to be sent. </param>
         /// <exception cref="InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
         /// <exception cref="ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
-        public void SendToTarget<Packet>(Packet oscPacket) where Packet : IOscPacketBytes
+        public void SendToTarget<Packet>(Packet oscPacket) where Packet : IOscPacket
         {
             if (_mode != LinkMode.Targeted)
             {
@@ -401,7 +401,7 @@ namespace OscLib
         /// <param name="endPoint"> The end point to which the packet will be sent. </param>
         /// <exception cref="InvalidOperationException"> Thrown if OSC Link is not in wide mode. </exception>
         /// <exception cref="ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
-        public void SendToEndPoint<Packet>(Packet oscPacket, IPEndPoint endPoint) where Packet : IOscPacketBytes
+        public void SendToEndPoint<Packet>(Packet oscPacket, IPEndPoint endPoint) where Packet : IOscPacket
         {
 
             if (_mode != LinkMode.Wide)
@@ -475,7 +475,7 @@ namespace OscLib
 
             if (_callEventsOnReceiveAsBytes)
             {
-                PacketReceivedAsBytes?.Invoke(new OscPacketBytes(binaryData), receivedFrom);
+                PacketReceivedAsBytes?.Invoke(new OscPacket(binaryData), receivedFrom);
             }
 
         }
@@ -496,7 +496,7 @@ namespace OscLib
 
             if (_callEventsOnReceiveAsBytes)
             {
-                PacketReceivedAsBytes?.Invoke(new OscPacketBytes(binaryData), receivedFrom);
+                PacketReceivedAsBytes?.Invoke(new OscPacket(binaryData), receivedFrom);
 
             } 
 
