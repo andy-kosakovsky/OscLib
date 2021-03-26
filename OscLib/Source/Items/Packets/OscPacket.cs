@@ -5,8 +5,12 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Contains an OSC packet serialized into binary.
+    /// Represents an OSC packet serialized into binary.
     /// </summary>
+    /// <remarks>
+    /// The purpose of this struct is to basically clearly designate a byte array as containing OSC binary data. 
+    /// Nothing more, nothing less - if a byte array is wrapped inside this struct, it should be safe to use with anything OSC-related.
+    /// </remarks>
     public readonly struct OscPacket : IOscPacket
     {
         private readonly byte[] _binaryData;
@@ -17,6 +21,7 @@ namespace OscLib
         /// <summary> Length of the data. </summary>
         public int Length { get => _binaryData.Length; }
 
+
         /// <summary>
         /// Creates a new OSC packet out of the provided OSC binary data.
         /// </summary>
@@ -26,10 +31,37 @@ namespace OscLib
             _binaryData = binaryData;
         }
 
+
+        /// <summary>
+        /// Serializes an OSC Message into bytes and creates an OSC Packet out of it.
+        /// </summary>
+        /// <param name="message"> The message to be serialized. </param>
         public OscPacket(OscMessage message)
         {
             _binaryData = OscSerializer.GetBytes(message);
         }
+
+
+        /// <summary>
+        /// Serializes an OSC Bundle into bytes and creats an OSC Packet out of it.
+        /// </summary>
+        /// <param name="bundle"></param>
+        public OscPacket(OscBundle bundle)
+        {
+            _binaryData = OscSerializer.GetBytes(bundle);
+        }
+
+
+        /// <summary>
+        /// Creates a message out of the provided address pattern and arguments, serializes it into bytes and creates an OSC Packet.
+        /// </summary>
+        /// <param name="addressPattern"></param>
+        /// <param name="arguments"></param>
+        public OscPacket(OscString addressPattern, object[] arguments = null)
+        {
+            _binaryData = OscSerializer.NewMessageGetBytes(addressPattern, arguments);
+        }
+
 
         /// <summary>
         /// Returns the binary contents of the packet, formatted to display 16 bytes per line.
@@ -41,6 +73,7 @@ namespace OscLib
 
             returnString.Append("PACKET (BINARY); Length: ");
             returnString.Append(_binaryData.Length);
+            returnString.Append("; Contents: ");
             returnString.Append('\n');
 
             returnString.Append(OscUtil.ByteArrayToStrings(_binaryData, 16));

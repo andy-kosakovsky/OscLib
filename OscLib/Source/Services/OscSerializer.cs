@@ -33,12 +33,15 @@ namespace OscLib
 
             extPointer += addrLength;
 
+            // TODO: maybe add the "add empty typetag string" setting that will affect the behaviour here
+            // add a comma at the beginning of type tag string
+            array[msgStart + addrLength] = OscProtocol.Comma;
+
+
             if (message.Arguments.Length > 0)
             {
                 // find the length of type tag, " + 1" accounts for the comma
                 int typeTagLength = OscUtil.GetNextMultipleOfFour(message.Arguments.Length + 1);
-
-                array[msgStart + addrLength] = OscProtocol.Comma;
 
                 extPointer = msgStart + addrLength + typeTagLength;
 
@@ -48,6 +51,13 @@ namespace OscLib
                 }
 
             }
+            else
+            {
+                // shift the pointer forwards to the end of the message
+                extPointer = msgStart + message.Length;
+            }
+
+
 
         }
 
@@ -170,6 +180,56 @@ namespace OscLib
         }
 
         #endregion // GETTING BYTES OF WHOLE MESSAGES / BUNDLES
+
+
+
+        #region GETTING PACKETS
+
+        /// <summary>
+        /// Serializes the provided OSC Message into bytes and returns them as an OSC Packet.
+        /// </summary>
+        /// <param name="message"> The message to be converted. </param>
+        /// <returns> An OSC Packet containing the message. </returns>
+        public static OscPacket GetPacket(OscMessage message)
+        {
+            return new OscPacket(message);
+        }
+
+
+        /// <summary>
+        /// Serializes the provided OSC Bundle into bytes and returns them as an OSC Packet.
+        /// </summary>
+        /// <param name="bundle"> The bundle to be converted. </param>
+        /// <returns> An OSC Packet containing the bundle. </returns>
+        public static OscPacket GetPacket(OscBundle bundle)
+        {
+            return new OscPacket(bundle);
+        }
+
+
+        /// <summary>
+        /// Creates an OSC Message out of the provided address pattern and arguments, serializes it and returns it as an OSC Packet.
+        /// </summary>
+        /// <param name="addressPattern"> The address pattern of the message. </param>
+        /// <param name="arguments"> The arguments of the message. Can be null - this will result in a message with an empty argument string. </param>
+        /// <returns> An OSC Packet containing the bundle. </returns>
+        public static OscPacket GetPacket(OscString addressPattern, object[] arguments = null)
+        {
+            return new OscPacket(addressPattern, arguments);
+        }
+
+
+        public static OscPacket GetPacket(OscTimetag timetag, OscMessage[] messages = null, OscBundle[] bundles = null)
+        {
+            // bundle it up
+            OscBundle bundle = new OscBundle(timetag, bundles, messages);
+
+            // get the bytes
+            return new OscPacket(bundle);
+
+        }
+
+        #endregion // GETTING PACKETS
 
 
 

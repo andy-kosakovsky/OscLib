@@ -16,8 +16,10 @@ namespace OscLib
         private readonly object[] _arguments;
         private readonly int _length;
        
+
         /// <summary> OSC address pattern of this message. </summary>
         public OscString AddressPattern { get => _addressPattern; }
+
 
         /// <summary> Arguments of this message. </summary>
         public object[] Arguments
@@ -32,22 +34,24 @@ namespace OscLib
                 {
                     return _arguments;
                 }
+
             }
 
         }
 
-        /// <summary> Length of this message in bytes. </summary>
-        public int Length { get => _length; }
 
+        /// <summary> Length of this message in bytes when serialized as OSC data. </summary>
+        /// <remarks> Includes the length of the argument type tag string. If there are zero arguments, it'll still include extra 4 bytes to contain the comma + 3 empty bytes. </remarks>
+        public int Length { get => _length; }
+        //TODO: maybe have it selectable in settings/preferences/attributes whether to include an ",___" empty type tag string in messages with no arguments? 
 
         /// <summary>
         /// Creates a new OSC message out of an address pattern and an array of arguments.
         /// </summary>
         /// <param name="addressPattern"> Address pattern attached to this message. </param>
-        /// <param name="arguments"> An array of arguments attached to this message. </param>
-        /// <exception cref="ArgumentException"> Thrown when address pattern is empty or invalid. </exception>
-        /// <exception cref="ArgumentNullException"> Thrown when arguments array is null for some reason. </exception>
-        public OscMessage(OscString addressPattern, object[] arguments)
+        /// <param name="arguments"> An array of arguments attached to this message. Can be null if no arguments are needed. </param>
+        /// <exception cref="ArgumentException"> Thrown when the address pattern is empty or invalid. </exception>
+        public OscMessage(OscString addressPattern, object[] arguments = null)
         {
             if (addressPattern.Length < 1)
             {
@@ -77,32 +81,11 @@ namespace OscLib
                 _length += OscUtil.GetNextMultipleOfFour(_arguments.Length + 1);
 
             }
-
-        }
-
-
-        /// <summary>
-        /// Creates a new OSC message out of an address pattern, without arguments. Assumes that there is no type tag string at all.
-        /// </summary>
-        /// <param name="addressPattern"> Address pattern attached to this message. </param>   
-        /// <exception cref="ArgumentException"> Thrown when address pattern is empty or invalid. </exception>
-        public OscMessage(OscString addressPattern)
-        {
-            if (addressPattern.Length < 1)
+            else
             {
-                throw new ArgumentException("OscMessage ERROR: Cannot create an OSC message, address pattern is empty");
+                // account for the empty type tag string
+                _length += OscProtocol.Chunk32;
             }
-
-            // check if address string is right
-            if (addressPattern[0] != OscProtocol.Separator)
-            {
-                throw new ArgumentException("OscMessage ERROR: Cannot create an OSC Message, address pattern is invalid");
-            }
-
-            _addressPattern = addressPattern;
-            _arguments = null;
-
-            _length = _addressPattern.OscLength;
 
         }
 

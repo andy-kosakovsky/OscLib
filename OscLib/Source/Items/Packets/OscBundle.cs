@@ -68,9 +68,9 @@ namespace OscLib
         /// <summary>
         /// Creates an OSC Bundle out of an array of messages and an array of bundles.
         /// </summary>
-        /// <param name="timetag"></param>
-        /// <param name="bundles"></param>
-        /// <param name="messages"></param>
+        /// <param name="timetag"> An OSC Timetag of this bundle. </param>
+        /// <param name="bundles"> An array of OSC Bundles to be packed into this bundle. </param>
+        /// <param name="messages"> An array of OSC Messages to be packed into this bundle. </param>
         public OscBundle(OscTimetag timetag, OscBundle[] bundles, OscMessage[] messages)
         {
             _timetag = timetag;
@@ -103,6 +103,7 @@ namespace OscLib
 
         }
 
+
         /// <summary>
         /// Creates an OSC bundle out of an array of OSC messages.
         /// </summary>
@@ -129,6 +130,7 @@ namespace OscLib
             }
 
         }
+
 
         /// <summary>
         /// Creates an empty OSC Bundle. Now why would you do that.
