@@ -7,43 +7,28 @@ namespace OscLib
     #region MESSAGING
 
     /// <summary> 
-    /// Used to receive a deserialized OSC message from the corresponding OSC Link event. 
+    /// Used to handle sent or received OSC Messages after they've been deserialized.
     /// </summary>
-    /// <param name="message"> Received OSC message, deserialized. </param>
-    /// <param name="receivedFrom"> The IP end point from which the message was received. </param>
-    public delegate void OscOnReceiveMessageDataHandler(OscMessage message, IPEndPoint receivedFrom);
+    /// <param name="message"> An OSC Message, deserialized. </param>
+    /// <param name="from"> The source end point of the message. </param>
+    public delegate void OscMessageHandler(OscMessage message, IPEndPoint from);
 
 
     /// <summary>
-    /// Used to receive a batch of deserialized OSC bundles (consisting of deserialized OSC messages) from the corresponding OSC Link event.
+    /// Used to handle sent or received OSC Bundles after they've been deserialized.
     /// </summary>
-    /// <param name="bundles"> A batch of received OSC bundles, deserialized. </param>
-    /// <param name="receivedFrom"> The IP end point from which the bundles were received. </param>
-    public delegate void OscOnReceiveBundlesDataHandler(OscBundle[] bundles, IPEndPoint receivedFrom);
+    /// <param name="bundle"> An OSC Bundle, deserialized. </param>
+    /// <param name="from"> The source end point of the bundle. </param>
+    public delegate void OscBundleHandler(OscBundle bundle, IPEndPoint from);
 
 
     /// <summary>
-    /// Used to receive a serialized OSC packet (in its binary form) from a corresponding OSC Link event.
+    /// Used to handle serialized OSC Packets.
     /// </summary>
-    /// <param name="packet"> Received serialized OSC packet. </param>
-    /// <param name="receivedFrom"> The IP end point from which the packet was received. </param>
-    public delegate void OscOnReceivePacketBinaryHandler(OscPacket packet, IPEndPoint receivedFrom);
-
-
-    /// <summary>
-    /// Used to get copies of OSC messages sent by OSC Link, in their deserialized form (for debugging and logging, for example)
-    /// </summary>
-    /// <param name="message"> Sent OSC message, deserialized. </param>
-    /// <param name="sentTo"> The IP end point to which the message was sent. </param>
-    public delegate void OscOnSendMessageHandler(OscMessage message, IPEndPoint sentTo);
-
-
-    /// <summary>
-    /// Used to get copies of OSC bundles sent by OSC Link, in their deserialized form (for debugging and logging, for example)
-    /// </summary>
-    /// <param name="bundles"> Sent OSC bundles, deserialized. </param>
-    /// <param name="sentTo"> The IP end point to which the message was sent. </param>
-    public delegate void OscOnSendBundlesHandler(OscBundle[] bundles, IPEndPoint sentTo);
+    /// <param name="packet"> An OSC Packet, containing serialized data. </param>
+    /// <param name="from"> The source end point of the packet. </param>
+    /// <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+    public delegate void OscPacketHandler<Packet>(Packet packet, IPEndPoint from) where Packet : IOscPacket;
 
     #endregion
 
@@ -62,21 +47,20 @@ namespace OscLib
     #region PACKET HEAP
 
     /// <summary>
-    /// Checks whether the packet is eligible to be sent, when OscSender is processing its packet heap.
+    /// Used with OSC Sender's packet heap to pass methods that check OSC Packets for various conditions before doing stuff with them.
     /// </summary>
+    /// <remarks>
+    /// The delegate is generic to accomodate for possible "custom" OSC Packets.
+    /// </remarks>
     /// <typeparam name="Packet"> Should implement the IOscPcketBinary interface. </typeparam>
-    /// <param name="packet"> Packet to be checked for eligibility. </param>
-    /// <returns> True if packet should be sent, False otherwise. </returns>
-    public delegate bool OscPacketReadyChecker<Packet>(Packet packet) where Packet : IOscPacket;
-
+    /// <param name="packet"> Packet to be checked. </param>
+    public delegate bool OscPacketHeapCheck<Packet>(Packet packet) where Packet : IOscPacket;
 
     /// <summary>
-    /// Checks whether the packet needs to be removed from the packet heap for whatever reason, precluding it from ever being sent.
+    /// Used to pass methods that serve as a source for timetags.
     /// </summary>
-    /// <typeparam name="Packet"> Should implement the IOscPacketBinary interface. </typeparam>
-    /// <param name="packet"> Packet to be checked for removal. </param>
-    /// <returns> True if packet should be removed, False otherwise. </returns>
-    public delegate bool OscPacketRemover<Packet>(Packet packet) where Packet : IOscPacket;
+    /// <returns> An OSC Timetag. </returns>
+    public delegate OscTimetag OscTimetagSource();
 
     #endregion
 

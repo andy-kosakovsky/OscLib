@@ -95,15 +95,16 @@ namespace OscLib
 
 
         // bundles are marked by having "#bundle" as their address string. this is a "prerendered" bundle message
-        private static readonly byte[] _bundleString;
+        private static readonly byte[] _bundleString = new byte[8] { BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
 
-        private static readonly int _bundleStringLength;
+        private static readonly int _bundleStringLength = _bundleString.Length;
 
         // reserved symbols that shouldn't be used in osc method or container names - just to have them all in a nice container
-        private static readonly byte[] _addressReservedSymbols;
+        private static readonly byte[] _addressReservedSymbols = new byte[] { Space, BundleMarker, MatchAnySequence,
+            Comma, Separator, MatchAnyChar, MatchNot, MatchRange, MatchCharArrayOpen, MatchCharArrayClose, MatchStringArrayOpen, MatchStringArrayClose };
 
 
-        private static readonly IPAddress _localIP;
+        private static readonly IPAddress _localIP = IPAddress.Parse("127.0.0.1");
 
 
 
@@ -113,17 +114,6 @@ namespace OscLib
         /// <summary> Cached length of the "#bundle " string. </summary>
         public static int BundleStringLength { get => _bundleStringLength; }
 
-        static OscProtocol()
-        {
-            _bundleString = new byte[8] { BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
-            _bundleStringLength = _bundleString.Length;
-
-            _addressReservedSymbols = new byte[] { Space, BundleMarker, MatchAnySequence,
-            Comma, Separator, MatchAnyChar, MatchNot, MatchRange, MatchCharArrayOpen, MatchCharArrayClose, MatchStringArrayOpen, MatchStringArrayClose };
-
-            _localIP = IPAddress.Parse("127.0.0.1");
-
-        }
 
         /// <summary>
         /// Checks whether the provided byte represents an ASCII symbol reserved by the OSC Protocol.

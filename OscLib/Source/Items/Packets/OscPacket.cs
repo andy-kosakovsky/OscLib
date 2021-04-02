@@ -19,47 +19,39 @@ namespace OscLib
         public byte[] BinaryData { get => _binaryData; }
 
         /// <summary> Length of the data. </summary>
-        public int Length { get => _binaryData.Length; }
+        public int OscLength { get => _binaryData.Length; }
 
 
         /// <summary>
-        /// Creates a new OSC packet out of the provided OSC binary data.
+        /// Creates a new OSC Packet out of the provided byte array containing OSC data (hopefully).
         /// </summary>
-        /// <param name="binaryData"></param>
-        public OscPacket(byte[] binaryData)
+        /// <param name="data"> Should contain valid OSC binary data. This constructor does VERY minimal validation, so use at your own risk. </param>
+        public OscPacket(byte[] data)
         {
-            _binaryData = binaryData;
+            if ((data[0] != OscProtocol.BundleMarker) && (data[0] != OscProtocol.Separator))
+            {
+                throw new ArgumentException("OSC Packet ERROR: Cannot create new OSC Packet, provided binary data doesn't seem to be valid. ");
+            }
+
+            _binaryData = data;
         }
 
 
         /// <summary>
-        /// Serializes an OSC Message into bytes and creates an OSC Packet out of it.
+        /// Creates a new OSC Packet out of a part of the provided byte array containing OSC data (hopefully).
         /// </summary>
-        /// <param name="message"> The message to be serialized. </param>
-        public OscPacket(OscMessage message)
+        /// <param name="dataSource"> Should contain valid OSC binary data for the relevant length. This constructor does VERY minimal validation, so use at your own risk. </param>
+        /// <param name="index"> The index from which to relevant part of the byte array begins. </param>
+        /// <param name="length"> The length of the relevant part of the byte array. </param>
+        public OscPacket(byte[] dataSource, int index, int length)
         {
-            _binaryData = OscSerializer.GetBytes(message);
-        }
+            if ((dataSource[index] != OscProtocol.BundleMarker) && (dataSource[0] != OscProtocol.Separator))
+            {
+                throw new ArgumentException("OSC Packet ERROR: Cannot create new OSC Packet, provided binary data doesn't seem to be valid. ");
+            }
 
-
-        /// <summary>
-        /// Serializes an OSC Bundle into bytes and creats an OSC Packet out of it.
-        /// </summary>
-        /// <param name="bundle"></param>
-        public OscPacket(OscBundle bundle)
-        {
-            _binaryData = OscSerializer.GetBytes(bundle);
-        }
-
-
-        /// <summary>
-        /// Creates a message out of the provided address pattern and arguments, serializes it into bytes and creates an OSC Packet.
-        /// </summary>
-        /// <param name="addressPattern"></param>
-        /// <param name="arguments"></param>
-        public OscPacket(OscString addressPattern, object[] arguments = null)
-        {
-            _binaryData = OscSerializer.NewMessageGetBytes(addressPattern, arguments);
+            _binaryData = new byte[length];
+            Array.Copy(dataSource, index, _binaryData, 0, length);
         }
 
 

@@ -112,7 +112,7 @@ namespace OscLib
         public bool ContainsPart(OscString partName)
         {           
             // if it's a pattern
-            if (partName.ContainsReservedSymbols)
+            if (partName.ContainsReservedSymbols())
             {
                 for (int i = 0; i < _contents.Count; i++)
                 {

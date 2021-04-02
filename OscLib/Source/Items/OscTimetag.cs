@@ -18,12 +18,8 @@ namespace OscLib
         /// <summary> This timetag represented as DateTime ticks, UTC. </summary>
         public long Ticks { get => _ticks; }
 
-        /// <summary> Returns this timetag represented as a DateTime object, corresponding to the time zone of the system. Creates a new instance of a DateTime object. </summary>
-        public DateTime DateTime { get => TimeZoneInfo.ConvertTimeFromUtc(new DateTime(_ticks), TimeZoneInfo.Local); }
+        
 
-        /// <summary> Returns this timetag represented as a DateTime object, corresponding to UTC time. Creates a new instance of a DateTime object. </summary>
-        public DateTime DateTimeUtc { get => new DateTime(_ticks); }
-            
         /// <summary>
         /// Creates an OSC Timetag out of the provided DateTime object.
         /// </summary>
@@ -87,13 +83,31 @@ namespace OscLib
         }
 
 
+        /// <summary> 
+        /// Returns this timetag represented as a DateTime object, corresponding to the time zone of the system. Creates a new instance of a DateTime object. 
+        /// </summary>
+        public DateTime GetDateTime()
+        {
+            return TimeZoneInfo.ConvertTimeFromUtc(new DateTime(_ticks), TimeZoneInfo.Local);
+        }
+
+
+        /// <summary> 
+        /// Returns this timetag represented as a DateTime object, corresponding to UTC time. Creates a new instance of a DateTime object. 
+        /// </summary>
+        public DateTime GetDateTimeUtc()
+        {
+            return new DateTime(_ticks);
+        }
+
+
         /// <summary>
         /// Returns this timetag as a string, formatted as "day / month / year  hours : minutes : seconds : milliseconds".
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return DateTime.ToString("dd/MM/yyyy HH:mm:ss:fff");
+            return GetDateTime().ToString("dd/MM/yyyy HH:mm:ss:fff");
         }
 
     }

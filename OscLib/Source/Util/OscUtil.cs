@@ -34,6 +34,29 @@ namespace OscLib
             return new IPEndPoint(OscProtocol.LocalIP, port);
         }
 
+        /// <summary>
+        /// Returns a string that consists of the provided char repeating the designated number of times.
+        /// </summary>
+        /// <returns></returns>
+        public static string GetRepeatingChar(char repeatMe, int thisManyTimes)
+        {
+            string result = string.Empty;
+
+            if (thisManyTimes > 0)
+            {
+                StringBuilder builder = new StringBuilder();
+
+                for (int i = 0; i < thisManyTimes; i++)
+                {
+                    builder.Append(repeatMe);
+                }
+
+                result = builder.ToString();
+            }
+
+            return result;
+        }
+
 
         /// <summary>
         /// Prints array of bytes in hex form as a formatted string sequence.
@@ -44,26 +67,59 @@ namespace OscLib
         public static string ByteArrayToStrings(byte[] array, int bytesPerLine)
         {
             StringBuilder returnString = new StringBuilder();
-
-            byte[] converterArray = new byte[bytesPerLine];
             int lineCounter = 0;
+
+            // the worst-case scenario for lineCounter length
+            int maxLinesLength = GetDigits(array.Length / bytesPerLine) + 1;
+            int maxByteNoLength = GetDigits(array.Length) + 2;
 
             for (int i = 0; i < array.Length; i++)
             {
-                if ((i > 0) && (i % bytesPerLine == 0))
+                // next line
+                if ((i % bytesPerLine == 0) || (i == 0))
                 {
-                    lineCounter += bytesPerLine;
+                    lineCounter++;
                     returnString.Append('\n');
-                    returnString.Append(BitConverter.ToString(converterArray));
-                    Array.Clear(converterArray, 0, bytesPerLine);
+                    returnString.Append(lineCounter);
+
+                    for (int j = maxLinesLength - GetDigits(lineCounter); j >= 0; j--)
+                    {
+                        returnString.Append(' ');
+                    }
+
+                    returnString.Append("BYTES [");
+                    returnString.Append(i);
+                    returnString.Append('/');
+                    returnString.Append(array.Length);
+                    returnString.Append(']');
+
+                    for (int j = maxByteNoLength - GetDigits(i); j >= 0; j--)
+                    {
+                        returnString.Append(' ');
+                    }
+
                 }
 
-                converterArray[i - lineCounter] = array[i];
+                // marking every 4-byte chunk
+                if (i % 4 == 0)
+                {
+                    returnString.Append('|');
+                }
+
+                // every byte equally-spaced
+                for (int j = 3 - GetDigits(array[i]); j > 0; j--)
+                {
+                    returnString.Append('0');
+                }
+
+                returnString.Append(array[i]);
+
+                returnString.Append(' ');
+
+               
+               
             }
             // append the last line
-
-            returnString.Append('\n');
-            returnString.Append(BitConverter.ToString(converterArray));
             returnString.Append('\n');
 
             return returnString.ToString();
@@ -80,50 +136,35 @@ namespace OscLib
             return ((number / 4) + 1) * 4;
         }
 
+        /// <summary>
+        /// Returns the number of digits in the provided number - as in, how long it is when written as decimal value. Ignores the minus sign.
+        /// </summary>
+        /// <param name="number"></param>
+        /// <returns></returns>
+        public static int GetDigits(int number)
+        {
+            if (number == 0)
+                return 1;
+
+            int value;
+
+            if (number > 0)
+                value = number;
+            else
+                value = -number;
+
+            if (value < 10) return 1;
+            if (value < 100) return 2;
+            if (value < 1_000) return 3;
+            if (value < 10_000) return 4;
+            if (value < 100_000) return 5;
+            if (value < 1_000_000) return 6;
+            if (value < 10_000_000) return 7;
+            if (value < 100_000_000) return 9;
+            if (value < 1_000_000_000) return 10;
+            return 11;
+        }
         
-        /// <summary>
-        /// Swaps the endianness of the provided array of bytes.
-        /// </summary>
-        /// <param name="data"> Array of bytes to be swapped (needs to be of an even length to work). </param>
-        internal static void SwapEndian(byte[] data)
-        {
-            if (data.Length % 2 != 0)
-            {
-                throw new ArgumentException("ERROR: Can't swap endianness, provided byte array is not of an even length (length is " + data.Length + ").");
-            }
-
-            for (int i = 0; i < data.Length / 2; i++)
-            {
-                byte currentValue = data[i];
-                data[i] = data[data.Length - 1 - i];
-                data[data.Length - 1 - i] = currentValue;
-            }
-
-        }
-
-
-        /// <summary>
-        /// Swaps the endiannes of *some* data within the provided byte array.
-        /// </summary>
-        /// <param name="data"> The target array. </param>
-        /// <param name="startIndex"> The index from which to start the swapping. </param>
-        /// <param name="length"> How many bytees to swap around (needs to be even). </param>
-        public static void SwapEndian(byte[] data, int startIndex, int length)
-        {
-            if (length % 2 != 0)
-            {
-                throw new ArgumentException("ERROR: Can't swap endianness, provided length is not even (length is " + length + ").");
-            }
-
-            for (int i = 0; i < (length / 2); i++)
-            {
-                byte currentValue = data[startIndex + i];
-                data[startIndex + i] = data[startIndex + length - 1 - i];
-                data[startIndex + length - 1 - i] = currentValue;
-            }
-           
-        }
-
 
         public static bool IsNumberBetween(int check, int boundOne, int boundTwo)
         {

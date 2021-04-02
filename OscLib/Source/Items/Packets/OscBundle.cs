@@ -21,7 +21,7 @@ namespace OscLib
         private readonly OscMessage[] _messages;
         private readonly OscBundle[] _bundles;
 
-        private readonly int _length;
+        private readonly int _oscLength;
 
         /// <summary> Timestamp attached to this bundle. </summary>
         public OscTimetag Timetag { get => _timetag; }
@@ -62,7 +62,7 @@ namespace OscLib
         }
 
         /// <summary> Length of this bundle in bytes. </summary>
-        public int Length { get => _length; }
+        public int OscLength { get => _oscLength; }
 
 
         /// <summary>
@@ -79,14 +79,14 @@ namespace OscLib
             _bundles = bundles;
 
             // find the length for everything
-            _length = HeaderLength;
+            _oscLength = HeaderLength;
 
             if (_bundles != null)
             {
                 for (int i = 0; i < _bundles.Length; i++)
                 {
                     // add bundle length plus the length of the integer containing its length
-                    _length += _bundles[i].Length + OscProtocol.Chunk32;
+                    _oscLength += _bundles[i].OscLength + OscProtocol.Chunk32;
                 }
 
             }
@@ -96,7 +96,35 @@ namespace OscLib
                 for (int i = 0; i < _messages.Length; i++)
                 {
                     // ditto
-                    _length += _messages[i].Length + OscProtocol.Chunk32;
+                    _oscLength += _messages[i].OscLength + OscProtocol.Chunk32;
+                }
+
+            }
+
+        }
+
+
+        /// <summary>
+        /// Creates an OSC bundle out of an array of OSC messages.
+        /// </summary>
+        /// <param name="timetag"> An OSC Timetag of this bundle. </param>
+        /// <param name="bundles"> An array of OSC messages to be packed into this bundle. </param>
+        public OscBundle(OscTimetag timetag, OscBundle[] bundles)
+        {
+            _timetag = timetag;
+
+            _messages = null;
+            _bundles = bundles;
+
+            // find the length of everything
+            _oscLength = HeaderLength;
+
+            if (_messages != null)
+            {
+                for (int i = 0; i < _bundles.Length; i++)
+                {
+                    // add message length plus the length of the integer containing its length
+                    _oscLength += _bundles[i].OscLength + OscProtocol.Chunk32;
                 }
 
             }
@@ -117,14 +145,14 @@ namespace OscLib
             _bundles = null;
             
             // find the length of everything
-            _length = HeaderLength;
+            _oscLength = HeaderLength;
 
             if (_messages != null)
             {
                 for (int i = 0; i < _messages.Length; i++)
                 {
                     // add message length plus the length of the integer containing its length
-                    _length += _messages[i].Length + OscProtocol.Chunk32;
+                    _oscLength += _messages[i].OscLength + OscProtocol.Chunk32;
                 }
 
             }
@@ -135,12 +163,12 @@ namespace OscLib
         /// <summary>
         /// Creates an empty OSC Bundle. Now why would you do that.
         /// </summary>
-        /// <param name="timestamp"> A OSC Timetag of this sad empty bundle. </param>
-        public OscBundle(OscTimetag timestamp)
+        /// <param name="timetag"> A OSC Timetag of this sad empty bundle. </param>
+        public OscBundle(OscTimetag timetag)
         {
-            _length = HeaderLength;
+            _oscLength = HeaderLength;
 
-            _timetag = timestamp;
+            _timetag = timetag;
 
             // nothing to see here
             _messages = null;
@@ -154,46 +182,73 @@ namespace OscLib
         /// <returns></returns>
         public override string ToString()
         {
+            return ToShiftedString(0);
+        }
+
+
+        /// <summary>
+        /// A debug method to print bundles inside of bundles easier. Does the same thing as the standard ToSpring() but adds some spaces after every new line.
+        /// </summary>
+        /// <param name="shiftAmount">How many spaces to add aftear each new line</param>
+        /// <returns></returns>
+        public string ToShiftedString(int shiftAmount = 6)
+        {
+            string spaces = OscUtil.GetRepeatingChar(' ', shiftAmount);
+
             StringBuilder returnString = new StringBuilder();
 
-            returnString.Append("BUNDLE (DATA): ");
+            returnString.Append(spaces);
+            returnString.Append("BUNDLE:-----------------------------------------\n");
+            returnString.Append(spaces);
+            returnString.Append("Time tag: ");
             returnString.Append(_timetag.ToString());
             returnString.Append(", total length: ");
-            returnString.Append(_length);
+            returnString.Append(_oscLength);
+
             if (_bundles != null)
             {
-                returnString.Append("\nBundles inside: ");
+                returnString.Append('\n');
+                returnString.Append(spaces);
+                returnString.Append("Bundles inside: ");
                 returnString.Append(_bundles.Length);
             }
 
-            if (_messages!= null)
+            if (_messages != null)
             {
                 returnString.Append("; messages inside: ");
                 returnString.Append(_messages.Length);
-            }
-            returnString.Append('\n');
+            }           
 
             if ((_bundles != null) && (_bundles.Length > 0))
             {
+                returnString.Append('\n');
                 for (int i = 0; i < _bundles.Length; i++)
-                {
-                    returnString.Append("   Bundle ");
-                    returnString.Append(i);
-                    returnString.Append(":\n");
-                    returnString.Append(_bundles[i].ToString());
+                {               
                     returnString.Append('\n');
+                    returnString.Append(spaces);
+                    returnString.Append(_bundles[i].ToShiftedString(shiftAmount + 6));
                 }
+             
             }
 
             if ((_messages != null) && (_messages.Length > 0))
             {
+                returnString.Append('\n');
+
                 for (int i = 0; i < _messages.Length; i++)
                 {
-                    returnString.Append("   Message ");
+                    returnString.Append('\n');
+                    returnString.Append(spaces);
+                    returnString.Append("Message ");
                     returnString.Append(i);
                     returnString.Append(": ");
                     returnString.Append(_messages[i].ToString());
                 }
+
+                returnString.Append('\n');
+                returnString.Append(spaces);
+                returnString.Append("END BUNDLE:-------------------------------------\n");
+                returnString.Append('\n');
             }
 
             return returnString.ToString();

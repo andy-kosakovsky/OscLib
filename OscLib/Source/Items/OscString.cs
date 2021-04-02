@@ -32,66 +32,8 @@ namespace OscLib
         /// <summary> The number of characters in this string. Ignores the null terminator. </summary>
         public int Length { get => _length; }
 
-        /// <summary> Returns a copy of an array containing all characters (their ASCII codes as bytes, that is) in this string. </summary>
-        public byte[] Chars
-        {
-            get
-            {
-                byte[] copy = new byte[_length];
-                _chars.CopyTo(copy, 0);
-                return copy;
-            }
 
-        }
-
-        /// <summary> Returns a copy of an array containing all chars (their ASCII codes as bytes, that is). </summary>
-        public byte[] OscBytes
-        {
-            get
-            {
-                byte[] copy = new byte[_oscLength];
-                _chars.CopyTo(copy, 0);
-                return copy;
-            }
-
-        }
-
-        /// <summary>
-        /// Whether this string contains special symbols reserved by OSC protocol. Checks when first called, then caches the result.
-        /// </summary>
-        public bool ContainsReservedSymbols
-        {
-            get
-            {
-                if (_containsReservedSymbols == Trit.Maybe)
-                {
-                    // let's find out, shall we
-                    bool contains = OscProtocol.ContainsReservedSymbols(_chars);
-
-                    if (contains)
-                    {
-                        _containsReservedSymbols = Trit.True;
-                        return true;
-                    }
-                    else
-                    {
-                        _containsReservedSymbols = Trit.False;
-                        return false;
-                    }
-
-                }
-                else if (_containsReservedSymbols == Trit.True)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-
-            }
-
-        }
+        
 
         /// <summary>
         /// Indexer access to the characters of this string, as ASCII codes.
@@ -299,6 +241,28 @@ namespace OscLib
         }
 
 
+        /// <summary> 
+        /// Returns a copy of an array containing all characters (their ASCII codes as bytes, that is) in this string. 
+        /// </summary>
+        public byte[] GetGetChars()
+        {
+            byte[] copy = new byte[_length];
+            _chars.CopyTo(copy, 0);
+            return copy;
+        }
+
+
+        /// <summary>
+        /// Returns a copy of an array containing all chars (their ASCII codes as bytes, that is). 
+        /// </summary>
+        public byte[] GetGetOscBytes()
+        {
+            byte[] copy = new byte[_oscLength];
+            _chars.CopyTo(copy, 0);
+            return copy;
+        }
+
+
         /// <summary>
         /// Gets a substring from this string.
         /// </summary>
@@ -334,7 +298,7 @@ namespace OscLib
             }
 
             // if strings are the same, might as well return true
-            if (!pattern.ContainsReservedSymbols)
+            if (!pattern.ContainsReservedSymbols())
             {
                 return (this == pattern);
             }
@@ -422,7 +386,7 @@ namespace OscLib
                     patIndex = patRevert;
 
                     // if the place where the string will be reverted reaches beyond the length of the string, that means string doesn't fit the pattern
-                    if (strRevert >= this.Length)
+                    if (strRevert >= Length)
                     {
                         return false;
                     }
@@ -445,7 +409,41 @@ namespace OscLib
 
         }
 
-        
+
+        /// <summary>
+        /// Whether this string contains special symbols reserved by OSC protocol. Checks when first called (can get quite expensive, depending on the length of the string), then caches the result.
+        /// </summary>
+        public bool ContainsReservedSymbols()
+        {
+            if (_containsReservedSymbols == Trit.Maybe)
+            {
+                // let's find out, shall we
+                bool contains = OscProtocol.ContainsReservedSymbols(_chars);
+
+                if (contains)
+                {
+                    _containsReservedSymbols = Trit.True;
+                    return true;
+                }
+                else
+                {
+                    _containsReservedSymbols = Trit.False;
+                    return false;
+                }
+
+            }
+            else if (_containsReservedSymbols == Trit.True)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+
         #region OVERRIDES AND OPERATORS
 
         /// <summary>

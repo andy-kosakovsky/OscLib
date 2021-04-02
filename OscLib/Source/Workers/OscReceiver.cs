@@ -61,7 +61,7 @@ namespace OscLib
                 if (!_connectedLinks.Contains(link))
                 {
                     _connectedLinks.Add(link);
-                    link.BundlesReceived += ReceiveBundles;
+                    link.BundleReceived += ReceiveBundle;
                     link.MessageReceived += ReceiveMessage;
                 }
                 
@@ -92,7 +92,7 @@ namespace OscLib
                 if (_connectedLinks.Contains(link))
                 {
                     _connectedLinks.Remove(link);
-                    link.BundlesReceived -= ReceiveBundles;
+                    link.BundleReceived -= ReceiveBundle;
                     link.MessageReceived -= ReceiveMessage;
                 }
 
@@ -162,7 +162,7 @@ namespace OscLib
                 if (currentLayer == methodLayer)
                 {
                     // if we don't have any reserved symbols, that means there should be only one method adhering to the pattern
-                    if (!pattern[currentLayer].ContainsReservedSymbols)
+                    if (!pattern[currentLayer].ContainsReservedSymbols())
                     {
                         if (stack[currentLayer][pattern[currentLayer]] is OscMethod part)
                         {
@@ -194,7 +194,7 @@ namespace OscLib
                 }
                 else
                 {
-                    if (!pattern[currentLayer].ContainsReservedSymbols)
+                    if (!pattern[currentLayer].ContainsReservedSymbols())
                     {
                         if (stack[currentLayer][pattern[currentLayer]] is OscContainer container)
                         {
@@ -259,20 +259,29 @@ namespace OscLib
 
 
         /// <summary>
-        /// Processes an incoming batch of bundles. Invoked when the connected OSC Link receives bundles.
+        /// Processes an incoming bundle. Invoked when the connected OSC Link receives bundles.
         /// </summary>
-        /// <param name="bundles"> A batch of OSC bundles to process. </param>
-        /// <param name="receivedFrom"> The IP end point from which the bundles were received. </param>
-        public virtual void ReceiveBundles(OscBundle[] bundles, IPEndPoint receivedFrom)
+        /// <param name="bundle"> OSC Bundle to process. </param>
+        /// <param name="receivedFrom"> The IP end point from which the bundle was received. </param>
+        public virtual void ReceiveBundle(OscBundle bundle, IPEndPoint receivedFrom)
         {
             try
             {
                 _addressSpaceAccess.WaitOne();
 
-                for (int i = 0; i < bundles.Length; i++)
+                if (bundle.Bundles.Length > 0)
                 {
-                    Process(bundles[i].Messages);
+                    for (int i = 0; i < bundle.Bundles.Length; i++)
+                    {
+                        Process(bundle.Bundles[i].Messages);
+                    }
                 }
+
+                if (bundle.Messages.Length > 0)
+                {
+                    Process(bundle.Messages);
+                }
+
             }
             finally
             {
@@ -324,7 +333,7 @@ namespace OscLib
 
                 for (int i = 0; i < pattern.Length; i++)
                 {
-                    if (pattern[i].ContainsReservedSymbols)
+                    if (pattern[i].ContainsReservedSymbols())
                     {
                         throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern contains invalid symbols");
                     }
@@ -391,7 +400,7 @@ namespace OscLib
 
                 for (int i = 0; i < pattern.Length; i++)
                 {
-                    if (pattern[i].ContainsReservedSymbols)
+                    if (pattern[i].ContainsReservedSymbols())
                     {
                         throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern contains invalid symbols");
                     }
@@ -460,7 +469,7 @@ namespace OscLib
                 for (int i = 0; i < pattern.Length; i++)
                 {
                     // bumping into a reserved symbol at this stage means that there was an attempt at pattern matching, and we can't have that just yet
-                    if (pattern[i].ContainsReservedSymbols)
+                    if (pattern[i].ContainsReservedSymbols())
                     {
                         throw new ArgumentException("Please no pattern-matching, I beg you.");
                     }

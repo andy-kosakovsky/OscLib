@@ -24,7 +24,7 @@ namespace OscLib
 
             int msgStart = extPointer;
 
-            if (msgStart + message.Length > array.Length)
+            if (msgStart + message.OscLength > array.Length)
             {
                 throw new ArgumentException("OSC Serializer ERROR: Cannot add OSC data to byte array, array is too short. ");
             }
@@ -54,10 +54,8 @@ namespace OscLib
             else
             {
                 // shift the pointer forwards to the end of the message
-                extPointer = msgStart + message.Length;
+                extPointer = msgStart + message.OscLength;
             }
-
-
 
         }
 
@@ -72,7 +70,7 @@ namespace OscLib
         {
             int bndStart = extPointer;
 
-            if (bndStart + bundle.Length > array.Length)
+            if (bndStart + bundle.OscLength > array.Length)
             {
                 throw new ArgumentException("OSC Serializer ERROR: Cannot add OSC data to byte array, array is too short. ");
             }
@@ -125,7 +123,7 @@ namespace OscLib
         /// <returns> An OSC Protocol-compliant byte array containing the serialized message. </returns>
         public static byte[] GetBytes(OscMessage message)
         {
-            byte[] binaryData = new byte[message.Length];
+            byte[] binaryData = new byte[message.OscLength];
 
             int pointer = 0;
 
@@ -143,7 +141,7 @@ namespace OscLib
         /// <returns> An OSC Protocol-compliant byte array containing the serialized bundle. </returns>
         public static byte[] GetBytes(OscBundle bundle)
         {
-            byte[] binaryData = new byte[bundle.Length];
+            byte[] binaryData = new byte[bundle.OscLength];
 
             int pointer = 0;
 
@@ -183,56 +181,6 @@ namespace OscLib
 
 
 
-        #region GETTING PACKETS
-
-        /// <summary>
-        /// Serializes the provided OSC Message into bytes and returns them as an OSC Packet.
-        /// </summary>
-        /// <param name="message"> The message to be converted. </param>
-        /// <returns> An OSC Packet containing the message. </returns>
-        public static OscPacket GetPacket(OscMessage message)
-        {
-            return new OscPacket(message);
-        }
-
-
-        /// <summary>
-        /// Serializes the provided OSC Bundle into bytes and returns them as an OSC Packet.
-        /// </summary>
-        /// <param name="bundle"> The bundle to be converted. </param>
-        /// <returns> An OSC Packet containing the bundle. </returns>
-        public static OscPacket GetPacket(OscBundle bundle)
-        {
-            return new OscPacket(bundle);
-        }
-
-
-        /// <summary>
-        /// Creates an OSC Message out of the provided address pattern and arguments, serializes it and returns it as an OSC Packet.
-        /// </summary>
-        /// <param name="addressPattern"> The address pattern of the message. </param>
-        /// <param name="arguments"> The arguments of the message. Can be null - this will result in a message with an empty argument string. </param>
-        /// <returns> An OSC Packet containing the bundle. </returns>
-        public static OscPacket GetPacket(OscString addressPattern, object[] arguments = null)
-        {
-            return new OscPacket(addressPattern, arguments);
-        }
-
-
-        public static OscPacket GetPacket(OscTimetag timetag, OscMessage[] messages = null, OscBundle[] bundles = null)
-        {
-            // bundle it up
-            OscBundle bundle = new OscBundle(timetag, bundles, messages);
-
-            // get the bytes
-            return new OscPacket(bundle);
-
-        }
-
-        #endregion // GETTING PACKETS
-
-
-
         #region ADDING BYTE "CONTENTS"
 
         /// <summary>
@@ -246,10 +194,10 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                AddBytes(packets[i].Length, array, ref extPointer);
+                AddBytes(packets[i].OscLength, array, ref extPointer);
 
                 packets[i].BinaryData.CopyTo(array, extPointer);
-                extPointer += packets[i].Length;
+                extPointer += packets[i].OscLength;
 
             }
 
@@ -267,7 +215,7 @@ namespace OscLib
 
             for (int i = 0; i < messages.Length; i++)
             {
-                AddBytes(messages[i].Length, array, ref extPointer);
+                AddBytes(messages[i].OscLength, array, ref extPointer);
 
                 AddBytes(messages[i], array, ref extPointer);
             }
@@ -286,7 +234,7 @@ namespace OscLib
 
             for (int i = 0; i < bundles.Length; i++)
             {
-                AddBytes(bundles[i].Length, array, ref extPointer);
+                AddBytes(bundles[i].OscLength, array, ref extPointer);
 
                 AddBytes(bundles[i], array, ref extPointer);
             }
@@ -312,7 +260,7 @@ namespace OscLib
             for (int i = 0; i < messages.Length; i++)
             {
                 // get length of all messages, plus allow 4 bytes for the "length" integer
-                length += messages[i].Length + OscProtocol.Chunk32;
+                length += messages[i].OscLength + OscProtocol.Chunk32;
             }
 
             byte[] binaryData = new byte[length];
@@ -322,7 +270,7 @@ namespace OscLib
             for (int i = 0; i < messages.Length; i++)
             {
                 // get length of the message
-                AddBytes(messages[i].Length, binaryData, ref pointer);
+                AddBytes(messages[i].OscLength, binaryData, ref pointer);
 
                 // get the message
                 AddBytes(messages[i], binaryData, ref pointer);
@@ -352,7 +300,7 @@ namespace OscLib
             // find length
             for (int i = 0; i < bundles.Length; i++)
             {
-                length += bundles[i].Length + OscProtocol.Chunk32;
+                length += bundles[i].OscLength + OscProtocol.Chunk32;
             }
 
             byte[] binaryData = new byte[length];
@@ -362,7 +310,7 @@ namespace OscLib
             for (int i = 0; i < bundles.Length; i++)
             {
                 // get bundle length
-                AddBytes(bundles[i].Length, binaryData, ref pointer);
+                AddBytes(bundles[i].OscLength, binaryData, ref pointer);
 
                 // get bundle
                 AddBytes(bundles[i], binaryData, ref pointer);
@@ -388,7 +336,7 @@ namespace OscLib
             for (int i = 0; i < packets.Length; i++)
             {
                 // length of each packet plus 4 bytes for recording the length itself
-                length += packets[i].Length + OscProtocol.Chunk32;
+                length += packets[i].OscLength + OscProtocol.Chunk32;
             }
 
             byte[] binaryData = new byte[length];
@@ -463,14 +411,14 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytes(int arg)
         {
-            byte[] data = BitConverter.GetBytes(arg);
+            int value = arg;
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(data);
+                value = OscEndian.Swap(value);
             }
 
-            return data;
+            return BitConverter.GetBytes(value);
         }
 
 
@@ -482,16 +430,17 @@ namespace OscLib
         /// <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         public static void AddBytes(int arg, byte[] array, ref int extPointer)
         {
-            BitConverter.GetBytes(arg).CopyTo(array, extPointer);
+            int value = arg;
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(array, extPointer, OscProtocol.Chunk32);
+                value = OscEndian.Swap(value);
             }
+
+            BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
             extPointer += OscProtocol.Chunk32;
-
         }
 
 
@@ -537,14 +486,14 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytes(long arg)
         {
-            byte[] data = BitConverter.GetBytes(arg);
+            long value = arg;
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(data);
+                value = OscEndian.Swap(value);
             }
 
-            return data;
+            return BitConverter.GetBytes(value);
         }
 
 
@@ -556,16 +505,17 @@ namespace OscLib
         /// <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data.  </param>
         public static void AddBytes(long arg, byte[] array, ref int extPointer)
         {
-            BitConverter.GetBytes(arg).CopyTo(array, extPointer);
+            long value = arg;
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(array, extPointer, OscProtocol.Chunk64);
+                value = OscEndian.Swap(value);
             }
+
+            BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
             extPointer += OscProtocol.Chunk64;
-
         }
 
 
@@ -612,14 +562,14 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytes(float arg)
         {
-            byte[] data = BitConverter.GetBytes(arg);
+            float value = arg;
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(data);
+                value = OscEndian.Swap(value);
             }
 
-            return data;
+            return BitConverter.GetBytes(value);
         }
 
 
@@ -631,12 +581,14 @@ namespace OscLib
         /// <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         public static void AddBytes(float arg, byte[] array, ref int extPointer)
         {
-            BitConverter.GetBytes(arg).CopyTo(array, extPointer);
+            float value = arg;
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(array, extPointer, OscProtocol.Chunk32);
+                value = OscEndian.Swap(value);
             }
+
+            BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
             extPointer += OscProtocol.Chunk32;
@@ -684,14 +636,14 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytes(double arg)
         {
-            byte[] data = BitConverter.GetBytes(arg);
+            double value = arg;
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(data);
+                value = OscEndian.Swap(value);
             }
 
-            return data;
+            return BitConverter.GetBytes(value);
         }
 
 
@@ -703,16 +655,17 @@ namespace OscLib
         /// <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         public static void AddBytes(double arg, byte[] array, ref int extPointer)
         {
-            BitConverter.GetBytes(arg).CopyTo(array, extPointer);
+            double value = arg;
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(array, extPointer, OscProtocol.Chunk64);
+                value = OscEndian.Swap(value);
             }
+
+            BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
             extPointer += OscProtocol.Chunk64;
-
         }
 
 
@@ -760,7 +713,7 @@ namespace OscLib
             // just to simplify conversion. will create two small byte[] arrays but who cares lol
             OscString oscString = arg;
 
-            return oscString.OscBytes;
+            return oscString.GetGetOscBytes();
         }
 
 
@@ -834,7 +787,7 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytes(OscString arg)
         {
-            return arg.OscBytes;
+            return arg.GetGetOscBytes();
         }
 
 
@@ -905,10 +858,9 @@ namespace OscLib
         {
             byte[] resultArray = new byte[GetLength(arg) + OscProtocol.Chunk32];
 
-            // copy the length into the array
-            GetBytes(arg.Length).CopyTo(resultArray, 0);
+            int pointer = 0;
 
-            arg.CopyTo(resultArray, OscProtocol.Chunk32);
+            AddBytes(arg, resultArray, ref pointer);
 
             return resultArray;
         }
@@ -925,11 +877,10 @@ namespace OscLib
             // TODO: adding blobs needs testing
             // add length
             AddBytes(arg.Length, array, ref extPointer);
-
             // add data
             arg.CopyTo(array, extPointer);
-            extPointer += GetLength(arg); 
 
+            extPointer += GetLength(arg); 
         }
 
 
@@ -1020,7 +971,7 @@ namespace OscLib
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(data);
+                OscEndian.Swap(data);
             }
 
             return data;
@@ -1039,7 +990,7 @@ namespace OscLib
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(array, extPointer, OscProtocol.Chunk32);
+                OscEndian.Swap(array, extPointer, OscProtocol.Chunk32);
             }
 
             // shift the external pointer
@@ -1059,7 +1010,7 @@ namespace OscLib
 
             if (BitConverter.IsLittleEndian)
             {
-                OscUtil.SwapEndian(data);
+                OscEndian.Swap(data);
             }
 
             typeTag = OscProtocol.TypeTagTime;
@@ -1243,10 +1194,10 @@ namespace OscLib
                     return OscProtocol.Chunk64;
 
                 case OscBundle oscBundle:
-                    return oscBundle.Length;
+                    return oscBundle.OscLength;
 
                 case OscMessage oscMessage:
-                    return oscMessage.Length;
+                    return oscMessage.OscLength;
 
 
                 default:

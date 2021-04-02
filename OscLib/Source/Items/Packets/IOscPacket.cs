@@ -10,7 +10,7 @@ namespace OscLib
         byte[] BinaryData { get; }
 
         /// <summary> Packet length in bytes. </summary>
-        int Length { get; }
+        int OscLength { get; }
 
     }
 
