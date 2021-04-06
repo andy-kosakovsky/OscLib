@@ -138,5 +138,142 @@ namespace OscLib
             bundleArray[thisBundleIndex] = new OscBundle(timestampStack[currentTimestampIndex], messageList.ToArray());
 
         }
+    
+
+
+
+    /// <summary>
+    /// Serializes the provided argument into its OSC byte data form and returns it as an array of bytes, provides the corresponding type tag.
+    /// </summary>
+    /// <remarks>
+    /// Implemented the way it is to minimize boxing.
+    /// </remarks>
+    /// <param name="arg"> Argument to be serialized. </param>
+    /// <param name="typeTag"> Will return the OSC type tag for the provided argument. </param>
+    /// <returns> The byte array containing the argument converted to OSC Protocol-compliant binary. </returns>
+    /// <exception cref="ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
+    protected virtual byte[] GetArgAsBytes<T>(T arg, out byte typeTag)
+    {
+        switch (arg)
+        {
+            case int argInt:
+                typeTag = _typeTagInt32;
+                return OscSerializer.GetBytes(argInt);
+
+            case long argLong:
+                typeTag = _typeTagInt64;
+                return OscSerializer.GetBytes(argLong);
+
+            case OscTimetag argTimestamp:
+                typeTag = _typeTagTimetag;
+                return OscSerializer.GetBytes(argTimestamp);
+
+            case float argFloat:
+                typeTag = _typeTagFloat32;
+                return OscSerializer.GetBytes(argFloat);
+
+            case double argDouble:
+                typeTag = _typeTagFloat64;
+                return OscSerializer.GetBytes(argDouble);
+
+            case string argString:
+                typeTag = _typeTagString;
+                return OscSerializer.GetBytes(argString);
+
+            case OscString oscString:
+                typeTag = _typeTagString;
+                return OscSerializer.GetBytes(oscString);
+
+            case byte[] argByte:
+                typeTag = _typeTagBlob;
+                return OscSerializer.GetBytes(argByte);
+
+            // deal with bools as args
+            case bool argBool:
+                if (argBool)
+                {
+                    typeTag = _typeTagTrue;
+                }
+                else
+                {
+                    typeTag = _typeTagFalse;
+                }
+                return new byte[0];
+
+            case char argChar:
+                return GetArgAsBytes(argChar.ToString(), out typeTag);
+
+
+
+            default:
+                throw new ArgumentException("Command Error: Argument " + arg.ToString() + " of unsupported type.");
+
+        }
+
+    }
+
+
+    /// <summary>
+    /// The catch-all method to serialize OSC Protocol-supported message arguments and add them into existing byte arrays.  
+    /// </summary>
+    /// <remarks>
+    /// Implemented the way it is to minimize boxing when dealing with objects and vars of unknown type.
+    /// </remarks>
+    /// <param name="arg"> The argument to be serialized. </param>
+    /// <param name="array"> The target byte array. </param>
+    /// <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
+    /// <param name="typeTag"> Corresponding OSC type tag. </param>
+    /// <exception cref="ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
+    public static void AddArgAsBytes<T>(T arg, byte[] array, ref int extPointer, out byte typeTag)
+    {
+        switch (arg)
+        {
+            case int argInt:
+                AddArgAsBytes(argInt, array, ref extPointer, out typeTag);
+                break;
+
+            case long argLong:
+                AddArgAsBytes(argLong, array, ref extPointer, out typeTag);
+                break;
+
+            case float argFloat:
+                AddArgAsBytes(argFloat, array, ref extPointer, out typeTag);
+                break;
+
+            case double argDouble:
+                AddArgAsBytes(argDouble, array, ref extPointer, out typeTag);
+                break;
+
+            case string argString:
+                AddArgAsBytes(argString, array, ref extPointer, out typeTag);
+                break;
+
+            case OscString oscString:
+                AddArgAsBytes(oscString, array, ref extPointer, out typeTag);
+                break;
+
+            case byte[] argByte:
+                AddArgAsBytes(argByte, array, ref extPointer, out typeTag);
+                break;
+
+            case bool argBool:
+                AddArgAsBytes(argBool, array, ref extPointer, out typeTag);
+                break;
+
+            case char argChar:
+                AddArgAsBytes(argChar.ToString(), array, ref extPointer, out typeTag);
+                break;
+
+            case OscTimetag argTimetag:
+                AddArgAsBytes(argTimetag, array, ref extPointer, out typeTag);
+                break;
+
+            default:
+                throw new ArgumentException("Command Error: Argument " + arg.ToString() + " of unsupported type.");
+
+        }
+
+    }
     */
+
 }

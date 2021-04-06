@@ -464,7 +464,7 @@ namespace OscLib
                 if (_bundlePacketsBeforeSending)
                 {
                     // counts the total of bytes currently in the data holder. set to the length of bundle header in case we got something to send
-                    int byteCounter = OscBundle.HeaderLength;
+                    int byteCounter = OscBundle.BundleHeaderLength;
 
                     // convenience "caches"
                     byte[] packetData;
@@ -485,7 +485,7 @@ namespace OscLib
                             packetLength = packetHeapLevel[i].OscLength;
 
                             // check whether this packet will fit (
-                            if ((byteCounter + packetLength + OscBundle.HeaderLength) < _packetMaxLength) 
+                            if ((byteCounter + packetLength + OscBundle.BundleHeaderLength) < _packetMaxLength) 
                             {
                                 // message will be processed and added to the bundle, let's account for that 
                                 totalPackets--;
@@ -516,10 +516,10 @@ namespace OscLib
                     }
 
                     // if we got bytes to send beyond the standard bundle header let's send them
-                    if (byteCounter > OscBundle.HeaderLength)
+                    if (byteCounter > OscBundle.BundleHeaderLength)
                     {
                         // add bundle header
-                        OscSerializer.AddBundleHeader(_cycleBinaryDataHolder, 0, _timetagSource.Invoke());
+                        OscProtocol.AddBundleHeader(_cycleBinaryDataHolder, 0, _timetagSource.Invoke());
                         
                         OscPacket newBundle = new OscPacket(_cycleBinaryDataHolder);
 

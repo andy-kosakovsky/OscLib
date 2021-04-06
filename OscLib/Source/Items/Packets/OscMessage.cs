@@ -11,11 +11,8 @@ namespace OscLib
         // used to return an empty array of arguments
         private static readonly object[] _argumentsEmpty = new object[0];
 
-
         private readonly OscString _addressPattern;
         private readonly object[] _arguments;
-        private readonly int _oscLength;
-
 
         /// <summary> OSC address pattern of this message. </summary>
         public OscString AddressPattern { get => _addressPattern; }
@@ -39,12 +36,7 @@ namespace OscLib
 
         }
 
-
-        /// <summary> Length of this message in bytes when serialized as OSC data. </summary>
-        /// <remarks> Includes the length of the argument type tag string. If there are zero arguments, it'll still include extra 4 bytes to contain the comma + 3 empty bytes. </remarks>
-        public int OscLength { get => _oscLength; }
-        //TODO: maybe have it selectable in settings/preferences/attributes whether to include an ",___" empty type tag string in messages with no arguments? 
-
+       
         /// <summary>
         /// Creates a new OSC message out of an address pattern and an array of arguments.
         /// </summary>
@@ -66,27 +58,6 @@ namespace OscLib
 
             _addressPattern = addressPattern;
             _arguments = arguments;
-
-            _oscLength = _addressPattern.OscLength;
-
-
-            if (_arguments != null)
-            {
-                for (int i = 0; i < arguments.Length; i++)
-                {
-                    _oscLength += OscSerializer.GetLength(arguments[i]);
-                }
-
-                // account for the type tag string
-                _oscLength += OscUtil.GetNextMultipleOfFour(_arguments.Length + 1);
-
-            }
-            else
-            {
-                // account for the empty type tag string
-                _oscLength += OscProtocol.Chunk32;
-            }
-
         }
 
 
@@ -98,9 +69,6 @@ namespace OscLib
         {
             StringBuilder returnString = new StringBuilder();
 
-            returnString.Append('(');
-            returnString.Append(_oscLength);
-            returnString.Append(" bytes) ");
             returnString.Append("MESSAGE: ");
             returnString.Append(_addressPattern.ToString());
 

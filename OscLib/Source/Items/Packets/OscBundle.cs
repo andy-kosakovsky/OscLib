@@ -10,18 +10,23 @@ namespace OscLib
     public readonly struct OscBundle
     {
         /// <summary> The length of the bundle header in bytes. That is, the "#bundle " + [timestamp] bit. </summary>
-        public const int HeaderLength = 16;
+        public const int BundleHeaderLength = 16;
+
+        /// <summary> The Length of the "#bundle " string in bytes that should be present in the beginning of a bundle. </summary>
+        public const int MarkerStringLength = 8;
+
+        // bundles are marked by having "#bundle" as their address string. this is a "prerendered" bundle message
+        private static readonly byte[] _markerString = new byte[8] { OscProtocol.BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
 
         // these are used to return empty arrays of messages and bundles
         private static readonly OscMessage[] _messagesEmpty = new OscMessage[0];
         private static readonly OscBundle[] _bundlesEmpty = new OscBundle[0];
 
+
         private readonly OscTimetag _timetag;
 
         private readonly OscMessage[] _messages;
         private readonly OscBundle[] _bundles;
-
-        private readonly int _oscLength;
 
         /// <summary> Timestamp attached to this bundle. </summary>
         public OscTimetag Timetag { get => _timetag; }
@@ -61,9 +66,6 @@ namespace OscLib
 
         }
 
-        /// <summary> Length of this bundle in bytes. </summary>
-        public int OscLength { get => _oscLength; }
-
 
         /// <summary>
         /// Creates an OSC Bundle out of an array of messages and an array of bundles.
@@ -77,30 +79,6 @@ namespace OscLib
 
             _messages = messages;
             _bundles = bundles;
-
-            // find the length for everything
-            _oscLength = HeaderLength;
-
-            if (_bundles != null)
-            {
-                for (int i = 0; i < _bundles.Length; i++)
-                {
-                    // add bundle length plus the length of the integer containing its length
-                    _oscLength += _bundles[i].OscLength + OscProtocol.Chunk32;
-                }
-
-            }
-
-            if (_messages != null)
-            {
-                for (int i = 0; i < _messages.Length; i++)
-                {
-                    // ditto
-                    _oscLength += _messages[i].OscLength + OscProtocol.Chunk32;
-                }
-
-            }
-
         }
 
 
@@ -115,20 +93,6 @@ namespace OscLib
 
             _messages = null;
             _bundles = bundles;
-
-            // find the length of everything
-            _oscLength = HeaderLength;
-
-            if (_messages != null)
-            {
-                for (int i = 0; i < _bundles.Length; i++)
-                {
-                    // add message length plus the length of the integer containing its length
-                    _oscLength += _bundles[i].OscLength + OscProtocol.Chunk32;
-                }
-
-            }
-
         }
 
 
@@ -144,19 +108,6 @@ namespace OscLib
             _messages = messages;
             _bundles = null;
             
-            // find the length of everything
-            _oscLength = HeaderLength;
-
-            if (_messages != null)
-            {
-                for (int i = 0; i < _messages.Length; i++)
-                {
-                    // add message length plus the length of the integer containing its length
-                    _oscLength += _messages[i].OscLength + OscProtocol.Chunk32;
-                }
-
-            }
-
         }
 
 
@@ -166,8 +117,6 @@ namespace OscLib
         /// <param name="timetag"> A OSC Timetag of this sad empty bundle. </param>
         public OscBundle(OscTimetag timetag)
         {
-            _oscLength = HeaderLength;
-
             _timetag = timetag;
 
             // nothing to see here
@@ -175,6 +124,18 @@ namespace OscLib
             _bundles = null;
 
         }
+
+
+        /// <summary>
+        /// Copies the bundle marker string ("#bundle ") to array, starting at the specified index.
+        /// </summary>
+        /// <param name="array"> Target array. </param>
+        /// <param name="index"> Target index. </param>
+        public static void CopyMarkerStringTo(byte[] array, int index)
+        {
+            _markerString.CopyTo(array, index);
+        }
+
 
         /// <summary>
         /// Returns this bundle as a neatly formatted string, for debug purposes mostly.
@@ -202,8 +163,6 @@ namespace OscLib
             returnString.Append(spaces);
             returnString.Append("Time tag: ");
             returnString.Append(_timetag.ToString());
-            returnString.Append(", total length: ");
-            returnString.Append(_oscLength);
 
             if (_bundles != null)
             {

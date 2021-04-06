@@ -28,9 +28,14 @@ namespace OscLib
     /// </summary>
     public class OscLink
     {
+        private static readonly IPAddress _localIP = IPAddress.Parse("127.0.0.1");
+
         #region FIELDS
         /// <summary> This OSC Link's name. </summary>
         protected readonly string _name;
+
+        /// <summary> The OSC Protocol currently in use by this link. </summary>
+        protected OscProtocol _protocol;
 
         /// <summary> Used internally to send and receive OSC packets. </summary>
         protected UdpClient _udpClient;
@@ -78,6 +83,10 @@ namespace OscLib
 
 
         #region PROPERTIES
+        /// <summary> Local IP address. </summary>
+        public static IPAddress LocalIP { get => _localIP; }
+
+
         /// <summary> Returns the name of this OSC Link. </summary>
         public string Name { get => _name;  }
 
@@ -189,10 +198,12 @@ namespace OscLib
         /// <param name="callEventsOnReceive"> Controls whether the "message/bundles received" events get called. </param>
         /// <param name="callEventsOnReceiveAsBytes"> Controls whether the "packet received as bytes" events get called. </param>
         /// <param name="callEventsOnSend"> Controls whether the "bundles/message sent" events get called. </param>
-        public OscLink(string name, int udpClientMaxBufferSize = 256, bool callEventsOnReceive = true, bool callEventsOnReceiveAsBytes = false, bool callEventsOnSend = false)
+        public OscLink(string name, OscProtocol protocol, int udpClientMaxBufferSize = 256, bool callEventsOnReceive = true, bool callEventsOnReceiveAsBytes = false, bool callEventsOnSend = false)
         {
 
             _name = name;
+            _protocol = protocol;
+
             _receiveTaskTokenSource = new CancellationTokenSource();
             _udpClientMaxBufferSize = udpClientMaxBufferSize;
 
@@ -524,7 +535,7 @@ namespace OscLib
             {
                 int pointer = 0;
 
-                BundleReceived?.Invoke(OscDeserializer.GetBundle(binaryData, ref pointer, binaryData.Length), receivedFrom);
+                BundleReceived?.Invoke(_protocol.GetBundle(binaryData, ref pointer, binaryData.Length), receivedFrom);
             }
 
             if (_callEventsOnReceiveAsBytes)
@@ -545,7 +556,7 @@ namespace OscLib
 
             if (_callEventsOnReceive)
             {
-                MessageReceived?.Invoke(OscDeserializer.GetMessage(binaryData), receivedFrom);
+                MessageReceived?.Invoke(_protocol.GetMessage(binaryData), receivedFrom);
             }
 
             if (_callEventsOnReceiveAsBytes)
@@ -568,11 +579,11 @@ namespace OscLib
             {
                 if (binaryData[0] == (byte)'#')
                 {
-                    BundleSent?.Invoke(OscDeserializer.GetBundle(binaryData), sentTo);
+                    BundleSent?.Invoke(_protocol.GetBundle(binaryData), sentTo);
                 }
                 else
                 {
-                    MessageSent?.Invoke(OscDeserializer.GetMessage(binaryData), sentTo);
+                    MessageSent?.Invoke(_protocol.GetMessage(binaryData), sentTo);
                 }
 
             }

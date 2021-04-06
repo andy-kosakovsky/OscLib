@@ -25,13 +25,13 @@ namespace OscLib
         /// <summary> Returns an end point at a local address on a random open port. </summary> 
         public static IPEndPoint GetLocalEndPoint()
         { 
-            return new IPEndPoint(OscProtocol.LocalIP, 0); 
+            return new IPEndPoint(OscLink.LocalIP, 0); 
         } 
 
 
         public static IPEndPoint GetLocalEndPointWithPort(int port)
         {
-            return new IPEndPoint(OscProtocol.LocalIP, port);
+            return new IPEndPoint(OscLink.LocalIP, port);
         }
 
         /// <summary>
