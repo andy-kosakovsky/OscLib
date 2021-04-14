@@ -16,7 +16,7 @@ namespace OscLib
         public const int MarkerStringLength = 8;
 
         // bundles are marked by having "#bundle" as their address string. this is a "prerendered" bundle message
-        private static readonly byte[] _markerString = new byte[8] { OscProtocol.BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
+        private static readonly byte[] _markerString = new byte[8] { OscConvert.BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
 
         // these are used to return empty arrays of messages and bundles
         private static readonly OscMessage[] _messagesEmpty = new OscMessage[0];
@@ -27,6 +27,7 @@ namespace OscLib
 
         private readonly OscMessage[] _messages;
         private readonly OscBundle[] _bundles;
+
 
         /// <summary> Timestamp attached to this bundle. </summary>
         public OscTimetag Timetag { get => _timetag; }
@@ -106,8 +107,7 @@ namespace OscLib
             _timetag = timetag;
     
             _messages = messages;
-            _bundles = null;
-            
+            _bundles = null;         
         }
 
 
@@ -122,7 +122,6 @@ namespace OscLib
             // nothing to see here
             _messages = null;
             _bundles = null;
-
         }
 
 
@@ -146,13 +145,13 @@ namespace OscLib
             return ToShiftedString(0);
         }
 
-
+  
         /// <summary>
         /// A debug method to print bundles inside of bundles easier. Does the same thing as the standard ToSpring() but adds some spaces after every new line.
         /// </summary>
         /// <param name="shiftAmount">How many spaces to add aftear each new line</param>
         /// <returns></returns>
-        public string ToShiftedString(int shiftAmount = 6)
+        private string ToShiftedString(int shiftAmount = 6)
         {
             string spaces = OscUtil.GetRepeatingChar(' ', shiftAmount);
 

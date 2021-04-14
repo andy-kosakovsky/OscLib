@@ -415,6 +415,8 @@ namespace OscLib
                                 }
                                 catch (Exception e)
                                 {
+                                    throw e;
+
                                     SendTaskExceptionRaised?.Invoke(e);
                                     
                                     // wipe the packet heap level, just in case
@@ -519,7 +521,7 @@ namespace OscLib
                     if (byteCounter > OscBundle.BundleHeaderLength)
                     {
                         // add bundle header
-                        OscProtocol.AddBundleHeader(_cycleBinaryDataHolder, 0, _timetagSource.Invoke());
+                        OscConvert.AddBundleHeader(_cycleBinaryDataHolder, 0, _timetagSource.Invoke());
                         
                         OscPacket newBundle = new OscPacket(_cycleBinaryDataHolder);
 

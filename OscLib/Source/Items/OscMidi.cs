@@ -10,19 +10,10 @@ namespace OscLib
     public readonly struct OscMidi
     {
         // TODO: FINISH THIS
-        private readonly byte _portId;
-
-        private readonly byte _status;
-
-        private readonly byte _data1;
-
-        private readonly byte _data2;
-
-
-        public byte PortID { get => _portId; }
-        public byte Status { get => _status; }
-        public byte Data1 { get => _data1; }
-        public byte Data2 { get => _data2; }
+        public readonly byte PortId;
+        public readonly byte Status;
+        public readonly byte Data1;
+        public readonly byte Data2;
 
     }
 }

@@ -15,7 +15,7 @@ namespace OscLib
     /// floats, some use an integer of 1 and 0 instead of T and F typetags for sending booleans, some use custom typetags, and so on. Some applications don't even allow any arguments
     /// apart from the bare standard int32, float32, OSC-string and OSC-blob. All this can be accounted for in method overloads in the derived classes. 
     /// </remarks>
-    public abstract class OscProtocol
+    public abstract class OscConvert
     {
         // byte lengths of data chunks used by OSC
 
@@ -79,10 +79,10 @@ namespace OscLib
 
 
         /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
-        protected bool _settingAddEmptyTypeTagStrings;
+        protected bool _settingEmptyTypeTagStrings;
 
         /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
-        public virtual bool SettingAddEmptyTypeTagStrings { get => _settingAddEmptyTypeTagStrings; }
+        public virtual bool SettingEmptyTypeTagStrings { get => _settingEmptyTypeTagStrings; set => _settingEmptyTypeTagStrings = value; }
 
 
 
@@ -101,17 +101,11 @@ namespace OscLib
 
             int msgStart = extPointer;
 
-            int msgLength = GetMessageOscLength(message);
-
-            if (msgStart + msgLength > array.Length)
-            {
-                throw new ArgumentException("OSC Serializer ERROR: Cannot add OSC data to byte array, array is too short. ");
-            }
-
+       
             message.AddressPattern.CopyTo(array, msgStart);
 
             extPointer += addrLength;
-        
+
             if (message.Arguments.Length > 0)
             {
                 // add the address pattern comma
@@ -130,34 +124,17 @@ namespace OscLib
             }
             else
             {
-                if (_settingAddEmptyTypeTagStrings)
+                if (_settingEmptyTypeTagStrings)
                 {
                     // add the address pattern comma
                     array[msgStart + addrLength] = Comma;
+
+                    // shift pointer forward by 4 bytes - the comma plus three null bytes
+                    extPointer += Chunk32;
                 }
 
-                // shift the pointer forwards to the end of the message
-                extPointer = msgStart + msgLength;
             }
-
-        }
-
-
-        /// <summary>
-        /// Converts the provided address pattern and arguments into OSC Message byte data, adds it to the provided byte array.
-        /// </summary>
-        /// <param name="addressPattern"> The address pattern of this message. </param>
-        /// <param name="arguments"> The arguments (should be of supported types, obviously). </param>
-        /// <param name="array"> The byte array to add the message data to. </param>
-        /// <param name="extPointer"> The external pointer designating the index from which to add data to array. Will be shifted forwards by the length of added data. </param>
-        /// <exception cref="ArgumentException"> Thrown if the provided data array is too small to fit the message into. </exception>
-        protected void AddMessageAsBytes(OscString addressPattern, object[] arguments, byte[] array, ref int extPointer)
-        {
-            // make a new message to check length, etc. This shouldn't be too problematic memory-wise, as we're not creating anything new on the heap
-            OscMessage message = new OscMessage(addressPattern, arguments);
-
-            AddMessageAsBytes(message, array, ref extPointer);
-
+         
         }
 
 
@@ -170,17 +147,9 @@ namespace OscLib
         protected void AddBundleAsBytes(OscBundle bundle, byte[] array, ref int extPointer)
         {
             int bndStart = extPointer;
-
-            int bndLength = GetBundleOscLength(bundle);
-
-            if (bndStart + bndLength > array.Length)
-            {
-                throw new ArgumentException("OSC Serializer ERROR: Cannot add OSC data to byte array, array is too short. ");
-            }
-
-            AddBundleHeader(array, extPointer, bundle.Timetag);
-
             extPointer += OscBundle.BundleHeaderLength;
+
+            AddBundleHeader(array, bndStart, bundle.Timetag);
 
             // add messages
             if (bundle.Messages.Length > 0)
@@ -196,73 +165,6 @@ namespace OscLib
         }
 
         #endregion // ADDING BYTES OF WHOLE MESSAGES / BUNDLES
-
-
-
-        #region GETTING BYTES OF WHOLE MESSAGES / BUNDLES
-
-        /// <summary>
-        /// Serializes the provided OSC Message into a byte array.
-        /// </summary>
-        /// <param name="message"> OSC Message to be serialized. </param>       
-        /// <returns> An OSC Protocol-compliant byte array containing the serialized message. </returns>
-        protected byte[] GetMessageAsBytes(OscMessage message)
-        {
-            byte[] binaryData = new byte[GetMessageOscLength(message)];
-
-            int pointer = 0;
-
-            AddMessageAsBytes(message, binaryData, ref pointer);
-
-            return binaryData;
-
-        }
-
-
-        /// <summary>
-        /// Creates a byte array of OSC binary data out of the provided address pattern and arguments.
-        /// </summary>
-        /// <param name="addressPattern"> The address pattern of this message. </param>
-        /// <param name="arguments"> The arguments (should be of supported types, obviously) </param>
-        /// <returns> A byte array containing the serialized message. </returns>
-        /// <exception cref="ArgumentNullException"> Thrown if the address pattern is null or empty. </exception>
-        /// <exception cref="ArgumentException"> Thrown if the address pattern doesn't start with a "/" symbol, as required per OSC Protocol. </exception>
-        protected byte[] GetMessageAsBytes(OscString addressPattern, object[] arguments = null)
-        {
-            if (OscString.IsNullOrEmpty(addressPattern))
-            {
-                throw new ArgumentNullException(nameof(addressPattern), "OSC Serializer ERROR: Cannot convert message to bytes, its address pattern is null or empty.");
-            }
-
-            // check if the very first symbol of the address pattern is compliant to the standard
-            if (addressPattern[0] != Separator)
-            {
-                throw new ArgumentException("OSC Serializer ERROR: Cannot convert, provided address pattern doesn't begin with a '/'.");
-            }
-
-            return GetMessageAsBytes(new OscMessage(addressPattern, arguments));
-
-        }
-
-
-        /// <summary>
-        /// Serializes the provided OSC Bundle into a byte array.
-        /// </summary>
-        /// <param name="bundle"> OSC Bundle to be serialized. </param>
-        /// <returns> An OSC Protocol-compliant byte array containing the serialized bundle. </returns>
-        protected byte[] GetBundleAsBytes(OscBundle bundle)
-        {
-            byte[] binaryData = new byte[GetBundleOscLength(bundle)];
-
-            int pointer = 0;
-
-            AddBundleAsBytes(bundle, binaryData, ref pointer);
-
-            return binaryData;
-
-        }
-
-        #endregion // GETTING BYTES OF WHOLE MESSAGES / BUNDLES
 
 
 
@@ -287,10 +189,11 @@ namespace OscLib
 
                 int endPointer = extPointer;
 
-                int length = endPointer - startPointer + Chunk32;
+                int length = endPointer - startPointer - Chunk32;
 
                 // add length
                 OscSerializer.AddBytes(length, array, startPointer);
+
             }
 
         }
@@ -315,7 +218,7 @@ namespace OscLib
 
                 int endPointer = extPointer;
 
-                int length = endPointer - startPointer + Chunk32;
+                int length = endPointer - startPointer - Chunk32;
 
                 // add length
                 OscSerializer.AddBytes(length, array, startPointer);
@@ -348,112 +251,55 @@ namespace OscLib
 
 
 
-        #region GETTING BYTE "CONTENTS"
-
-        /// <summary>
-        /// Converts the provided OSC Messages to bytes and orders them into a byte array of OSC Bundle "contents".
-        /// </summary>
-        /// <param name="messages"> An array of OSC Messages to convert. </param>
-        /// <param name="length"> An out parameter containing the length of the resultant byte array. </param>
-        /// <returns> An ordered byte array of elements formatted as [element 1's length] - [element 1] - [element 2's length] - [element 2] and so on. </returns>
-        protected byte[] GetBytesAsContent(OscMessage[] messages, out int length)
-        {
-            length = 0;
-
-            int pointer = 0;
-
-            for (int i = 0; i < messages.Length; i++)
-            {
-                // get length of all messages, plus allow 4 bytes for the "length" integer
-                length += GetMessageOscLength(messages[i]) + OscProtocol.Chunk32;
-            }
-
-            byte[] binaryData = new byte[length];
-
-            AddBytesAsContent(messages, binaryData, ref pointer);
-
-            return binaryData;
-
-        }
-
-
-        /// <summary>
-        /// Converts the provided OSC Bundles to bytes and orders them into a byte array of OSC Bundle "contents".
-        /// </summary>
-        /// <param name="bundles"> An array of OSC Messages to convert. </param>
-        /// <param name="length"> An out parameter containing the length of the resultant byte array. </param>
-        /// <returns> An ordered byte array of elements formatted as [element 1's length] - [element 1] - [element 2's length] - [element 2] and so on. </returns>
-        protected byte[] GetBytesAsContent(OscBundle[] bundles, out int length)
-        {
-            length = 0;
-
-            // find length
-            for (int i = 0; i < bundles.Length; i++)
-            {
-                length += GetBundleOscLength(bundles[i]) + Chunk32;
-            }
-
-            byte[] binaryData = new byte[length];
-            int pointer = 0;
-
-            AddBytesAsContent(bundles, binaryData, ref pointer);
-          
-            return binaryData;
-
-        }
-
-
-        /// <summary>
-        /// Orders the provided OSC Packets into a byte array of OSC Bundle "contents".
-        /// </summary>
-        /// <param name="packets"> An array of OSC Packets to order. </param>
-        /// <param name="length"> An out parameter containing the length of the resultant byte array. </param>
-        /// <returns> An ordered byte array of elements formatted as [element 1's length] - [element 1] - [element 2's length] - [element 2] and so on. </returns>
-        protected byte[] GetBytesAsContent(OscPacket[] packets, out int length)
-        {
-            length = 0;
-
-            // get length
-            for (int i = 0; i < packets.Length; i++)
-            {
-                // length of each packet plus 4 bytes for recording the length itself
-                length += packets[i].OscLength + Chunk32;
-            }
-
-            byte[] binaryData = new byte[length];
-            int pointer = 0;
-
-            AddBytesAsContent(packets, binaryData, ref pointer);
-
-            return binaryData;
-
-        }
-
-        #endregion // GETTING BYTE "CONTENTS"
-
-
         #region PACKET SERIALIZATION
 
         /// <summary>
-        /// Converts the provided 
+        /// Converts the provided OSC Message into an OSC Packet. 
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="message"> The OSC Message to be converted. </param>
         /// <returns></returns>
         public OscPacket GetPacket(OscMessage message)
         {
-            return new OscPacket(GetMessageAsBytes(message));
+            byte[] binaryData = new byte[GetMessageOscLength(message)];
+
+            int fakePointer = 0;
+
+            AddMessageAsBytes(message, binaryData, ref fakePointer);
+
+            return new OscPacket(binaryData);
         }
 
 
+        /// <summary>
+        /// Creates an OSC Message out of the provided address pattern and argument array, converts it into an OSC Packet.
+        /// </summary>
+        /// <param name="addressPattern"> The address pattern of the message. </param>
+        /// <param name="arguments"> The arguments </param>
+        /// <returns></returns>
         public OscPacket GetPacket(OscString addressPattern, object[] arguments = null)
         {
-            return new OscPacket(GetMessageAsBytes(addressPattern, arguments));
+            // create a message out of the provided stuff first
+            OscMessage message = new OscMessage(addressPattern, arguments);
+
+            byte[] binaryData = new byte[GetMessageOscLength(message)];
+
+            int fakePointer = 0;
+
+            AddMessageAsBytes(message, binaryData, ref fakePointer);
+
+            return new OscPacket(binaryData);
         }
 
 
         public OscPacket GetPacket(OscBundle bundle)
         {
-            return new OscPacket(GetBundleAsBytes(bundle));
+            byte[] binaryData = new byte[GetBundleOscLength(bundle)];
+
+            int fakePointer = 0;
+
+            AddBundleAsBytes(bundle, binaryData, ref fakePointer);
+
+            return new OscPacket(binaryData);
         }
 
 
@@ -489,7 +335,7 @@ namespace OscLib
 
             byte[] data = new byte[length];
 
-            AddBundleHeader(data, 0);
+            AddBundleHeader(data, 0, timetag);
 
             int pointer = OscBundle.BundleHeaderLength;
 
@@ -506,20 +352,20 @@ namespace OscLib
         #region PACKET DESERIALIZATION
 
         /// <summary>
-        /// Deserializes an OSC message from a byte array, using an external pointer to navigate it.
+        /// Deserializes an OSC message from the byte array, using an external pointer to navigate it.
         /// </summary>
         /// <param name="data"> The byte array containing the message. </param>
-        /// <param name="pointer"> Points at the start of the message. Will be shifted forwards to the end of the message. </param>
+        /// <param name="extPointer"> Points at the start of the message. Will be shifted forwards to the end of the message. </param>
         /// <param name="length"> The length of this message in bytes. </param>
         /// <returns> The resultant OSC message. </returns>
         /// <exception cref="ArgumentException"> Thrown when no message is found at pointer position. </exception>
         /// <exception cref="InvalidOperationException"> Thrown when the message can't be parsed or has errors. </exception>
-        public OscMessage GetMessage(byte[] data, ref int pointer, int length)
+        public OscMessage GetMessage(byte[] data, ref int extPointer, int length)
         {
             // should start with an '/'
-            if (data[pointer] != Separator)
+            if (data[extPointer] != Separator)
             {
-                throw new ArgumentException("OSC Deserializer ERROR: No OSC Message found at pointer position, expecting a '/' symbol. Pointer at: " + pointer);
+                throw new ArgumentException("OSC Deserializer ERROR: No OSC Message found at pointer position, expecting a '/' symbol. Pointer at: " + extPointer);
             }
 
             OscString addressPattern;
@@ -528,18 +374,18 @@ namespace OscLib
 
             int addressPatternLength = -1, typeTagStart = -1;
 
-            int msgStart = pointer;
+            int msgStart = extPointer;
 
             // find the address pattern
-            while (pointer < msgStart + length)
+            while (extPointer < msgStart + length)
             {
                 // move pointer forward by a chunk
-                pointer += OscProtocol.Chunk32;
+                extPointer += Chunk32;
 
                 // preceding chunk ending in a 0 means the pattern ends somewhere within it, or right at the end of the chunk before it.
-                if (data[pointer - 1] == 0)
+                if (data[extPointer - 1] == 0)
                 {
-                    for (int i = pointer - 2; i >= pointer - Chunk32; i--)
+                    for (int i = extPointer - 2; i >= extPointer - Chunk32; i--)
                     {
                         if (data[i] != 0)
                         {
@@ -552,11 +398,10 @@ namespace OscLib
                     // if not yet found, the pattern's end is the last byte of the chunk behind
                     if (addressPatternLength < 0)
                     {
-                        addressPatternLength = pointer - msgStart - Chunk32;
+                        addressPatternLength = extPointer - msgStart - Chunk32;
                     }
 
                     break;
-
                 }
 
             }
@@ -571,33 +416,48 @@ namespace OscLib
                 addressPattern = new OscString(data, msgStart, addressPatternLength);
             }
 
-            // check if the address string exists at all
-            if (data[pointer] == Comma)
+
+            if (extPointer >= msgStart + length)
             {
-                typeTagStart = pointer;
+                // if we've reached the end of a a message already, and we don't expect an empty type tag string, we might as well return it 
+                if (!_settingEmptyTypeTagStrings)
+                {
+                    return new OscMessage(addressPattern);
+                }
+                else
+                {
+                    throw new ArgumentException("OSC Converter ERROR: Cannot deserialize OSC Packet - expecting a type tag string, found none. ");
+                }
+
+            }
+
+            // check if the address string exists at all
+            if (data[extPointer] == Comma)
+            {
+                typeTagStart = extPointer;
 
                 // find the end of it
-                while (data[pointer] != 0)
+                while (data[extPointer] != 0)
                 {
-                    pointer++;
+                    extPointer++;
                 }
 
                 // - 1 is to accomodate for the "," in the beginning
-                int typeTagsTotal = pointer - typeTagStart - 1;
+                int typeTagsTotal = extPointer - typeTagStart - 1;
 
                 arguments = new object[typeTagsTotal];
 
                 // move the pointer to the next 4-byte point after the end of the type tags
-                pointer = OscUtil.GetNextMultipleOfFour(pointer);
+                extPointer = OscUtil.GetNextMultipleOfFour(extPointer);
 
                 if (typeTagsTotal > 0)
                 {
                     // the first element in the array will be the "," type tag separator
                     for (int i = 0; i < typeTagsTotal; i++)
                     {
+                        arguments[i] = BytesToArg<object>(data, ref extPointer, data[typeTagStart + 1 + i]);
                         
-
-                        if (pointer > msgStart + length)
+                        if (extPointer > msgStart + length)
                         {
                             throw new InvalidOperationException("OSC Deserializer ERROR: Pointer went beyond the end of message. ");
                         }
@@ -614,7 +474,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Deserializes an OSC message from a byte array that only contains that one message.
+        /// Deserializes an OSC message from the byte array that only contains that one message.
         /// </summary>
         /// <param name="data"> Byte array containing the OSC message. </param>
         /// <returns> The resultant OSC message. </returns>
@@ -635,19 +495,20 @@ namespace OscLib
         /// <remarks> The method is generic to avoid the struct-as-interface boxing/unboxing shenanigans. </remarks>
         public OscMessage GetMessage<Packet>(Packet oscPacket) where Packet : IOscPacket
         {
-            if (oscPacket.BinaryData[0] != OscProtocol.Separator)
-            {
-                throw new ArgumentException("OSC Deserializer ERROR: Cannot deserialize OSC message, provided OSC Packet is invalid.");
-            }
-
             return GetMessage(oscPacket.BinaryData);
-
         }
 
 
-        public OscBundle GetBundle(byte[] data, ref int pointer, int length)
+        /// <summary>
+        /// Deserializes an OSC Bundle from the byte array, using an external pointer to navigate it.
+        /// </summary>
+        /// <param name="data"> The byte array containing the bundle. </param>
+        /// <param name="extPointer"> Points at the start of the bundle. Will be shifted forwards to the end of the bundle. </param>
+        /// <param name="length"> The length of this bundle in bytes. </param>
+        /// <returns> The resultant OSC Bundle. </returns>
+        public OscBundle GetBundle(byte[] data, ref int extPointer, int length)
         {
-            int bndStart = pointer;
+            int bndStart = extPointer;
 
             if (data[bndStart] != BundleMarker)
             {
@@ -655,47 +516,47 @@ namespace OscLib
             }
 
             // let's skip the "#bundle" bit
-            pointer += OscBundle.MarkerStringLength;
+            extPointer += OscBundle.MarkerStringLength;
 
             // get timestamp
-            OscTimetag timetag = OscDeserializer.GetTimetag(data, ref pointer);
+            OscTimetag timetag = OscDeserializer.GetTimetag(data, ref extPointer);
 
             // if we're past the length at this, that means the bundle's empty and we can return it
-            if (pointer > bndStart + length)
+            if (extPointer > bndStart + length)
             {
                 return new OscBundle(timetag);
             }
 
-            int contentStart = pointer;
+            int contentStart = extPointer;
             int bndTotal = 0, msgTotal = 0, elementLength = 0;
 
             // get the number of bundles and messages in the elements (not going into messages contained within bundles)
-            while (pointer < bndStart + length)
+            while (extPointer < bndStart + length)
             {
-                if (data[pointer] == BundleMarker)
+                if (data[extPointer] == BundleMarker)
                 {
                     // element is a bundle, move ahead by the length of an element
                     bndTotal++;
 
-                    pointer += elementLength;
+                    extPointer += elementLength;
                 }
-                else if (data[pointer] == Separator)
+                else if (data[extPointer] == Separator)
                 {
                     // element is a message, move ahead by the length of an element
                     msgTotal++;
 
-                    pointer += elementLength;
+                    extPointer += elementLength;
                 }
                 else
                 {
                     // we got the length of next element here
-                    elementLength = OscDeserializer.GetInt32(data, ref pointer);
+                    elementLength = OscDeserializer.GetInt32(data, ref extPointer);
                 }
 
             }
 
             // move the pointer back
-            pointer = contentStart;
+            extPointer = contentStart;
 
             // create arrays to contain bundles and messages;
             OscBundle[] bundles = null;
@@ -714,22 +575,22 @@ namespace OscLib
             int bndCount = 0, msgCount = 0;
 
             // go again lol
-            while (pointer < bndStart + length)
+            while (extPointer < bndStart + length)
             {
-                if (data[pointer] == BundleMarker)
+                if (data[extPointer] == BundleMarker)
                 {
-                    bundles[bndCount] = GetBundle(data, ref pointer, elementLength);
+                    bundles[bndCount] = GetBundle(data, ref extPointer, elementLength);
                     bndCount++;
                 }
-                else if (data[pointer] == Separator)
+                else if (data[extPointer] == Separator)
                 {
-                    messages[msgCount] = GetMessage(data, ref pointer, elementLength);
+                    messages[msgCount] = GetMessage(data, ref extPointer, elementLength);
                     msgCount++;
                 }
                 else
                 {
                     // there should be the length of next element here
-                    elementLength = OscDeserializer.GetInt32(data, ref pointer);
+                    elementLength = OscDeserializer.GetInt32(data, ref extPointer);
                 }
 
             }
@@ -739,6 +600,11 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Deserializes an OSC Bundle from the byte array.
+        /// </summary>
+        /// <param name="data"> The byte array containing the bundle. </param>
+        /// <returns> The resultant OSC Bundle. </returns>
         public OscBundle GetBundle(byte[] data)
         {
             int pointer = 0;
@@ -747,22 +613,29 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Creats an OSC Bundle out of the provided OSC binary packet.
+        /// </summary>
+        /// <typeparam name="Packet"> The packet struct fed into this method should implement the IOscPacket interface. Obviously, it should contain readable OSC data as well. </typeparam>
+        /// <param name="oscPacket"></param>
+        /// <returns></returns>
         public OscBundle GetBundle<Packet>(Packet oscPacket) where Packet : IOscPacket
         {
-            if (oscPacket.BinaryData[0] != OscProtocol.BundleMarker)
-            {
-                throw new ArgumentException("OSC Deserializer ERROR: Cannot deserialize OSC message, provided OSC Packet is invalid.");
-            }
-
             return GetBundle(oscPacket.BinaryData);
         }
 
         #endregion
 
 
+
         #region GETTING ELEMENT LENGTH
 
-        protected int GetMessageOscLength(OscMessage message)
+        /// <summary>
+        /// Calculates the byte length of the provided OSC Message according to this OSC Protocol implementation's specifics.
+        /// </summary>
+        /// <param name="message"> The message to measure. </param>
+        /// <returns> The length of the provided message in bytes. </returns>
+        public int GetMessageOscLength(OscMessage message)
         {
             int length = message.AddressPattern.OscLength;
 
@@ -778,7 +651,7 @@ namespace OscLib
             }
             else
             {
-                if (_settingAddEmptyTypeTagStrings)
+                if (_settingEmptyTypeTagStrings)
                 {
                     // add space for a comma plus 3 empty bytes (how wasteful)
                     length += Chunk32;
@@ -789,8 +662,12 @@ namespace OscLib
             return length;
         }
 
-
-        protected int GetBundleOscLength(OscBundle bundle)
+        /// <summary>
+        /// Calculates the byte length of the provided OSC Bundle according to this OSC Protocol implementation's specifics.
+        /// </summary>
+        /// <param name="bundle"> The bundle to measure. </param>
+        /// <returns> The length of the provided message in bytes. </returns>
+        public int GetBundleOscLength(OscBundle bundle)
         {
             int length = OscBundle.BundleHeaderLength;
 
@@ -815,6 +692,7 @@ namespace OscLib
         #endregion // GETTING ELEMENT LENGTH
 
 
+
         #region ABSTRACT METHODS
 
         /// <summary>
@@ -831,7 +709,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Serializes the provided argument into its OSC byte data form and adds it into existing byte array, provides the corresponding type tag.  
+        /// Serializes the provided argument into its OSC byte data form and adds it into an existing byte array, provides the corresponding type tag.  
         /// </summary>
         /// <remarks>
         /// Implemented the way it is to minimize boxing.
@@ -860,9 +738,16 @@ namespace OscLib
         /// <param name="extPointer"> The external pointer designating the position from which the relevant data starts. </param>
         /// <param name="typeTag"> The type tag of the argument contained in the data. </param>
         /// <returns></returns>
-        protected abstract object BytesToArg(byte[] array, ref int extPointer, byte typeTag);
+        protected abstract T BytesToArg<T>(byte[] array, ref int extPointer, byte typeTag);
+
+
+        protected abstract void GetArguments(byte[] array, ref int argPointer, ref int typeTagPointer);
+
+
+        //protected virtual TOscMessage GetMessage<TOscMessage>(byte[] array, ref int extPointer, )
 
         #endregion // ABSTRACT METHODS
+
 
 
         #region STATIC METHODS
@@ -917,15 +802,8 @@ namespace OscLib
         /// <param name="index"> Target index. </param>
         public static void AddBundleHeader(byte[] target, int index)
         {
-
-            if (target.Length <= index + OscBundle.BundleHeaderLength)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), "OSC Serializer ERROR: Can't add bundle header to byte array at index " + index + ", it won't fit. ");
-            }
-
             OscBundle.CopyMarkerStringTo(target, index);
             OscTime.ImmediatelyBytes.CopyTo(target, index + 8);
-
         }
 
 
@@ -940,15 +818,8 @@ namespace OscLib
         /// <param name="timetag"> To be included in the header. </param>
         public static void AddBundleHeader(byte[] target, int index, OscTimetag timetag)
         {
-
-            if (target.Length <= index + OscBundle.BundleHeaderLength)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), "OSC Serializer ERROR: Can't add bundle header to byte array at index " + index + ", it won't fit. ");
-            }
-
             OscBundle.CopyMarkerStringTo(target, index);
             OscSerializer.AddBytes(timetag, target, index + Chunk64);
-
         }
 
         #endregion // ADDING BUNDLE HEADERS
