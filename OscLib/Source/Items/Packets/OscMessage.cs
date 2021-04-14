@@ -6,7 +6,7 @@ namespace OscLib
     /// <summary>
     /// Represents a single OSC message.
     /// </summary>
-    public readonly struct OscMessage
+    public readonly struct OscMessage 
     {
         // used to return an empty array of arguments
         private static readonly object[] _argumentsEmpty = new object[0];
@@ -36,7 +36,7 @@ namespace OscLib
 
         }
 
-       
+         
         /// <summary>
         /// Creates a new OSC message out of an address pattern and an array of arguments.
         /// </summary>
@@ -45,19 +45,20 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown when the address pattern is empty or invalid. </exception>
         public OscMessage(OscString addressPattern, object[] arguments = null)
         {
-            if (addressPattern.Length < 1)
+            if (OscString.IsNullOrEmpty(addressPattern))
             {
                 throw new ArgumentException("OscMessage ERROR: Cannot create an OSC message, address pattern is empty");
             }
 
             // check if address string is right
-            if (addressPattern[0] != OscProtocol.Separator)
+            if (addressPattern[0] != OscConvert.Separator)
             {
                 throw new ArgumentException("OscMessage ERROR: Cannot create an OSC Message, address pattern is invalid");
             }
 
             _addressPattern = addressPattern;
             _arguments = arguments;
+
         }
 
 

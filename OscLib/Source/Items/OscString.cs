@@ -22,19 +22,12 @@ namespace OscLib
         }
 
         private readonly byte[] _chars;
-        private readonly int _oscLength;
-        private readonly int _length;
+
+        public readonly int OscLength;
+        public readonly int Length;
+
         private Trit _containsReservedSymbols;
-
-        /// <summary> The number of characters in this string when used as an OSC argument or address - counting the null terminator and extra null symbols that pad it to a multiple of 4. </summary> 
-        public int OscLength { get => _oscLength; }
-
-        /// <summary> The number of characters in this string. Ignores the null terminator. </summary>
-        public int Length { get => _length; }
-
-
-        
-
+   
         /// <summary>
         /// Indexer access to the characters of this string, as ASCII codes.
         /// </summary>
@@ -65,8 +58,8 @@ namespace OscLib
         public OscString(byte[] bytes)
         {
             _chars = bytes;
-            _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
-            _length = _chars.Length;
+            OscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
+            Length = _chars.Length;
             _containsReservedSymbols = Trit.Maybe;
         }
 
@@ -82,8 +75,8 @@ namespace OscLib
             _chars = new byte[length];
             Array.Copy(bytes, start, _chars, 0, length);
 
-            _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
-            _length = _chars.Length;
+            OscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
+            Length = _chars.Length;
             _containsReservedSymbols = Trit.Maybe;
         }
 
@@ -96,8 +89,8 @@ namespace OscLib
         {
             _chars = Encoding.ASCII.GetBytes(sourceString);
 
-            _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
-            _length = _chars.Length;
+            OscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
+            Length = _chars.Length;
             _containsReservedSymbols = Trit.Maybe;
 
         }
@@ -111,8 +104,8 @@ namespace OscLib
         private OscString(byte[] bytes, Trit specialSymbols)
         {
             _chars = bytes;
-            _oscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
-            _length = _chars.Length;
+            OscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
+            Length = _chars.Length;
 
             _containsReservedSymbols = specialSymbols;
         }
@@ -128,7 +121,7 @@ namespace OscLib
 
             for (int i = 0; i < newStringBytes.Length; i++)
             {
-                if (OscProtocol.IsAReservedSymbol(newStringBytes[i]))
+                if (OscConvert.IsAReservedSymbol(newStringBytes[i]))
                 {
                     newStringBytes[i] = (byte)'_';
                 }
@@ -151,7 +144,7 @@ namespace OscLib
 
             for (int i = 0; i < newStringBytes.Length; i++)
             {
-                if (OscProtocol.IsAReservedSymbol(newStringBytes[i]))
+                if (OscConvert.IsAReservedSymbol(newStringBytes[i]))
                 {
                     newStringBytes[i] = (byte)'_';
                 }
@@ -246,7 +239,7 @@ namespace OscLib
         /// </summary>
         public byte[] GetGetChars()
         {
-            byte[] copy = new byte[_length];
+            byte[] copy = new byte[Length];
             _chars.CopyTo(copy, 0);
             return copy;
         }
@@ -257,7 +250,7 @@ namespace OscLib
         /// </summary>
         public byte[] GetGetOscBytes()
         {
-            byte[] copy = new byte[_oscLength];
+            byte[] copy = new byte[OscLength];
             _chars.CopyTo(copy, 0);
             return copy;
         }
@@ -272,10 +265,10 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown when "start" is beyond the string's length, or when "length" is too large. </exception>
         public OscString GetSubstring(int start, int length)
         {
-            if ((start >= this._length) || (start < 0))
+            if ((start >= Length) || (start < 0))
                 throw new ArgumentException("OSC String ERROR: Cannot get a substring, it starts beyond the length of the string.");
 
-            if (start + length > _length)
+            if (start + length > Length)
                 throw new ArgumentException("Osc String ERROR: Cannot get a substring, it's too long");
 
             return new OscString(_chars, start, length);
@@ -292,7 +285,7 @@ namespace OscLib
         {
             // first, let's cover some common situations
             // if pattern consists of only one "*" symbol then it'll match to anything
-            if ((pattern._chars.Length == 1) && (pattern[0] == OscProtocol.MatchAnySequence))
+            if ((pattern._chars.Length == 1) && (pattern[0] == OscConvert.MatchAnySequence))
             {
                 return true;
             }
@@ -324,7 +317,7 @@ namespace OscLib
 
 
                 // check for '*'
-                if (pattern[patIndex] == OscProtocol.MatchAnySequence)
+                if (pattern[patIndex] == OscConvert.MatchAnySequence)
                 {
                     patRevert = ++patIndex;
                     strRevert = strIndex;
@@ -337,7 +330,7 @@ namespace OscLib
 
                 }
                 // check for []
-                else if (pattern[patIndex] == OscProtocol.MatchCharArrayOpen)
+                else if (pattern[patIndex] == OscConvert.MatchCharArrayOpen)
                 {
                     if (!CharMatchesSquareBrackets(this[strIndex], ref patIndex, ref pattern))
                     {
@@ -357,7 +350,7 @@ namespace OscLib
                     }
                 }
                 // check for {}
-                else if (pattern[patIndex] == OscProtocol.MatchStringArrayOpen)
+                else if (pattern[patIndex] == OscConvert.MatchStringArrayOpen)
                 {
                     if (!StringMatchesCurlyBrackets(ref pattern, ref strIndex, ref patIndex))
                     {
@@ -400,7 +393,7 @@ namespace OscLib
 
             }
 
-            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscProtocol.MatchAnySequence))
+            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscConvert.MatchAnySequence))
             {
                 patIndex++;
             }
@@ -418,7 +411,7 @@ namespace OscLib
             if (_containsReservedSymbols == Trit.Maybe)
             {
                 // let's find out, shall we
-                bool contains = OscProtocol.ContainsReservedSymbols(_chars);
+                bool contains = OscConvert.ContainsReservedSymbols(_chars);
 
                 if (contains)
                 {
@@ -615,7 +608,7 @@ namespace OscLib
 
             while (pointer < pattern.Length)
             {
-                if (pattern[pointer] == OscProtocol.MatchCharArrayClose)
+                if (pattern[pointer] == OscConvert.MatchCharArrayClose)
                 {
                     bracketEnd = pointer;
                     // make sure the pointer is going past the bracket
@@ -627,7 +620,7 @@ namespace OscLib
                 if (!found)
                 {
 
-                    if (pattern[pointer] == OscProtocol.MatchNot)
+                    if (pattern[pointer] == OscConvert.MatchNot)
                     {
                         // if it's at the beginning, make sure that it's noted, and keep a space for it in the return array 
                         if (bracketStart == (pointer - 1))
@@ -636,10 +629,10 @@ namespace OscLib
                         }
 
                     }
-                    else if (pattern[pointer] == OscProtocol.MatchRange)
+                    else if (pattern[pointer] == OscConvert.MatchRange)
                     {
                         // if we're not at the start, and if we're not by the end of the char array, so we can safely check back and forth
-                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != OscProtocol.MatchCharArrayClose)))
+                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != OscConvert.MatchCharArrayClose)))
                         {
                             if (OscUtil.IsNumberBetween(checkChar, pattern[pointer - 1], pattern[pointer + 1]))
                             {
@@ -691,7 +684,7 @@ namespace OscLib
 
             while (patPointer < pattern.Length)
             {
-                if ((pattern[patPointer] == OscProtocol.Comma) || (pattern[patPointer] == OscProtocol.MatchStringArrayClose))
+                if ((pattern[patPointer] == OscConvert.Comma) || (pattern[patPointer] == OscConvert.MatchStringArrayClose))
                 {
                     if (substringFits)
                     {
@@ -704,7 +697,7 @@ namespace OscLib
 
                     substringFits = true;
 
-                    if (pattern[patPointer] == OscProtocol.MatchStringArrayClose)
+                    if (pattern[patPointer] == OscConvert.MatchStringArrayClose)
                     {
                         curlyEnd = patPointer;
                         patPointer++;
@@ -748,7 +741,7 @@ namespace OscLib
 
         private bool CharIsEqual(byte strChar, byte patChar)
         {
-            if (patChar == OscProtocol.MatchAnyChar)
+            if (patChar == OscConvert.MatchAnyChar)
             {
                 return true;
             }

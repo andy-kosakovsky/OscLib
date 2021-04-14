@@ -338,8 +338,11 @@
             May contain both messages and bundles. Bundles inside a bundle should be time-tagged 
             </summary>
         </member>
-        <member name="F:OscLib.OscBundle.HeaderLength">
+        <member name="F:OscLib.OscBundle.BundleHeaderLength">
             <summary> The length of the bundle header in bytes. That is, the "#bundle " + [timestamp] bit. </summary>
+        </member>
+        <member name="F:OscLib.OscBundle.MarkerStringLength">
+            <summary> The Length of the "#bundle " string in bytes that should be present in the beginning of a bundle. </summary>
         </member>
         <member name="P:OscLib.OscBundle.Timetag">
             <summary> Timestamp attached to this bundle. </summary>
@@ -349,9 +352,6 @@
         </member>
         <member name="P:OscLib.OscBundle.Bundles">
             <summary> Bundles inside this bundle. </summary>
-        </member>
-        <member name="P:OscLib.OscBundle.OscLength">
-            <summary> Length of this bundle in bytes. </summary>
         </member>
         <member name="M:OscLib.OscBundle.#ctor(OscLib.OscTimetag,OscLib.OscBundle[],OscLib.OscMessage[])">
             <summary>
@@ -381,6 +381,13 @@
             </summary>
             <param name="timetag"> A OSC Timetag of this sad empty bundle. </param>
         </member>
+        <member name="M:OscLib.OscBundle.CopyMarkerStringTo(System.Byte[],System.Int32)">
+            <summary>
+            Copies the bundle marker string ("#bundle ") to array, starting at the specified index.
+            </summary>
+            <param name="array"> Target array. </param>
+            <param name="index"> Target index. </param>
+        </member>
         <member name="M:OscLib.OscBundle.ToString">
             <summary>
             Returns this bundle as a neatly formatted string, for debug purposes mostly.
@@ -404,10 +411,6 @@
         </member>
         <member name="P:OscLib.OscMessage.Arguments">
             <summary> Arguments of this message. </summary>
-        </member>
-        <member name="P:OscLib.OscMessage.OscLength">
-            <summary> Length of this message in bytes when serialized as OSC data. </summary>
-            <remarks> Includes the length of the argument type tag string. If there are zero arguments, it'll still include extra 4 bytes to contain the comma + 3 empty bytes. </remarks>
         </member>
         <member name="M:OscLib.OscMessage.#ctor(OscLib.OscString,System.Object[])">
             <summary>
@@ -458,132 +461,10 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="T:OscLib.OscProtocol">
-            <summary>
-            Describes the OSC protocol convention on type tags and bundle designators.
-            </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.Chunk32">
-            <summary> Length in bytes of a single (32 bits/4 bytes long) OSC data chunk. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.Chunk64">
-            <summary> Length in bytes of a double-sized (64 bits/8 bytes long) OSC data chunk. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.TypeTagInt32">
-            <summary> OSC type tag for Int32 data type. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.TypeTagFloat32">
-            <summary> OSC type tag for Float32 data type. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.TypeTagInt64">
-            <summary> OSC type tag for Int64/Long data type. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.TypeTagFloat64">
-            <summary> OSC type tag for Float64/Double data type. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.TypeTagString">
-            <summary> OSC type tag for String data type. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.TypeTagBlob">
-            <summary> OSC type tag for Blob data type. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.TypeTagTime">
-            <summary> OSC type tag for OSC Time Tag data type. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.BundleMarker">
-            <summary> Designates the start of an OSC Bundle. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.Separator">
-            <summary> Separates parts of an address string inside OSC Messages. Always should be present at the start of an address string. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.Comma">
-            <summary> Designates the beginning of an OSC type tag string inside messages. Separates strings in string arrays when pattern matching. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.Space">
-            <summary> Personal space. Not allowed in OSC Method or Container names, otherwise insignificant. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.MatchAnySequence">
-            <summary> Stands for any sequence of zero or more characters in pattern matching. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.MatchAnyChar">
-            <summary> Stands for any single character in pattern matching. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.MatchCharArrayOpen">
-            <summary> Opens an array of characters in pattern matching. A match will occur if any of the characters within the array corresponds to a single character. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.MatchCharArrayClose">
-            <summary> Closes an array of characters in pattern matching. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.MatchNot">
-            <summary> "Reverses" the character array, matching it with any symbol *not* present in it.  </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.MatchRange">
-            <summary> A range symbol used inside character arrays. Stands for the entire range of ASCII symbols between the two around it. </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.MatchStringArrayOpen">
-            <summary> Opens an array of strings in pattern matching. A match will occur if any of the strings within the array matches to a sequence of characters.  </summary>
-        </member>
-        <member name="F:OscLib.OscProtocol.MatchStringArrayClose">
-            <summary> Closes an array of strings in pattern matching. </summary>
-        </member>
-        <member name="P:OscLib.OscProtocol.LocalIP">
-            <summary> Local IP address. </summary>
-        </member>
-        <member name="P:OscLib.OscProtocol.BundleStringLength">
-            <summary> Cached length of the "#bundle " string. </summary>
-        </member>
-        <member name="M:OscLib.OscProtocol.IsAReservedSymbol(System.Byte)">
-            <summary>
-            Checks whether the provided byte represents an ASCII symbol reserved by the OSC Protocol.
-            </summary>
-            <param name="symbol"> ASCII symbol as a byte. </param>
-            <returns></returns>
-        </member>
-        <member name="M:OscLib.OscProtocol.ContainsReservedSymbols(System.Byte[])">
-            <summary>
-            Checks whether the byte array contains any ASCII symbols reserved by the OSC Protocol.
-            </summary>
-            <param name="array"> An array presumably containing ASCII symbols as bytes. </param>
-            <returns></returns>
-        </member>
-        <member name="M:OscLib.OscProtocol.CopyBundleStringTo(System.Byte[],System.Int32)">
-            <summary>
-            Copies the bundle string ("#bundle ") to array, starting at the specified index.
-            </summary>
-            <param name="array"> Target array. </param>
-            <param name="index"> Target index. </param>
-        </member>
         <member name="T:OscLib.OscDeserializer">
             <summary>
             Deserializes OSC binary data, translating it into readable messages and bundles.
             </summary>
-        </member>
-        <member name="M:OscLib.OscDeserializer.GetMessage(System.Byte[],System.Int32@,System.Int32)">
-            <summary>
-            Deserializes an OSC message from a byte array, using an external pointer to navigate it.
-            </summary>
-            <param name="data"> The byte array containing the message. </param>
-            <param name="pointer"> Points at the start of the message. Will be shifted forwards to the end of the message. </param>
-            <param name="length"> The length of this message in bytes. </param>
-            <returns> The resultant OSC message. </returns>
-            <exception cref="T:System.ArgumentException"> Thrown when no message is found at pointer position. </exception>
-            <exception cref="T:System.InvalidOperationException"> Thrown when the message can't be parsed or has errors. </exception>
-        </member>
-        <member name="M:OscLib.OscDeserializer.GetMessage(System.Byte[])">
-            <summary>
-            Deserializes an OSC message from a byte array that only contains that one message.
-            </summary>
-            <param name="data"> Byte array containing the OSC message. </param>
-            <returns> The resultant OSC message. </returns>
-        </member>
-        <member name="M:OscLib.OscDeserializer.GetMessage``1(``0)">
-            <summary>
-            Creates an OSC Message out of the provided OSC binary packet.
-            </summary>
-            <typeparam name="Packet"> The packet struct fed into this method should implement the IOscPacket interface. Obviously, it should contain readable OSC data as well. </typeparam>
-            <param name="oscPacket"> The packet to be deserialized. </param>
-            <returns> The resultant OSC message. </returns>
-            <remarks> The method is generic to avoid the struct-as-interface boxing/unboxing shenanigans. </remarks>
         </member>
         <member name="M:OscLib.OscDeserializer.GetInt32(System.Byte[],System.Int32@)">
             <summary>
@@ -598,6 +479,14 @@
             </summary>
             <param name="data"> Byte array containing the data. </param>
             <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        </member>
+        <member name="M:OscLib.OscDeserializer.GetTimetag(System.Byte[],System.Int32@)">
+            <summary>
+            Gets a timestamp out of the byte array, using an external pointer.
+            </summary>
+            <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+            <param name="data"> Byte array containing the data. </param>
+            <returns> An OscTimestamp. </returns>
         </member>
         <member name="M:OscLib.OscDeserializer.GetFloat32(System.Byte[],System.Int32@)">
             <summary>
@@ -628,14 +517,6 @@
             <param name="data"> Byte array containing the data. </param>
             <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
         </member>
-        <member name="M:OscLib.OscDeserializer.GetTimetag(System.Byte[],System.Int32@)">
-            <summary>
-            Gets a timestamp out of the byte array, using an external pointer.
-            </summary>
-            <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-            <param name="data"> Byte array containing the data. </param>
-            <returns> An OscTimestamp. </returns>
-        </member>
         <member name="M:OscLib.OscDeserializer.GetInt32(System.Byte[],System.Int32)">
             <summary>
             Gets an int out of the byte array, using a pointer.
@@ -646,6 +527,13 @@
         <member name="M:OscLib.OscDeserializer.GetInt64(System.Byte[],System.Int32)">
             <summary>
             Gets a long out of the byte array, using a pointer.
+            </summary>
+            <param name="data"> Byte array containing the data. </param>
+            <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        </member>
+        <member name="M:OscLib.OscDeserializer.GetTimetag(System.Byte[],System.Int32)">
+            <summary>
+            Gets a timestamp out of the byte array, using a pointer.
             </summary>
             <param name="data"> Byte array containing the data. </param>
             <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
@@ -679,137 +567,10 @@
             <param name="data"> Byte array containing the data. </param>
             <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
         </member>
-        <member name="M:OscLib.OscDeserializer.GetTimetag(System.Byte[],System.Int32)">
-            <summary>
-            Gets a timestamp out of the byte array, using a pointer.
-            </summary>
-            <param name="data"> Byte array containing the data. </param>
-            <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        </member>
         <member name="T:OscLib.OscSerializer">
             <summary>
-            Serializes data into bytes according to OSC Protocol.
+            Serializes data into bytes. Makes sure it is big-endian where appropriate.
             </summary>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscMessage,System.Byte[],System.Int32@)">
-            <summary>
-            Serializes the provided OSC Message into byte data, adds it to the provided byte array.
-            </summary>
-            <param name="message"> The message to convert to bytes. </param>
-            <param name="array"> The byte array to add the message data to. </param>
-            <param name="extPointer"> The external pointer designating the index from which to add data to array. Will be shifted forwards by the length of added data. </param>
-            <exception cref="T:System.ArgumentException"> Thrown if the provided data array is too small to fit the message into. </exception>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscBundle,System.Byte[],System.Int32@)">
-            <summary>
-            Serializes the provided OSC Bundle into byte data, adds it to the provided byte array.
-            </summary>
-            <param name="bundle"> The bundle to convert to bytes. </param>
-            <param name="array"> The byte array to add bundle data to. </param>
-            <param name="extPointer"> The external pointer designating the index from which to add data to array. Will be shifted forwards by the length of added data. </param>
-        </member>
-        <member name="M:OscLib.OscSerializer.NewMessageAddBytes(OscLib.OscString,System.Object[],System.Byte[],System.Int32@)">
-            <summary>
-            Converts the provided address pattern and arguments into OSC Message byte data, adds it to the provided byte array.
-            </summary>
-            <param name="addressPattern"> The address pattern of this message. </param>
-            <param name="arguments"> The arguments (should be of supported types, obviously). </param>
-            <param name="array"> The byte array to add the message data to. </param>
-            <param name="extPointer"> The external pointer designating the index from which to add data to array. Will be shifted forwards by the length of added data. </param>
-            <exception cref="T:System.ArgumentException"> Thrown if the provided data array is too small to fit the message into. </exception>
-        </member>
-        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscMessage)">
-            <summary>
-            Serializes the provided OSC Message into a byte array.
-            </summary>
-            <param name="message"> OSC Message to be serialized. </param>       
-            <returns> An OSC Protocol-compliant byte array containing the serialized message. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscBundle)">
-            <summary>
-            Serializes the provided OSC Bundle into a byte array.
-            </summary>
-            <param name="bundle"> OSC Bundle to be serialized. </param>
-            <returns> An OSC Protocol-compliant byte array containing the serialized bundle. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.NewMessageGetBytes(OscLib.OscString,System.Object[])">
-            <summary>
-            Creates a byte array of OSC binary data out of the provided address pattern and arguments.
-            </summary>
-            <param name="addressPattern"> The address pattern of this message. </param>
-            <param name="arguments"> The arguments (should be of supported types, obviously) </param>
-            <returns> A byte array containing the serialized message. </returns>
-            <exception cref="T:System.ArgumentNullException"> Thrown if the address pattern is null or empty. </exception>
-            <exception cref="T:System.ArgumentException"> Thrown if the address pattern doesn't start with a "/" symbol, as required per OSC Protocol. </exception>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesAsContent(OscLib.OscPacket[],System.Byte[],System.Int32@)">
-            <summary>
-            Orders the provided OSC Packets into a byte array of OSC Bundle "contents", adds it to the provided byte array starting from the provided pointer.
-            </summary>
-            <param name="packets"> An array of OSC Packets to order. </param>
-            <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The data will be added to target array from this index onwards. This pointer will be shifted forwards by the length of added data. </param>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesAsContent(OscLib.OscMessage[],System.Byte[],System.Int32@)">
-            <summary>
-            Orders the provided OSC Messages into a byte array of OSC Bundle "contents", adds it to the provided byte array starting from the provided pointer.
-            </summary>
-            <param name="messages"> An array of OSC Messages to order. </param>
-            <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The data will be added to target array from this index onwards. This pointer will be shifted forwards by the length of added data. </param>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesAsContent(OscLib.OscBundle[],System.Byte[],System.Int32@)">
-            <summary>
-            Orders the provided OSC Bundles into a byte array of OSC Bundle "contents", adds it to the provided byte array starting from the provided pointer.
-            </summary>
-            <param name="bundles"> An array of OSC Bundles to order. </param>
-            <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The data will be added to target array from this index onwards. This pointer will be shifted forwards by the length of added data. </param>
-        </member>
-        <member name="M:OscLib.OscSerializer.GetBytesAsContent(OscLib.OscMessage[],System.Int32@)">
-            <summary>
-            Converts the provided OSC Messages to bytes and orders them into a byte array of OSC Bundle "contents".
-            </summary>
-            <param name="messages"> An array of OSC Messages to convert. </param>
-            <param name="length"> An out parameter containing the length of the resultant byte array. </param>
-            <returns> An ordered byte array of elements formatted as [element 1's length] - [element 1] - [element 2's length] - [element 2] and so on. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.GetBytesAsContent(OscLib.OscBundle[],System.Int32@)">
-            <summary>
-            Converts the provided OSC Bundles to bytes and orders them into a byte array of OSC Bundle "contents".
-            </summary>
-            <param name="bundles"> An array of OSC Messages to convert. </param>
-            <param name="length"> An out parameter containing the length of the resultant byte array. </param>
-            <returns> An ordered byte array of elements formatted as [element 1's length] - [element 1] - [element 2's length] - [element 2] and so on. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.GetBytesAsContent(OscLib.OscPacket[],System.Int32@)">
-            <summary>
-            Orders the provided OSC Packets into a byte array of OSC Bundle "contents".
-            </summary>
-            <param name="packets"> An array of OSC Packets to order. </param>
-            <param name="length"> An out parameter containing the length of the resultant byte array. </param>
-            <returns> An ordered byte array of elements formatted as [element 1's length] - [element 1] - [element 2's length] - [element 2] and so on. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBundleHeader(System.Byte[],System.Int32)">
-            <summary>
-            Adds a bundle header to the target byte array, starting from the specified index. Tags it with the "execute immediately" timetag.
-            </summary>
-            <remarks>
-            "Adds" means "overwrites the next 16 bytes with the bundle header", by the way, so it's probably best to make sure there's nothing important there first.
-            </remarks>
-            <param name="target"> Target byte array to modify. </param>
-            <param name="index"> Target index. </param>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBundleHeader(System.Byte[],System.Int32,OscLib.OscTimetag)">
-            <summary>
-            Adds a bundle header to the target byte array, starting from the specified index and using the provided timetag. 
-            </summary>
-            <remarks>
-            "Adds" means "overwrites the next 16 bytes with the bundle header", by the way, so it's probably best to make sure there's nothing important there first.
-            </remarks>
-            <param name="target"> Target byte array to modify. </param>
-            <param name="index"> Target index. </param>
-            <param name="timetag"> To be included in the header. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(System.Int32)">
             <summary>
@@ -820,28 +581,19 @@
         </member>
         <member name="M:OscLib.OscSerializer.AddBytes(System.Int32,System.Byte[],System.Int32@)">
             <summary>
-            Converts an integer into bytes and adds them to an existing array, swapping their endianness if needed.
+            Converts an integer into bytes and adds them to an existing array, swapping their endianness if needed and shifting the pointer accordingly.
             </summary>
             <param name="arg"> An integer to be converted. </param>
             <param name="array"> The target byte array. </param>
             <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Int32,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.AddBytes(System.Int32,System.Byte[],System.Int32)">
             <summary>
-            Converts an integer into a byte array, swapping its endianness if needed. Provides the OSC INT32 type tag.
-            </summary>
-            <param name="arg"> An integer to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A byte array. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg(System.Int32,System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            Converts an integer into bytes and adds them to an existing array, swapping their endianness if needed. Provides the OSC INT32 type tag.
+            Converts an integer into bytes and adds them to an existing array, swapping their endianness if needed.
             </summary>
             <param name="arg"> An integer to be converted. </param>
             <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
+            <param name="pointer">The index from which to add data. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(System.Int64)">
             <summary>
@@ -852,28 +604,19 @@
         </member>
         <member name="M:OscLib.OscSerializer.AddBytes(System.Int64,System.Byte[],System.Int32@)">
             <summary>
-            Converts a longint into bytes and adds them to an existing array, swapping their endianness if needed.
+            Converts a longint into bytes and adds them to an existing array, swapping their endianness if needed and shifting the pointer accordingly.
             </summary>
             <param name="arg"> A longint to be converted. </param>
             <param name="array"> The target byte array. </param>
             <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data.  </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Int64,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.AddBytes(System.Int64,System.Byte[],System.Int32)">
             <summary>
-            Converts an longint into a byte array, swapping its endianness if needed. Provides the OSC INT64 type tag.
+            Converts a longint into bytes and adds them to an existing array, swapping their endianness if needed.
             </summary>
-            <param name="arg"> Longint to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A byte array. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg(System.Int64,System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            Converts a longint into bytes and adds them to an existing array, swapping their endianness if needed. Provides the OSC INT64 type tag.
-            </summary>
-            <param name="arg"> An integer to be converted. </param>
+            <param name="arg"> A longint to be converted. </param>
             <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
+            <param name="pointer"> The index from which to add data. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(System.Single)">
             <summary>
@@ -884,28 +627,19 @@
         </member>
         <member name="M:OscLib.OscSerializer.AddBytes(System.Single,System.Byte[],System.Int32@)">
             <summary>
-            Converts a float into bytes and adds them to an existing array, swapping their endianness if needed.
+            Converts a float into bytes and adds them to an existing array, swapping their endianness if needed and shifting the pointer accordingly.
             </summary>
             <param name="arg"> The float to be converted. </param>
             <param name="array"> The target byte array. </param>
             <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Single,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.AddBytes(System.Single,System.Byte[],System.Int32)">
             <summary>
-            Converts a float into a byte array, swapping its endianness if needed. Provides the OSC FLOAT32 type tag.
-            </summary>
-            <param name="arg"> The float to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A byte array. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg(System.Single,System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            Converts a float into bytes and adds them to an existing array, swapping their endianness if needed. Provides the OSC FLOAT32 type tag.
+            Converts a float into bytes and adds them to an existing array, swapping their endianness if needed.
             </summary>
             <param name="arg"> The float to be converted. </param>
             <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
+            <param name="pointer">The index from which to add data. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(System.Double)">
             <summary>
@@ -922,22 +656,13 @@
             <param name="array"> The target byte array. </param>
             <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Double,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.AddBytes(System.Double,System.Byte[],System.Int32)">
             <summary>
-            Converts a double into a byte array, swapping its endianness if needed. Provides the OSC FLOAT64 type tag.
-            </summary>
-            <param name="arg"> The double to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A byte array. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg(System.Double,System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            Converts a double into bytes and adds them to an existing array, swapping their endianness if needed. Provides the OSC FLOAT64 type tag.
+            Converts a double into bytes and adds them to an existing array, swapping their endianness if needed.
             </summary>
             <param name="arg"> The double to be converted. </param>
             <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
+            <param name="pointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(System.String)">
             <summary>
@@ -954,22 +679,13 @@
             <param name="array"> The target byte array. </param>
             <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(System.String,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.AddBytes(System.String,System.Byte[],System.Int32)">
             <summary>
-            Converts a string into an ASCII byte array. Provides the OSC STRING type tag.
-            </summary>
-            <param name="arg"> The string to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A byte array. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg(System.String,System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            Converts a string into ASCII bytes and adds them to an existing array. Provides the OSC STRING type tag.
+            Converts a string into ASCII bytes and adds them to an existing byte array.
             </summary>
             <param name="arg"> The string to be converted. </param>
             <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
+            <param name="pointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetLength(System.String)">
             <summary>
@@ -993,22 +709,13 @@
             <param name="array"> The target byte array. </param>
             <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(OscLib.OscString,System.Byte@)">
+        <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscString,System.Byte[],System.Int32)">
             <summary>
-            Converts a string into an ASCII byte array. Provides the OSC-string type tag.
-            </summary>
-            <param name="arg"> String to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A byte array. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg(OscLib.OscString,System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            Converts an OSC String into ASCII bytes and adds them to an existing array. Provides the OSC STRING type tag.
+            Converts an OSC String into ASCII bytes and adds them to an existing byte array.
             </summary>
             <param name="arg"> The string to be converted. </param>
             <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
+            <param name="pointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetLength(OscLib.OscString)">
             <summary>
@@ -1032,22 +739,13 @@
             <param name="array"> The target byte array. </param>
             <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Byte[],System.Byte@)">
+        <member name="M:OscLib.OscSerializer.AddBytes(System.Byte[],System.Byte[],System.Int32)">
             <summary>
-            Converts a byte array into an OSC Protocol-compliant binary blob and returns it as a copy. Provides the OSC BLOB type tag.
+            Formats a byte array to be OSC Protocol-compliant and adds it to an existing byte array.
             </summary>
-            <param name="arg"> The byte array to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A binary blob - still a byte array but correctly formatted. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg(System.Byte[],System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            Formats a byte array to be OSC Protocol-compliant and adds it to an existing byte array. Provides the OSC BLOB type tag.
-            </summary>
-            <param name="arg"> The byte array to be converted. </param>
+            <param name="arg"> The byte array to be formatted. </param>
             <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
+            <param name="pointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetLength(System.Byte[])">
             <summary>
@@ -1056,78 +754,28 @@
             <param name="arg"> Byte array to be measured. </param>
             <returns> OSC length of the array. </returns>
         </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(System.Boolean,System.Byte@)">
-            <summary>
-            Converts a bool into byte representation. Returns the type tag. Behaviour is dependant on OSC Protocol attributes.
-            </summary>
-            <param name="arg"> Bool to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A byte array. </returns>
-        </member>
         <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscTimetag)">
             <summary>
             Converts an OSC Timetag into a byte array.
             </summary>
-            <param name="timetag"> The timetag to be converted. </param>
+            <param name="arg"> The timetag to be converted. </param>
             <returns> A byte array. </returns>
         </member>
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscTimetag,System.Byte[],System.Int32@)">
+            <summary>
+            Converts an OSC Timetag into bytes and adds them to an existing array. Shifts the pointer forward accordingly.
+            </summary>
+            <param name="arg"> The timetag to be converted. </param>
+            <param name="array"> The target byte array. </param>
+            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
+        </member>
+        <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscTimetag,System.Byte[],System.Int32)">
             <summary>
             Converts an OSC Timetag into bytes and adds them to an existing array.
             </summary>
             <param name="arg"> The timetag to be converted. </param>
             <param name="array"> The target byte array. </param>
-            <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
-        </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg(OscLib.OscTimetag,System.Byte@)">
-            <summary>
-            Converts an OSC Timetag into a byte array. Provides the OSC timestamp type tag.
-            </summary>
-            <param name="timetag"> The timetag to be converted. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <returns> A byte array. </returns>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg(OscLib.OscTimetag,System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            Converts an OSC Timetag into bytes and adds them to an existing array. Provides the OSC TIMETAG type tag.
-            </summary>
-            <param name="arg"> The timetag to be converted. </param>
-            <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-        </member>
-        <member name="M:OscLib.OscSerializer.GetBytesArg``1(``0,System.Byte@)">
-            <summary>
-            The catch-all method to serialize OSC Protocol-supported message arguments into byte arrays.  
-            </summary>
-            <remarks>
-            Implemented the way it is to minimize boxing when dealing with objects and vars of unknown type.
-            </remarks>
-            <param name="arg"> Argument to be serialized. </param>
-            <param name="typeTag"> Will return the OSC type tag for the provided argument. </param>
-            <returns> The byte array containing the argument converted to OSC Protocol-compliant binary. </returns>
-            <exception cref="T:System.ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
-        </member>
-        <member name="M:OscLib.OscSerializer.AddBytesArg``1(``0,System.Byte[],System.Int32@,System.Byte@)">
-            <summary>
-            The catch-all method to serialize OSC Protocol-supported message arguments and add them into existing byte arrays.  
-            </summary>
-            <remarks>
-            Implemented the way it is to minimize boxing when dealing with objects and vars of unknown type.
-            </remarks>
-            <param name="arg"> The argument to be serialized. </param>
-            <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
-            <param name="typeTag"> Corresponding OSC type tag. </param>
-            <exception cref="T:System.ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
-        </member>
-        <member name="M:OscLib.OscSerializer.GetLength``1(``0)">
-            <summary>
-            The catch-all method to get OSC-supported argument lengths in bytes.
-            </summary> 
-            <param name="arg"> The argument to check the byte length of. </param>
-            <returns> Byte length of the argument. </returns>
-            <exception cref="T:System.ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
+            <param name="pointer">The index from which to add data. </param>
         </member>
         <member name="T:OscLib.OscTime">
             <summary>
@@ -1283,6 +931,12 @@
         <member name="M:OscLib.OscUtil.GetLocalEndPoint">
             <summary> Returns an end point at a local address on a random open port. </summary> 
         </member>
+        <member name="M:OscLib.OscUtil.ClampLong(System.Int64)">
+            <summary>
+            Clamps a long to fit into an int.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:OscLib.OscUtil.GetRepeatingChar(System.Char,System.Int32)">
             <summary>
             Returns a string that consists of the provided char repeating the designated number of times.
@@ -1311,6 +965,275 @@
             <param name="number"></param>
             <returns></returns>
         </member>
+        <member name="T:OscLib.OscConvertBase">
+            <summary>
+            Implements a set methods allowing for converting messages and bundles into OSC byte data and back.  
+            </summary>
+            <remarks>
+            This base class implements methods for converting OSC Messages and Bundles to OSC Packets and vice versa, but implementing the exact methods for serializing and deserializing 
+            arguments is left to derived classes. Different applications utilising OSC might have slightly different implementations of the OSC protocol -- some don't use double-length 
+            floats, some use an integer of 1 and 0 instead of T and F typetags for sending booleans, some use custom typetags, and so on. Some applications don't even allow any arguments
+            apart from the bare standard int32, float32, OSC-string and OSC-blob. All this can be accounted for in method overloads in the derived classes. 
+            </remarks>
+        </member>
+        <member name="F:OscLib.OscConvertBase.Chunk32">
+            <summary> Length in bytes of a single (32 bits/4 bytes long) OSC data chunk. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.Chunk64">
+            <summary> Length in bytes of a double-sized (64 bits/8 bytes long) OSC data chunk. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.MatchAnySequence">
+            <summary> Stands for any sequence of zero or more characters in pattern matching. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.MatchAnyChar">
+            <summary> Stands for any single character in pattern matching. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.MatchCharArrayOpen">
+            <summary> Opens an array of characters in pattern matching. A match will occur if any of the characters within the array corresponds to a single character. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.MatchCharArrayClose">
+            <summary> Closes an array of characters in pattern matching. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.MatchNot">
+            <summary> "Reverses" the character array, matching it with any symbol *not* present in it.  </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.MatchRange">
+            <summary> A range symbol used inside character arrays. Stands for the entire range of ASCII symbols between the two around it. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.MatchStringArrayOpen">
+            <summary> Opens an array of strings in pattern matching. A match will occur if any of the strings within the array matches to a sequence of characters.  </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.MatchStringArrayClose">
+            <summary> Closes an array of strings in pattern matching. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.BundleMarker">
+            <summary> Designates the start of an OSC Bundle. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.Separator">
+            <summary> Separates parts of an address string inside OSC Messages. Always should be present at the start of an address string. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.Comma">
+            <summary> Designates the beginning of an OSC type tag string inside messages. Separates strings in string arrays when pattern matching. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase.Space">
+            <summary> Personal space. Not allowed in OSC Method or Container names, otherwise insignificant. </summary>
+        </member>
+        <member name="F:OscLib.OscConvertBase._settingEmptyTypeTagStrings">
+            <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
+        </member>
+        <member name="P:OscLib.OscConvertBase.SettingEmptyTypeTagStrings">
+            <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
+        </member>
+        <member name="M:OscLib.OscConvertBase.AddMessageAsBytes(OscLib.OscMessage,System.Byte[],System.Int32@)">
+            <summary>
+            Serializes the provided OSC Message into byte data, adds it to the provided byte array.
+            </summary>
+            <param name="message"> The message to convert to bytes. </param>
+            <param name="array"> The byte array to add the message data to. </param>
+            <param name="extPointer"> The external pointer designating the index from which to add data to array. Will be shifted forwards by the length of added data. </param>
+            <exception cref="T:System.ArgumentException"> Thrown if the provided data array is too small to fit the message into. </exception>
+        </member>
+        <member name="M:OscLib.OscConvertBase.AddBundleAsBytes(OscLib.OscBundle,System.Byte[],System.Int32@)">
+            <summary>
+            Serializes the provided OSC Bundle into byte data, adds it to the provided byte array.
+            </summary>
+            <param name="bundle"> The bundle to convert to bytes. </param>
+            <param name="array"> The byte array to add bundle data to. </param>
+            <param name="extPointer"> The external pointer designating the index from which to add data to array. Will be shifted forwards by the length of added data. </param>
+        </member>
+        <member name="M:OscLib.OscConvertBase.AddBytesAsContent(OscLib.OscMessage[],System.Byte[],System.Int32@)">
+            <summary>
+            Orders the provided OSC Messages into a byte array of OSC Bundle "contents", adds it to the provided byte array starting from the provided pointer.
+            </summary>
+            <param name="messages"> An array of OSC Messages to order. </param>
+            <param name="array"> The target byte array. </param>
+            <param name="extPointer"> The data will be added to target array from this index onwards. This pointer will be shifted forwards by the length of added data. </param>
+        </member>
+        <member name="M:OscLib.OscConvertBase.AddBytesAsContent(OscLib.OscBundle[],System.Byte[],System.Int32@)">
+            <summary>
+            Orders the provided OSC Bundles into a byte array of OSC Bundle "contents", adds it to the provided byte array starting from the provided pointer.
+            </summary>
+            <param name="bundles"> An array of OSC Bundles to order. </param>
+            <param name="array"> The target byte array. </param>
+            <param name="extPointer"> The data will be added to target array from this index onwards. This pointer will be shifted forwards by the length of added data. </param>
+        </member>
+        <member name="M:OscLib.OscConvertBase.AddBytesAsContent(OscLib.OscPacket[],System.Byte[],System.Int32@)">
+            <summary>
+            Orders the provided OSC Packets into a byte array of OSC Bundle "contents", adds it to the provided byte array starting from the provided pointer.
+            </summary>
+            <param name="packets"> An array of OSC Packets to order. </param>
+            <param name="array"> The target byte array. </param>
+            <param name="extPointer"> The data will be added to target array from this index onwards. This pointer will be shifted forwards by the length of added data. </param>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetPacket(OscLib.OscMessage)">
+            <summary>
+            Converts the provided OSC Message into an OSC Packet. 
+            </summary>
+            <param name="message"> The OSC Message to be converted. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetPacket(OscLib.OscString,System.Object[])">
+            <summary>
+            Creates an OSC Message out of the provided address pattern and argument array, converts it into an OSC Packet.
+            </summary>
+            <param name="addressPattern"> The address pattern of the message. </param>
+            <param name="arguments"> The arguments </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetMessage(System.Byte[],System.Int32@,System.Int32)">
+            <summary>
+            Deserializes an OSC message from the byte array, using an external pointer to navigate it.
+            </summary>
+            <param name="data"> The byte array containing the message. </param>
+            <param name="extPointer"> Points at the start of the message. Will be shifted forwards to the end of the message. </param>
+            <param name="length"> The length of this message in bytes. </param>
+            <returns> The resultant OSC message. </returns>
+            <exception cref="T:System.ArgumentException"> Thrown when no message is found at pointer position. </exception>
+            <exception cref="T:System.InvalidOperationException"> Thrown when the message can't be parsed or has errors. </exception>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetMessage(System.Byte[])">
+            <summary>
+            Deserializes an OSC message from the byte array that only contains that one message.
+            </summary>
+            <param name="data"> Byte array containing the OSC message. </param>
+            <returns> The resultant OSC message. </returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetMessage``1(``0)">
+            <summary>
+            Creates an OSC Message out of the provided OSC binary packet.
+            </summary>
+            <typeparam name="Packet"> The packet struct fed into this method should implement the IOscPacket interface. Obviously, it should contain readable OSC data as well. </typeparam>
+            <param name="oscPacket"> The packet to be deserialized. </param>
+            <returns> The resultant OSC message. </returns>
+            <remarks> The method is generic to avoid the struct-as-interface boxing/unboxing shenanigans. </remarks>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetBundle(System.Byte[],System.Int32@,System.Int32)">
+            <summary>
+            Deserializes an OSC Bundle from the byte array, using an external pointer to navigate it.
+            </summary>
+            <param name="data"> The byte array containing the bundle. </param>
+            <param name="extPointer"> Points at the start of the bundle. Will be shifted forwards to the end of the bundle. </param>
+            <param name="length"> The length of this bundle in bytes. </param>
+            <returns> The resultant OSC Bundle. </returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetBundle(System.Byte[])">
+            <summary>
+            Deserializes an OSC Bundle from the byte array.
+            </summary>
+            <param name="data"> The byte array containing the bundle. </param>
+            <returns> The resultant OSC Bundle. </returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetBundle``1(``0)">
+            <summary>
+            Creats an OSC Bundle out of the provided OSC binary packet.
+            </summary>
+            <typeparam name="Packet"> The packet struct fed into this method should implement the IOscPacket interface. Obviously, it should contain readable OSC data as well. </typeparam>
+            <param name="oscPacket"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetMessageOscLength(OscLib.OscMessage)">
+            <summary>
+            Calculates the byte length of the provided OSC Message according to this OSC Protocol implementation's specifics.
+            </summary>
+            <param name="message"> The message to measure. </param>
+            <returns> The length of the provided message in bytes. </returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetBundleOscLength(OscLib.OscBundle)">
+            <summary>
+            Calculates the byte length of the provided OSC Bundle according to this OSC Protocol implementation's specifics.
+            </summary>
+            <param name="bundle"> The bundle to measure. </param>
+            <returns> The length of the provided message in bytes. </returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetArgAsBytes``1(``0,System.Byte@)">
+            <summary>
+            Serializes the provided argument into its OSC byte data form and returns it as an array of bytes, provides the corresponding type tag.
+            </summary>
+            <remarks>
+            Implemented the way it is to minimize boxing.
+            </remarks>
+            <param name="arg"> Argument to be serialized. </param>
+            <param name="typeTag"> Will return the OSC type tag for the provided argument. </param>
+            <returns> The byte array containing the argument converted to OSC Protocol-compliant binary. </returns>
+            <exception cref="T:System.ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
+        </member>
+        <member name="M:OscLib.OscConvertBase.AddArgAsBytes``1(``0,System.Byte[],System.Int32@,System.Byte@)">
+            <summary>
+            Serializes the provided argument into its OSC byte data form and adds it into an existing byte array, provides the corresponding type tag.  
+            </summary>
+            <remarks>
+            Implemented the way it is to minimize boxing.
+            </remarks>
+            <param name="arg"> The argument to be serialized. </param>
+            <param name="array"> The target byte array. </param>
+            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
+            <param name="typeTag"> Corresponding OSC type tag. </param>
+            <exception cref="T:System.ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
+        </member>
+        <member name="M:OscLib.OscConvertBase.GetArgLength``1(``0)">
+            <summary>
+            Returns the provided argument's OSC byte length.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="arg"></param>
+        </member>
+        <member name="M:OscLib.OscConvertBase.BytesToArg(System.Byte[],System.Int32@,System.Byte)">
+            <summary>
+            Deserializes the part of provided byte array into an object representing the OSC Message argument, starting from the pointer position and according to the provided type tag. 
+            Shifts the pointer forward accordingly.
+            </summary>
+            <param name="array"> The byte array containing OSC byte data. </param>
+            <param name="extPointer"> The external pointer designating the position from which the relevant data starts. </param>
+            <param name="typeTag"> The type tag of the argument contained in the data. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.IsAReservedSymbol(System.Byte)">
+            <summary>
+            Checks whether the provided byte represents an ASCII symbol reserved by the OSC Protocol.
+            </summary>
+            <param name="symbol"> ASCII symbol as a byte. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.ContainsReservedSymbols(System.Byte[])">
+            <summary>
+            Checks whether the byte array contains any ASCII symbols reserved by the OSC Protocol.
+            </summary>
+            <param name="array"> An array presumably containing ASCII symbols as bytes. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscConvertBase.AddBundleHeader(System.Byte[],System.Int32)">
+            <summary>
+            Adds a bundle header to the target byte array, starting from the specified index. Tags it with the "execute immediately" timetag.
+            </summary>
+            <remarks>
+            "Adds" means "overwrites the next 16 bytes with the bundle header", by the way, so it's probably best to make sure there's nothing important there first.
+            </remarks>
+            <param name="target"> Target byte array to modify. </param>
+            <param name="index"> Target index. </param>
+        </member>
+        <member name="M:OscLib.OscConvertBase.AddBundleHeader(System.Byte[],System.Int32,OscLib.OscTimetag)">
+            <summary>
+            Adds a bundle header to the target byte array, starting from the specified index and using the provided timetag. 
+            </summary>
+            <remarks>
+            "Adds" means "overwrites the next 16 bytes with the bundle header", by the way, so it's probably best to make sure there's nothing important there first.
+            </remarks>
+            <param name="target"> Target byte array to modify. </param>
+            <param name="index"> Target index. </param>
+            <param name="timetag"> To be included in the header. </param>
+        </member>
+        <member name="T:OscLib.OscConvertFull">
+            <summary>
+            An implementation of a "full" version of OSC Protocol - supporting all 
+            or discarded outright.
+            </summary>
+        </member>
+        <member name="T:OscLib.OscConvertMini">
+            <summary>
+            An implementation of a basic, bare-bones version of OSC Protocol - only supporting Int32, Float32, Osc-String and Osc-Blob as arguments. Everything else will be converted into one of these,
+            or discarded outright.
+            </summary>
+        </member>
         <member name="T:OscLib.LinkMode">
             <summary>
             Describes the current mode of operation of an OSC Link.
@@ -1334,6 +1257,9 @@
         </member>
         <member name="F:OscLib.OscLink._name">
             <summary> This OSC Link's name. </summary>
+        </member>
+        <member name="F:OscLib.OscLink._protocol">
+            <summary> The OSC Protocol currently in use by this link. </summary>
         </member>
         <member name="F:OscLib.OscLink._udpClient">
             <summary> Used internally to send and receive OSC packets. </summary>
@@ -1374,6 +1300,9 @@
         <member name="F:OscLib.OscLink._mode">
             <summary> Current mode of operation. </summary>
         </member>
+        <member name="P:OscLib.OscLink.LocalIP">
+            <summary> Local IP address. </summary>
+        </member>
         <member name="P:OscLib.OscLink.Name">
             <summary> Returns the name of this OSC Link. </summary>
         </member>
@@ -1410,7 +1339,7 @@
         <member name="E:OscLib.OscLink.BundleReceived">
             <summary> Invoked when this OSC Link receives a bundle or a batch of bundles. Received data is deserialized into a "flat" array containing all valid bundles. </summary> 
         </member>
-        <member name="E:OscLib.OscLink.PacketReceivedAsBytes">
+        <member name="E:OscLib.OscLink.PacketReceived">
             <summary> Invoked when this OSC Link receives any packet of binary OSC data. The packet is passed as is. </summary>
         </member>
         <member name="E:OscLib.OscLink.MessageSent">
@@ -1422,7 +1351,7 @@
         <member name="E:OscLib.OscLink.ReceiveTaskExceptionRaised">
             <summary> Invoked when there is an exception inside the receive task. Allows to catch exceptions without crashing the task, if desired. </summary>
         </member>
-        <member name="M:OscLib.OscLink.#ctor(System.String,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
+        <member name="M:OscLib.OscLink.#ctor(System.String,OscLib.OscConvertBase,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
             <summary>
             Creates a new OSC Link.
             </summary>

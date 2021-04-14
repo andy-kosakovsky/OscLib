@@ -26,7 +26,7 @@ namespace OscLib
             int value = GetInt32(data, pointer);
 
             // move pointer
-            pointer += OscProtocol.Chunk32;
+            pointer += OscConvert.Chunk32;
 
             return value;
         }
@@ -41,7 +41,7 @@ namespace OscLib
         {
             long value = GetInt64(data, pointer);
 
-            pointer += OscProtocol.Chunk64;
+            pointer += OscConvert.Chunk64;
 
             return value;
         }
@@ -57,7 +57,7 @@ namespace OscLib
         {
             OscTimetag timetag = GetTimetag(data, pointer);
 
-            pointer += OscProtocol.Chunk64;
+            pointer += OscConvert.Chunk64;
 
             return timetag;
         }
@@ -72,7 +72,7 @@ namespace OscLib
         {
             float value = GetFloat32(data, pointer);
 
-            pointer += OscProtocol.Chunk32;
+            pointer += OscConvert.Chunk32;
 
             return value;
         }
@@ -87,7 +87,7 @@ namespace OscLib
         {
             double value = GetFloat64(data, pointer);
 
-            pointer += OscProtocol.Chunk64;
+            pointer += OscConvert.Chunk64;
 
             return value;
         }
@@ -123,18 +123,19 @@ namespace OscLib
         /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
         public static string GetString(byte[] data, ref int pointer)
         {
-            StringBuilder returnString = new StringBuilder();
+            int start = pointer;
+            int count = 0;
 
             // scan chunks until we hit some nulls, then get to a multiple of 4 and stop
             while (data[pointer] != 0)
-            {
-                returnString.Append((char)data[pointer]);
+            { 
                 pointer++;
+                count++;
             }
 
             pointer = OscUtil.GetNextMultipleOfFour(pointer);
 
-            return returnString.ToString();
+            return Encoding.ASCII.GetString(data, start, count);
         }
 
         public static OscString GetOscString(byte[] data, ref int pointer)
@@ -276,16 +277,7 @@ namespace OscLib
         public static string GetString(byte[] data, int pointer)
         {
             int index = pointer;
-            StringBuilder returnString = new StringBuilder();
-
-            // scan bytes until we hit a 0, then just stop.
-            while (data[index] != 0)
-            {
-                returnString.Append((char)data[pointer]);
-                index++;
-            }
-
-            return returnString.ToString();
+            return GetString(data, ref index);
         }
 
 

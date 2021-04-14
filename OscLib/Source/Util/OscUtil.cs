@@ -28,6 +28,24 @@ namespace OscLib
             return new IPEndPoint(OscLink.LocalIP, 0); 
         } 
 
+        /// <summary>
+        /// Clamps a long to fit into an int.
+        /// </summary>
+        /// <returns></returns>
+        public static int ClampLong(long input)
+        {
+            int output;
+
+            if (input > int.MaxValue)
+                output = int.MaxValue;
+            else if (input < int.MinValue)
+                output = int.MinValue;
+            else
+                output = (int)input;
+
+            return output;
+        }
+
 
         public static IPEndPoint GetLocalEndPointWithPort(int port)
         {

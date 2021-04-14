@@ -48,7 +48,7 @@ namespace OscLib
             BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
-            extPointer += OscProtocol.Chunk32;
+            extPointer += OscConvert.Chunk32;
         }
 
 
@@ -112,7 +112,7 @@ namespace OscLib
             BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
-            extPointer += OscProtocol.Chunk64;
+            extPointer += OscConvert.Chunk64;
         }
 
 
@@ -176,7 +176,7 @@ namespace OscLib
             BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
-            extPointer += OscProtocol.Chunk32;
+            extPointer += OscConvert.Chunk32;
         }
 
 
@@ -240,7 +240,7 @@ namespace OscLib
             BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
-            extPointer += OscProtocol.Chunk64;
+            extPointer += OscConvert.Chunk64;
         }
 
 
@@ -392,7 +392,7 @@ namespace OscLib
         /// <returns> A binary blob - still a byte array but correctly formatted. </returns>
         public static byte[] GetBytes(byte[] arg)
         {
-            byte[] resultArray = new byte[GetLength(arg) + OscProtocol.Chunk32];
+            byte[] resultArray = new byte[GetLength(arg) + OscConvert.Chunk32];
 
             int pointer = 0;
 
@@ -478,17 +478,10 @@ namespace OscLib
         /// <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
         public static void AddBytes(OscTimetag arg, byte[] array, ref int extPointer)
         {
-            ulong value = arg.NtpTimestamp;
-
-            if (BitConverter.IsLittleEndian)
-            {
-                value = OscEndian.Swap(value);
-            }
-
-            BitConverter.GetBytes(value).CopyTo(array, extPointer);
+            AddBytes(arg, array, extPointer);
 
             // shift the external pointer
-            extPointer += OscProtocol.Chunk64;
+            extPointer += OscConvert.Chunk64;
         }
 
 
@@ -512,6 +505,76 @@ namespace OscLib
 
 
         #endregion // TIMETAG
+
+
+
+        #region COLOR
+
+        public static byte[] GetBytes(OscColor color)
+        {
+            byte[] result = new byte[4];
+
+            result[0] = color.Red;
+            result[1] = color.Green;
+            result[2] = color.Blue;
+            result[3] = color.Alpha;
+
+            return result;
+        }
+
+
+        public static void AddBytes(OscColor color, byte[] array, ref int extPointer)
+        {
+            array[extPointer++] = color.Red;
+            array[extPointer++] = color.Green;
+            array[extPointer++] = color.Blue;
+            array[extPointer++] = color.Alpha;
+        }
+
+
+        public static void AddBytes(OscColor color, byte[] array, int pointer)
+        {
+            int index = pointer;
+            AddBytes(color, array, ref index);
+        }
+
+        #endregion // COLOR
+
+
+        #region MIDI
+
+        public static byte[] GetBytes(OscMidi midi)
+        {
+            byte[] result = new byte[4];
+
+            result[0] = midi.PortId;
+            result[1] = midi.Status;
+            result[2] = midi.Data1;
+            result[3] = midi.Data2;
+
+            return result;
+        }
+
+
+        public static void AddBytes(OscMidi midi, byte[] array, ref int extPointer)
+        {
+            array[extPointer++] = midi.PortId;
+            array[extPointer++] = midi.Status;
+            array[extPointer++] = midi.Data1;
+            array[extPointer++] = midi.Data2;
+        }
+
+
+        public static void AddBytes(OscMidi midi, byte[] array, int pointer)
+        {
+            int index = pointer;
+            AddBytes(midi, array, ref index);
+        }
+
+        #endregion // MIDI
+
+
+
 
     }
 

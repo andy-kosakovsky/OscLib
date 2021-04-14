@@ -9,16 +9,8 @@ namespace OscLib
     /// </summary>
     public readonly struct OscTimetag
     {       
-        private readonly ulong _ntpTimestamp;
-        private readonly long _ticks;
-
-        /// <summary> This timetag represented in NTP timestamp format. </summary>
-        public ulong NtpTimestamp { get => _ntpTimestamp; }
-
-        /// <summary> This timetag represented as DateTime ticks, UTC. </summary>
-        public long Ticks { get => _ticks; }
-
-        
+        public readonly ulong NtpTimestamp;
+        public readonly long Ticks;     
 
         /// <summary>
         /// Creates an OSC Timetag out of the provided DateTime object.
@@ -26,9 +18,9 @@ namespace OscLib
         /// <param name="time"> The source DateTime object. </param>
         public OscTimetag(DateTime time)
         {
-            _ticks = time.ToUniversalTime().Ticks;
+            Ticks = time.ToUniversalTime().Ticks;
        
-            long tickMinusEpoch = _ticks - OscTime.NtpEpochStart;
+            long tickMinusEpoch = Ticks - OscTime.NtpEpochStart;
 
             // get the seconds out of ticks
             uint seconds = (uint)(tickMinusEpoch / TimeSpan.TicksPerSecond);
@@ -37,7 +29,7 @@ namespace OscLib
 
             uint fraction = (uint)(uint.MaxValue * ((double)tickFraction / TimeSpan.TicksPerSecond));
 
-            _ntpTimestamp = (ulong)seconds << 32 | fraction;
+            NtpTimestamp = (ulong)seconds << 32 | fraction;
         }
 
         /// <summary>
@@ -47,9 +39,9 @@ namespace OscLib
         public OscTimetag(long tick)
         {
 
-            _ticks = tick;
+            Ticks = tick;
 
-            long tickMinusEpoch = _ticks - OscTime.NtpEpochStart;
+            long tickMinusEpoch = Ticks - OscTime.NtpEpochStart;
 
             // get the seconds out of ticks
             uint seconds = (uint)(tickMinusEpoch / TimeSpan.TicksPerSecond);
@@ -60,7 +52,7 @@ namespace OscLib
             uint fraction = (uint)(uint.MaxValue * ((double)tickFraction / TimeSpan.TicksPerSecond));
 
             // bitshift and add to a neat 64-bit ulong containing the result timestamp
-            _ntpTimestamp = (ulong)seconds << 32 | fraction;
+            NtpTimestamp = (ulong)seconds << 32 | fraction;
 
         }
 
@@ -70,34 +62,34 @@ namespace OscLib
         /// <param name="ntpTimestamp"> An ulong containing a 64-bit fixed-point NTP-format timestamp. </param>
         public OscTimetag(ulong ntpTimestamp)
         {
-            _ntpTimestamp = ntpTimestamp;
-            _ticks = 0;
+            NtpTimestamp = ntpTimestamp;
+            Ticks = 0;
 
-            uint seconds = (uint)((_ntpTimestamp >> 32) & 0xFFFFFFFF);
+            uint seconds = (uint)((NtpTimestamp >> 32) & 0xFFFFFFFF);
 
-            uint ntpFraction = (uint)(_ntpTimestamp & 0xFFFFFFFF);
+            uint ntpFraction = (uint)(NtpTimestamp & 0xFFFFFFFF);
 
             uint tickFraction = (uint)(((double)ntpFraction / uint.MaxValue) * TimeSpan.TicksPerSecond);
 
-            _ticks = OscTime.NtpEpochStart + (seconds * TimeSpan.TicksPerSecond) + tickFraction + 1;
+            Ticks = OscTime.NtpEpochStart + (seconds * TimeSpan.TicksPerSecond) + tickFraction + 1;
         }
 
 
         /// <summary> 
-        /// Returns this timetag represented as a DateTime object, corresponding to the time zone of the system. Creates a new instance of a DateTime object. 
+        /// Returns this timetag represented as a DateTime object, corresponding to the time zone of the system.
         /// </summary>
         public DateTime GetDateTime()
         {
-            return TimeZoneInfo.ConvertTimeFromUtc(new DateTime(_ticks), TimeZoneInfo.Local);
+            return TimeZoneInfo.ConvertTimeFromUtc(new DateTime(Ticks), TimeZoneInfo.Local);
         }
 
 
         /// <summary> 
-        /// Returns this timetag represented as a DateTime object, corresponding to UTC time. Creates a new instance of a DateTime object. 
+        /// Returns this timetag represented as a DateTime object, corresponding to UTC time.
         /// </summary>
         public DateTime GetDateTimeUtc()
         {
-            return new DateTime(_ticks);
+            return new DateTime(Ticks);
         }
 
 

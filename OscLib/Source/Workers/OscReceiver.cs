@@ -130,7 +130,7 @@ namespace OscLib
         {
             // get pattern elements
 
-            OscString[] pattern = message.AddressPattern.Split(OscProtocol.Separator);
+            OscString[] pattern = message.AddressPattern.Split(OscConvert.Separator);
 
             // the layer of the pattern that contains method name (0 will be root)
             int methodLayer = pattern.Length - 1;
@@ -327,7 +327,7 @@ namespace OscLib
                 _addressSpaceAccess.WaitOne();
 
                 // get the address pattern and check it for any crap we don't need
-                OscString[] pattern = addressPattern.Split(OscProtocol.Separator);
+                OscString[] pattern = addressPattern.Split(OscConvert.Separator);
 
                 OscContainer container = _root;
 
@@ -394,7 +394,7 @@ namespace OscLib
                 _addressSpaceAccess.WaitOne();
 
             // get the address pattern and check it for any crap we don't need
-            OscString[] pattern = addressPattern.Split(OscProtocol.Separator);
+            OscString[] pattern = addressPattern.Split(OscConvert.Separator);
 
             OscContainer container = _root;
 
@@ -462,7 +462,7 @@ namespace OscLib
                 _addressSpaceAccess.WaitOne();
 
                 // get the address pattern and check it for any crap we don't need
-                OscString[] pattern = addressPattern.Split(OscProtocol.Separator);
+                OscString[] pattern = addressPattern.Split(OscConvert.Separator);
 
                 OscContainer container = _root;
 

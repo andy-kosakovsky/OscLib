@@ -35,7 +35,7 @@ namespace OscLib
         protected readonly string _name;
 
         /// <summary> The OSC Protocol currently in use by this link. </summary>
-        protected OscProtocol _protocol;
+        protected OscConvert _protocol;
 
         /// <summary> Used internally to send and receive OSC packets. </summary>
         protected UdpClient _udpClient;
@@ -174,7 +174,7 @@ namespace OscLib
 
 
         /// <summary> Invoked when this OSC Link receives any packet of binary OSC data. The packet is passed as is. </summary>
-        public event OscPacketHandler<OscPacket> PacketReceivedAsBytes;
+        public event OscPacketHandler<OscPacket> PacketReceived;
 
 
         /// <summary> Invoked when this OSC Link sends out an OSC packet containing a message. On invocation, the message is deserialized into readible form. </summary>
@@ -198,7 +198,7 @@ namespace OscLib
         /// <param name="callEventsOnReceive"> Controls whether the "message/bundles received" events get called. </param>
         /// <param name="callEventsOnReceiveAsBytes"> Controls whether the "packet received as bytes" events get called. </param>
         /// <param name="callEventsOnSend"> Controls whether the "bundles/message sent" events get called. </param>
-        public OscLink(string name, OscProtocol protocol, int udpClientMaxBufferSize = 256, bool callEventsOnReceive = true, bool callEventsOnReceiveAsBytes = false, bool callEventsOnSend = false)
+        public OscLink(string name, OscConvert protocol, int udpClientMaxBufferSize = 256, bool callEventsOnReceive = true, bool callEventsOnReceiveAsBytes = false, bool callEventsOnSend = false)
         {
 
             _name = name;
@@ -498,7 +498,7 @@ namespace OscLib
                             _receiveDataBuffer = _udpClient.Receive(ref _receiveReturnAddress);
 
                             // per OSC protocol, first symbol of a bundle would always be "#"
-                            if (_receiveDataBuffer[0] == OscProtocol.BundleMarker)
+                            if (_receiveDataBuffer[0] == OscConvert.BundleMarker)
                                 OnBundleReceived(_receiveDataBuffer, _receiveReturnAddress);
                             else
                                 OnMessageReceived(_receiveDataBuffer, _receiveReturnAddress);
@@ -540,7 +540,7 @@ namespace OscLib
 
             if (_callEventsOnReceiveAsBytes)
             {
-                PacketReceivedAsBytes?.Invoke(new OscPacket(binaryData), receivedFrom);
+                PacketReceived?.Invoke(new OscPacket(binaryData), receivedFrom);
             }
 
         }
@@ -561,7 +561,7 @@ namespace OscLib
 
             if (_callEventsOnReceiveAsBytes)
             {
-                PacketReceivedAsBytes?.Invoke(new OscPacket(binaryData), receivedFrom);
+                PacketReceived?.Invoke(new OscPacket(binaryData), receivedFrom);
 
             } 
 
