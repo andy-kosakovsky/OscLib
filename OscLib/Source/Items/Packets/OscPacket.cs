@@ -28,7 +28,7 @@ namespace OscLib
         /// <param name="data"> Should contain valid OSC binary data. This constructor does VERY minimal validation, so use at your own risk. </param>
         public OscPacket(byte[] data)
         {
-            if ((data[0] != OscConvert.BundleMarker) && (data[0] != OscConvert.Separator))
+            if ((data[0] != OscProtocol.BundleMarker) && (data[0] != OscProtocol.Separator))
             {
                 throw new ArgumentException("OSC Packet ERROR: Cannot create new OSC Packet, provided binary data doesn't seem to be valid. ");
             }
@@ -45,7 +45,7 @@ namespace OscLib
         /// <param name="length"> The length of the relevant part of the byte array. </param>
         public OscPacket(byte[] dataSource, int index, int length)
         {
-            if ((dataSource[index] != OscConvert.BundleMarker) && (dataSource[0] != OscConvert.Separator))
+            if ((dataSource[index] != OscProtocol.BundleMarker) && (dataSource[0] != OscProtocol.Separator))
             {
                 throw new ArgumentException("OSC Packet ERROR: Cannot create new OSC Packet, provided binary data doesn't seem to be valid. ");
             }

@@ -34,8 +34,8 @@ namespace OscLib
         /// <summary> This OSC Link's name. </summary>
         protected readonly string _name;
 
-        /// <summary> The OSC Protocol currently in use by this link. </summary>
-        protected OscConvert _protocol;
+        /// <summary> The OSC Converter currently in use by this link. </summary>
+        protected readonly OscConvert _converter;
 
         /// <summary> Used internally to send and receive OSC packets. </summary>
         protected UdpClient _udpClient;
@@ -49,6 +49,8 @@ namespace OscLib
         // receive task
         /// <summary> Receives the packets from the UDP client and deserializes them. </summary>
         protected Task _receiveTask;
+
+     
 
         /// <summary> The "return address" of the last-received packet - that is, the end point it came from. </summary>
         protected IPEndPoint _receiveReturnAddress;
@@ -89,6 +91,9 @@ namespace OscLib
 
         /// <summary> Returns the name of this OSC Link. </summary>
         public string Name { get => _name;  }
+
+        /// <summary> The OSC Converter currently in use by this link. </summary>
+        public OscConvert Converter { get => _converter; }
 
         /// <summary> Returns whether this OSC Link is currently open. </summary>
         public bool IsOpen { get => (_mode != LinkMode.Closed); }
@@ -194,15 +199,16 @@ namespace OscLib
         /// Creates a new OSC Link.
         /// </summary>
         /// <param name="name"> The name of this OSC Link. </param>
+        /// <param name="converter"> The OSC Converter that this link will be using. </param>
         /// <param name="udpClientMaxBufferSize"> The maximum buffer size of the internal UDP client, in kb. </param>
         /// <param name="callEventsOnReceive"> Controls whether the "message/bundles received" events get called. </param>
         /// <param name="callEventsOnReceiveAsBytes"> Controls whether the "packet received as bytes" events get called. </param>
         /// <param name="callEventsOnSend"> Controls whether the "bundles/message sent" events get called. </param>
-        public OscLink(string name, OscConvert protocol, int udpClientMaxBufferSize = 256, bool callEventsOnReceive = true, bool callEventsOnReceiveAsBytes = false, bool callEventsOnSend = false)
+        public OscLink(string name, OscConvert converter, int udpClientMaxBufferSize = 256, bool callEventsOnReceive = true, bool callEventsOnReceiveAsBytes = false, bool callEventsOnSend = false)
         {
 
             _name = name;
-            _protocol = protocol;
+            _converter = converter;
 
             _receiveTaskTokenSource = new CancellationTokenSource();
             _udpClientMaxBufferSize = udpClientMaxBufferSize;
@@ -278,7 +284,7 @@ namespace OscLib
         /// <exception cref="InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> The port number is out of range. </exception>
         /// <exception cref="SocketException"> Couldn't open a socket. </exception>
-        public void OpenToTarget(IPEndPoint targetEndPoint, int port)
+        public void OpenToTarget(int port, IPEndPoint targetEndPoint)
         {
             if (targetEndPoint == null)
             {
@@ -318,7 +324,7 @@ namespace OscLib
             _targetEndPoint = null;
 
             _udpClient = new UdpClient();
-            _udpClient.Client.Bind(OscUtil.GetLocalEndPoint());   
+            _udpClient.Client.Bind(GetLocalEndPoint());   
 
             Open();
 
@@ -345,7 +351,7 @@ namespace OscLib
 
 
             _udpClient = new UdpClient();
-            _udpClient.Client.Bind(OscUtil.GetLocalEndPointWithPort(port));
+            _udpClient.Client.Bind(GetLocalEndPointWithPort(port));
 
             Open();
 
@@ -378,6 +384,19 @@ namespace OscLib
             // get new token source
             _receiveTaskTokenSource = new CancellationTokenSource();
                     
+        }
+
+        public void SendToTarget(OscMessage oscMessage)
+        {
+            if (_mode != LinkMode.Targeted)
+            {
+                throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + " needs to be in TARGET MODE (current mode: " + _mode.ToString() + ").");
+            }
+            OscPacket packet = _converter.GetPacket(oscMessage);
+
+            _udpClient.Send(packet.BinaryData, packet.OscLength);
+
+            OnDataSent(packet.BinaryData, TargetEndPoint);
         }
 
 
@@ -498,7 +517,7 @@ namespace OscLib
                             _receiveDataBuffer = _udpClient.Receive(ref _receiveReturnAddress);
 
                             // per OSC protocol, first symbol of a bundle would always be "#"
-                            if (_receiveDataBuffer[0] == OscConvert.BundleMarker)
+                            if (_receiveDataBuffer[0] == OscProtocol.BundleMarker)
                                 OnBundleReceived(_receiveDataBuffer, _receiveReturnAddress);
                             else
                                 OnMessageReceived(_receiveDataBuffer, _receiveReturnAddress);
@@ -535,7 +554,7 @@ namespace OscLib
             {
                 int pointer = 0;
 
-                BundleReceived?.Invoke(_protocol.GetBundle(binaryData, ref pointer, binaryData.Length), receivedFrom);
+                BundleReceived?.Invoke(_converter.GetBundle(binaryData, ref pointer, binaryData.Length), receivedFrom);
             }
 
             if (_callEventsOnReceiveAsBytes)
@@ -556,7 +575,7 @@ namespace OscLib
 
             if (_callEventsOnReceive)
             {
-                MessageReceived?.Invoke(_protocol.GetMessage(binaryData), receivedFrom);
+                MessageReceived?.Invoke(_converter.GetMessage(binaryData), receivedFrom);
             }
 
             if (_callEventsOnReceiveAsBytes)
@@ -579,18 +598,36 @@ namespace OscLib
             {
                 if (binaryData[0] == (byte)'#')
                 {
-                    BundleSent?.Invoke(_protocol.GetBundle(binaryData), sentTo);
+                    BundleSent?.Invoke(_converter.GetBundle(binaryData), sentTo);
                 }
                 else
                 {
-                    MessageSent?.Invoke(_protocol.GetMessage(binaryData), sentTo);
+                    MessageSent?.Invoke(_converter.GetMessage(binaryData), sentTo);
                 }
 
             }
 
         }
 
-        #endregion
+        #endregion // EVENT WRAPPERS
+
+
+        #region STATIC METHODS
+
+        /// <summary> Returns an end point at a local address on a random open port. </summary> 
+        public static IPEndPoint GetLocalEndPoint()
+        {
+            return new IPEndPoint(LocalIP, 0);
+        }
+
+        /// <summary> Returns an end point at a local address with the requested port number (subject to availability). </summary> 
+        public static IPEndPoint GetLocalEndPointWithPort(int port)
+        {
+            return new IPEndPoint(LocalIP, port);
+        }
+
+        #endregion // STATIC METHODS
+
 
         /// <summary>
         /// Prints out the status of this OSC Link as a nicely formatted string.

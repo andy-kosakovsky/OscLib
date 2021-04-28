@@ -5,28 +5,11 @@ using System.Text;
 
 namespace OscLib
 {
-   /// <summary>
-   /// A basic implementation of a yes-no-maybe boolean-like thing. 
-   /// </summary>
-    internal enum Trit
-    {
-        True = 1,
-        False = -1,
-        Maybe = 0
-    }
-
-
     /// <summary>
     /// Utility class for various helper methods.
     /// </summary>
     public static class OscUtil
     {
-
-        /// <summary> Returns an end point at a local address on a random open port. </summary> 
-        public static IPEndPoint GetLocalEndPoint()
-        { 
-            return new IPEndPoint(OscLink.LocalIP, 0); 
-        } 
 
         /// <summary>
         /// Clamps a long to fit into an int.
@@ -45,12 +28,7 @@ namespace OscLib
 
             return output;
         }
-
-
-        public static IPEndPoint GetLocalEndPointWithPort(int port)
-        {
-            return new IPEndPoint(OscLink.LocalIP, port);
-        }
+        
 
         /// <summary>
         /// Returns a string that consists of the provided char repeating the designated number of times.

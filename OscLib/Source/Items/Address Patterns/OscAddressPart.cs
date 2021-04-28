@@ -26,7 +26,7 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown when name does contain reserved symbols. Pls no, thx. </exception>
         public OscAddressPart(OscString name)
         {
-            if (name.ContainsReservedSymbols())
+            if (name.ContainsSpecialSymbols() || name.ContainsPatternMatching())
             {
                 throw new ArgumentException("Address Space Error: Invalid name for new element, contains reserved symbols");
             }

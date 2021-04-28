@@ -12,71 +12,11 @@ namespace OscLib
     /// <remarks>
     /// This base class implements methods for converting OSC Messages and Bundles to OSC Packets and vice versa, but implementing the exact methods for serializing and deserializing 
     /// arguments is left to derived classes. Different applications utilising OSC might have slightly different implementations of the OSC protocol -- some don't use double-length 
-    /// floats, some use an integer of 1 and 0 instead of T and F typetags for sending booleans, some use custom typetags, and so on. Some applications don't even allow any arguments
+    /// floats, some use an integer equal to 1 or 0 instead of T and F typetags for sending booleans, some use custom typetags, and so on. Some applications don't even allow any arguments
     /// apart from the bare standard int32, float32, OSC-string and OSC-blob. All this can be accounted for in method overloads in the derived classes. 
     /// </remarks>
     public abstract class OscConvert
     {
-        // byte lengths of data chunks used by OSC
-
-        /// <summary> Length in bytes of a single (32 bits/4 bytes long) OSC data chunk. </summary>
-        public const int Chunk32 = 4;
-        /// <summary> Length in bytes of a double-sized (64 bits/8 bytes long) OSC data chunk. </summary>
-        public const int Chunk64 = 8;
-
-
-        #region PATTERN MATCHING CONSTS
-
-        /// <summary> Stands for any sequence of zero or more characters in pattern matching. </summary>
-        public const byte MatchAnySequence = (byte)'*';
-
-        /// <summary> Stands for any single character in pattern matching. </summary>
-        public const byte MatchAnyChar = (byte)'?';
-
-
-        /// <summary> Opens an array of characters in pattern matching. A match will occur if any of the characters within the array corresponds to a single character. </summary>
-        public const byte MatchCharArrayOpen = (byte)'[';
-
-        /// <summary> Closes an array of characters in pattern matching. </summary>
-        public const byte MatchCharArrayClose = (byte)']';
-
-        /// <summary> "Reverses" the character array, matching it with any symbol *not* present in it.  </summary>
-        public const byte MatchNot = (byte)'!';
-
-        /// <summary> A range symbol used inside character arrays. Stands for the entire range of ASCII symbols between the two around it. </summary>
-        public const byte MatchRange = (byte)'-';
-
-
-        /// <summary> Opens an array of strings in pattern matching. A match will occur if any of the strings within the array matches to a sequence of characters.  </summary>
-        public const byte MatchStringArrayOpen = (byte)'{';
-
-        /// <summary> Closes an array of strings in pattern matching. </summary>
-        public const byte MatchStringArrayClose = (byte)'}';
-
-        #endregion // PATTERN MATCHING CONSTS
-
-
-        // consts for other special symbols specified in OSC protocol
-        #region SPECIAL SYMBOL CONSTS
-
-        /// <summary> Designates the start of an OSC Bundle. </summary>
-        public const byte BundleMarker = (byte)'#';
-
-        /// <summary> Separates parts of an address string inside OSC Messages. Always should be present at the start of an address string. </summary>
-        public const byte Separator = (byte)'/';
-
-        /// <summary> Designates the beginning of an OSC type tag string inside messages. Separates strings in string arrays when pattern matching. </summary>
-        public const byte Comma = (byte)',';
-
-        /// <summary> Personal space. Not allowed in OSC Method or Container names, otherwise insignificant. </summary>
-        public const byte Space = (byte)' ';
-
-        #endregion // SPECIAL SYMBOL CONSTS
-
-        // reserved symbols that shouldn't be used in osc method or container names - just to have them all in a nice container
-        private static readonly byte[] _addressReservedSymbols = new byte[] { Space, BundleMarker, MatchAnySequence,
-            Comma, Separator, MatchAnyChar, MatchNot, MatchRange, MatchCharArrayOpen, MatchCharArrayClose, MatchStringArrayOpen, MatchStringArrayClose };
-
 
         /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
         protected bool _settingEmptyTypeTagStrings;
@@ -109,7 +49,7 @@ namespace OscLib
             if (message.Arguments.Length > 0)
             {
                 // add the address pattern comma
-                array[msgStart + addrLength] = Comma;
+                array[msgStart + addrLength] = OscProtocol.Comma;
 
                 // find the length of type tag, " + 1" accounts for the comma
                 int typeTagLength = OscUtil.GetNextMultipleOfFour(message.Arguments.Length + 1);
@@ -127,10 +67,10 @@ namespace OscLib
                 if (_settingEmptyTypeTagStrings)
                 {
                     // add the address pattern comma
-                    array[msgStart + addrLength] = Comma;
+                    array[msgStart + addrLength] = OscProtocol.Comma;
 
                     // shift pointer forward by 4 bytes - the comma plus three null bytes
-                    extPointer += Chunk32;
+                    extPointer += OscProtocol.Chunk32;
                 }
 
             }
@@ -183,13 +123,13 @@ namespace OscLib
             {
                 // leave space for length
                 int startPointer = extPointer;
-                extPointer += Chunk32;
+                extPointer += OscProtocol.Chunk32;
 
                 AddMessageAsBytes(messages[i], array, ref extPointer);
 
                 int endPointer = extPointer;
 
-                int length = endPointer - startPointer - Chunk32;
+                int length = endPointer - startPointer - OscProtocol.Chunk32;
 
                 // add length
                 OscSerializer.AddBytes(length, array, startPointer);
@@ -212,13 +152,13 @@ namespace OscLib
             {
                 // leave space for length
                 int startPointer = extPointer;
-                extPointer += Chunk32;
+                extPointer += OscProtocol.Chunk32;
 
                 AddBundleAsBytes(bundles[i], array, ref extPointer);
 
                 int endPointer = extPointer;
 
-                int length = endPointer - startPointer - Chunk32;
+                int length = endPointer - startPointer - OscProtocol.Chunk32;
 
                 // add length
                 OscSerializer.AddBytes(length, array, startPointer);
@@ -309,7 +249,7 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                length += packets[i].OscLength + Chunk32;
+                length += packets[i].OscLength + OscProtocol.Chunk32;
             }
 
             byte[] data = new byte[length];
@@ -330,7 +270,7 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                length += packets[i].OscLength + Chunk32;
+                length += packets[i].OscLength + OscProtocol.Chunk32;
             }
 
             byte[] data = new byte[length];
@@ -363,7 +303,7 @@ namespace OscLib
         public OscMessage GetMessage(byte[] data, ref int extPointer, int length)
         {
             // should start with an '/'
-            if (data[extPointer] != Separator)
+            if (data[extPointer] != OscProtocol.Separator)
             {
                 throw new ArgumentException("OSC Deserializer ERROR: No OSC Message found at pointer position, expecting a '/' symbol. Pointer at: " + extPointer);
             }
@@ -380,12 +320,12 @@ namespace OscLib
             while (extPointer < msgStart + length)
             {
                 // move pointer forward by a chunk
-                extPointer += Chunk32;
+                extPointer += OscProtocol.Chunk32;
 
                 // preceding chunk ending in a 0 means the pattern ends somewhere within it, or right at the end of the chunk before it.
                 if (data[extPointer - 1] == 0)
                 {
-                    for (int i = extPointer - 2; i >= extPointer - Chunk32; i--)
+                    for (int i = extPointer - 2; i >= extPointer - OscProtocol.Chunk32; i--)
                     {
                         if (data[i] != 0)
                         {
@@ -398,7 +338,7 @@ namespace OscLib
                     // if not yet found, the pattern's end is the last byte of the chunk behind
                     if (addressPatternLength < 0)
                     {
-                        addressPatternLength = extPointer - msgStart - Chunk32;
+                        addressPatternLength = extPointer - msgStart - OscProtocol.Chunk32;
                     }
 
                     break;
@@ -432,7 +372,7 @@ namespace OscLib
             }
 
             // check if the address string exists at all
-            if (data[extPointer] == Comma)
+            if (data[extPointer] == OscProtocol.Comma)
             {
                 typeTagStart = extPointer;
 
@@ -455,7 +395,7 @@ namespace OscLib
                     // the first element in the array will be the "," type tag separator
                     for (int i = 0; i < typeTagsTotal; i++)
                     {
-                        arguments[i] = BytesToArg<object>(data, ref extPointer, data[typeTagStart + 1 + i]);
+                        arguments[i] = BytesToArg(data, ref extPointer, data[typeTagStart + 1 + i]);
                         
                         if (extPointer > msgStart + length)
                         {
@@ -510,7 +450,7 @@ namespace OscLib
         {
             int bndStart = extPointer;
 
-            if (data[bndStart] != BundleMarker)
+            if (data[bndStart] != OscProtocol.BundleMarker)
             {
                 throw new ArgumentException("OSC Deserializer ERROR: Cannot deserialize OSC bundle, provided byte array is invalid.");
             }
@@ -533,14 +473,14 @@ namespace OscLib
             // get the number of bundles and messages in the elements (not going into messages contained within bundles)
             while (extPointer < bndStart + length)
             {
-                if (data[extPointer] == BundleMarker)
+                if (data[extPointer] == OscProtocol.BundleMarker)
                 {
                     // element is a bundle, move ahead by the length of an element
                     bndTotal++;
 
                     extPointer += elementLength;
                 }
-                else if (data[extPointer] == Separator)
+                else if (data[extPointer] == OscProtocol.Separator)
                 {
                     // element is a message, move ahead by the length of an element
                     msgTotal++;
@@ -577,12 +517,12 @@ namespace OscLib
             // go again lol
             while (extPointer < bndStart + length)
             {
-                if (data[extPointer] == BundleMarker)
+                if (data[extPointer] == OscProtocol.BundleMarker)
                 {
                     bundles[bndCount] = GetBundle(data, ref extPointer, elementLength);
                     bndCount++;
                 }
-                else if (data[extPointer] == Separator)
+                else if (data[extPointer] == OscProtocol.Separator)
                 {
                     messages[msgCount] = GetMessage(data, ref extPointer, elementLength);
                     msgCount++;
@@ -654,7 +594,7 @@ namespace OscLib
                 if (_settingEmptyTypeTagStrings)
                 {
                     // add space for a comma plus 3 empty bytes (how wasteful)
-                    length += Chunk32;
+                    length += OscProtocol.Chunk32;
                 }
 
             }
@@ -676,14 +616,14 @@ namespace OscLib
                 length += GetMessageOscLength(bundle.Messages[i]);
 
                 // account for length's bytes as well
-                length += Chunk32;
+                length += OscProtocol.Chunk32;
             }
 
             for (int i = 0; i < bundle.Bundles.Length; i++)
             {
                 length += GetBundleOscLength(bundle.Bundles[i]);
 
-                length += Chunk32;
+                length += OscProtocol.Chunk32;
             }
 
             return length;
@@ -734,17 +674,16 @@ namespace OscLib
         /// Deserializes the part of provided byte array into an object representing the OSC Message argument, starting from the pointer position and according to the provided type tag. 
         /// Shifts the pointer forward accordingly.
         /// </summary>
+        /// <remarks>
+        /// Words cannot describe how much I HATE the fact that this returns arguments as object, requiring boxing and thus causing the dreaded GC pressure. But, alas, I'm currently too 
+        /// stupid to figure out some clever way to avoid this. There is probably a way to deal with this, but it'll have to wait. 
+        /// </remarks>
         /// <param name="array"> The byte array containing OSC byte data. </param>
         /// <param name="extPointer"> The external pointer designating the position from which the relevant data starts. </param>
         /// <param name="typeTag"> The type tag of the argument contained in the data. </param>
         /// <returns></returns>
-        protected abstract T BytesToArg<T>(byte[] array, ref int extPointer, byte typeTag);
+        protected abstract object BytesToArg(byte[] array, ref int extPointer, byte typeTag);
 
-
-        protected abstract void GetArguments(byte[] array, ref int argPointer, ref int typeTagPointer);
-
-
-        //protected virtual TOscMessage GetMessage<TOscMessage>(byte[] array, ref int extPointer, )
 
         #endregion // ABSTRACT METHODS
 
@@ -752,43 +691,7 @@ namespace OscLib
 
         #region STATIC METHODS
 
-        /// <summary>
-        /// Checks whether the provided byte represents an ASCII symbol reserved by the OSC Protocol.
-        /// </summary>
-        /// <param name="symbol"> ASCII symbol as a byte. </param>
-        /// <returns></returns>
-        public static bool IsAReservedSymbol(byte symbol)
-        {
-            for (int i = 0; i < _addressReservedSymbols.Length; i++)
-            {
-                if (symbol == _addressReservedSymbols[i])
-                    return true;
-            }
-
-            return false;
-
-        }
-
-
-        /// <summary>
-        /// Checks whether the byte array contains any ASCII symbols reserved by the OSC Protocol.
-        /// </summary>
-        /// <param name="array"> An array presumably containing ASCII symbols as bytes. </param>
-        /// <returns></returns>
-        public static bool ContainsReservedSymbols(byte[] array)
-        {
-            for (int i = 0; i < array.Length; i++)
-            {
-                if (IsAReservedSymbol(array[i]))
-                {
-                    return true;
-                }
-
-            }
-
-            return false;
-        }
-
+      
 
         #region ADDING BUNDLE HEADERS
 
@@ -819,7 +722,7 @@ namespace OscLib
         public static void AddBundleHeader(byte[] target, int index, OscTimetag timetag)
         {
             OscBundle.CopyMarkerStringTo(target, index);
-            OscSerializer.AddBytes(timetag, target, index + Chunk64);
+            OscSerializer.AddBytes(timetag, target, index + OscProtocol.Chunk64);
         }
 
         #endregion // ADDING BUNDLE HEADERS

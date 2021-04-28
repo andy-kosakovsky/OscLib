@@ -12,9 +12,162 @@ namespace OscLib
     public static class OscDeserializer
     {
 
+        #region GET ARGUMENTS (WITH DIRECT POINTER)
+
+        /// <summary>
+        /// Gets an int out of the byte array.
+        /// </summary>
+        /// <param name="data"> Byte array containing the data. </param>
+        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        public static int GetInt32(byte[] data, int pointer)
+        {
+            int value = BitConverter.ToInt32(data, pointer);
+
+            // swap endianness if needed
+            if (BitConverter.IsLittleEndian)
+            {
+                value = OscEndian.Swap(value);
+            }
+
+            return value;
+        }
+
+
+        /// <summary>
+        /// Gets a long out of the byte array.
+        /// </summary>
+        /// <param name="data"> Byte array containing the data. </param>
+        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        public static long GetInt64(byte[] data, int pointer)
+        {
+            long value = BitConverter.ToInt64(data, pointer);
+
+            if (BitConverter.IsLittleEndian)
+            {
+                value = OscEndian.Swap(value);
+            }
+
+            return value;
+        }
+
+
+        /// <summary>
+        /// Gets a timestamp out of the byte array.
+        /// </summary>
+        /// <param name="data"> Byte array containing the data. </param>
+        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        public static OscTimetag GetTimetag(byte[] data, int pointer)
+        {
+            ulong ntpTimestamp = BitConverter.ToUInt64(data, pointer);
+
+            if (BitConverter.IsLittleEndian)
+            {
+                ntpTimestamp = OscEndian.Swap(ntpTimestamp);
+            }
+
+            return new OscTimetag(ntpTimestamp);
+        }
+
+
+        /// <summary>
+        /// Gets a float out of the byte array.
+        /// </summary>
+        /// <param name="data"> Byte array containing the data. </param>
+        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        public static float GetFloat32(byte[] data, int pointer)
+        {
+            float value = BitConverter.ToSingle(data, pointer);
+
+            if (BitConverter.IsLittleEndian)
+            {
+                value = OscEndian.Swap(value);
+            }
+
+            return value;
+        }
+
+
+        /// <summary>
+        /// Gets a double out of the byte array.
+        /// </summary>
+        /// <param name="data"> Byte array containing the data. </param>
+        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        public static double GetFloat64(byte[] data, int pointer)
+        {
+            double value = BitConverter.ToDouble(data, pointer);
+
+            if (BitConverter.IsLittleEndian)
+            {
+                value = OscEndian.Swap(value);
+            }
+
+            return value;
+        }
+
+
+        /// <summary>
+        /// Gets a binary blob out of the byte array.
+        /// </summary>
+        /// <param name="data"> Byte array containing the data. </param>
+        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        /// <returns> A byte array. </returns>
+        public static byte[] GetBlob(byte[] data, int pointer)
+        {
+            int index = pointer;
+
+            // get length
+            int length = GetInt32(data, ref index);
+
+            byte[] resultArray = new byte[length];
+
+            // get result
+            Array.Copy(data, index, resultArray, 0, length);
+
+            return resultArray;
+        }
+
+
+        /// <summary>
+        /// Gets a string out of the byte array, using a pointer.
+        /// </summary>
+        /// <param name="data"> Byte array containing the data. </param>
+        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        public static string GetString(byte[] data, int pointer)
+        {
+            int index = pointer;
+            return GetString(data, ref index);
+        }
+
+
+        public static OscString GetOscString(byte[] data, int pointer)
+        {
+            int index = pointer;
+            return GetOscString(data, ref index);
+        }
+
+   
+        public static OscMidi GetOscMidi(byte[] data, int pointer)
+        {
+            return new OscMidi(data[pointer],
+                               data[pointer + 1],
+                               data[pointer + 2],
+                               data[pointer + 3]);
+        }
+
+
+        public static OscColor GetOscColor(byte[] data, int pointer)
+        {
+            return new OscColor(data[pointer],
+                               data[pointer + 1],
+                               data[pointer + 2],
+                               data[pointer + 3]);
+        }
+
+        #endregion
+
 
         #region GET ARGUMENTS (WITH EXTERNAL POINTER)
-        
+
 
         /// <summary>
         /// Gets an int out of the byte array, using an external pointer.
@@ -26,7 +179,7 @@ namespace OscLib
             int value = GetInt32(data, pointer);
 
             // move pointer
-            pointer += OscConvert.Chunk32;
+            pointer += OscProtocol.Chunk32;
 
             return value;
         }
@@ -41,7 +194,7 @@ namespace OscLib
         {
             long value = GetInt64(data, pointer);
 
-            pointer += OscConvert.Chunk64;
+            pointer += OscProtocol.Chunk64;
 
             return value;
         }
@@ -57,7 +210,7 @@ namespace OscLib
         {
             OscTimetag timetag = GetTimetag(data, pointer);
 
-            pointer += OscConvert.Chunk64;
+            pointer += OscProtocol.Chunk64;
 
             return timetag;
         }
@@ -72,7 +225,7 @@ namespace OscLib
         {
             float value = GetFloat32(data, pointer);
 
-            pointer += OscConvert.Chunk32;
+            pointer += OscProtocol.Chunk32;
 
             return value;
         }
@@ -87,7 +240,7 @@ namespace OscLib
         {
             double value = GetFloat64(data, pointer);
 
-            pointer += OscConvert.Chunk64;
+            pointer += OscProtocol.Chunk64;
 
             return value;
         }
@@ -128,7 +281,7 @@ namespace OscLib
 
             // scan chunks until we hit some nulls, then get to a multiple of 4 and stop
             while (data[pointer] != 0)
-            { 
+            {
                 pointer++;
                 count++;
             }
@@ -138,160 +291,38 @@ namespace OscLib
             return Encoding.ASCII.GetString(data, start, count);
         }
 
+
         public static OscString GetOscString(byte[] data, ref int pointer)
         {
-            throw new NotImplementedException();
-        }
+            int start = pointer;
+            int count = 0;
 
-
-
-        public static OscString GetOscMidi(byte[] data, ref int pointer)
-        {
-            throw new NotImplementedException();
-        }
-
-        #endregion
-
-
-
-        #region GET ARGUMENTS (WITH DIRECT POINTER)
-
-        /// <summary>
-        /// Gets an int out of the byte array, using a pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static int GetInt32(byte[] data, int pointer)
-        {
-            int value = BitConverter.ToInt32(data, pointer);
-
-            // swap endianness if needed
-            if (BitConverter.IsLittleEndian)
+            while (data[pointer] != 0)
             {
-                value = OscEndian.Swap(value);
+                pointer++;
+                count++;
             }
 
-            return value;
+            pointer = OscUtil.GetNextMultipleOfFour(pointer);
+
+            return new OscString(data, start, count);
+
         }
 
 
-        /// <summary>
-        /// Gets a long out of the byte array, using a pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static long GetInt64(byte[] data, int pointer)
+        public static OscMidi GetOscMidi(byte[] data, ref int pointer)
         {
-            long value = BitConverter.ToInt64(data, pointer);
-
-            if (BitConverter.IsLittleEndian)
-            {
-                value = OscEndian.Swap(value);
-            }
-
-            return value;
+            pointer += OscProtocol.Chunk32;
+            return GetOscMidi(data, pointer - OscProtocol.Chunk32);
         }
 
 
-        /// <summary>
-        /// Gets a timestamp out of the byte array, using a pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static OscTimetag GetTimetag(byte[] data, int pointer)
+        public static OscColor GetOscColor(byte[] data, ref int pointer)
         {
-            ulong ntpTimestamp = BitConverter.ToUInt64(data, pointer);
-
-            if (BitConverter.IsLittleEndian)
-            {
-                ntpTimestamp = OscEndian.Swap(ntpTimestamp);
-            }
-
-            return new OscTimetag(ntpTimestamp);
+            pointer += OscProtocol.Chunk32;
+            return GetOscColor(data, pointer - OscProtocol.Chunk32);
         }
 
-
-        /// <summary>
-        /// Gets a float out of the byte array, using a pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static float GetFloat32(byte[] data, int pointer)
-        {
-            float value = BitConverter.ToSingle(data, pointer);
-
-            if (BitConverter.IsLittleEndian)
-            {
-                value = OscEndian.Swap(value);
-            }
-
-            return value;
-        }
-
-
-        /// <summary>
-        /// Gets a double out of the byte array, using a pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static double GetFloat64(byte[] data, int pointer)
-        {
-            double value = BitConverter.ToDouble(data, pointer);
-
-            if (BitConverter.IsLittleEndian)
-            {
-                value = OscEndian.Swap(value);
-            }
-
-            return value;
-        }
-
-
-        /// <summary>
-        /// Gets a binary blob out of the byte array, using a pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        /// <returns> A byte array. </returns>
-        public static byte[] GetBlob(byte[] data, int pointer)
-        {
-            int index = pointer;
-
-            // get length
-            int length = GetInt32(data, ref index);
-
-            byte[] resultArray = new byte[length];
-
-            // get result
-            Array.Copy(data, index, resultArray, 0, length);
-
-            return resultArray;
-        }
-
-
-        /// <summary>
-        /// Gets a string out of the byte array, using a pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static string GetString(byte[] data, int pointer)
-        {
-            int index = pointer;
-            return GetString(data, ref index);
-        }
-
-
-        public static OscString GetOscString(byte[] data, int pointer)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        
-        public static OscString GetOscMidi(byte[] data, int pointer)
-        {
-            throw new NotImplementedException();
-        }
 
         #endregion
 

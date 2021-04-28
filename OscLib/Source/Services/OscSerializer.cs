@@ -48,7 +48,7 @@ namespace OscLib
             BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
-            extPointer += OscConvert.Chunk32;
+            extPointer += OscProtocol.Chunk32;
         }
 
 
@@ -112,7 +112,7 @@ namespace OscLib
             BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
-            extPointer += OscConvert.Chunk64;
+            extPointer += OscProtocol.Chunk64;
         }
 
 
@@ -176,7 +176,7 @@ namespace OscLib
             BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
-            extPointer += OscConvert.Chunk32;
+            extPointer += OscProtocol.Chunk32;
         }
 
 
@@ -240,7 +240,7 @@ namespace OscLib
             BitConverter.GetBytes(value).CopyTo(array, extPointer);
 
             // shift the external pointer
-            extPointer += OscConvert.Chunk64;
+            extPointer += OscProtocol.Chunk64;
         }
 
 
@@ -278,7 +278,7 @@ namespace OscLib
             // just to simplify conversion. will create two small byte[] arrays but who cares lol
             OscString oscString = arg;
 
-            return oscString.GetGetOscBytes();
+            return oscString.GetOscBytes();
         }
 
 
@@ -338,7 +338,7 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytes(OscString arg)
         {
-            return arg.GetGetOscBytes();
+            return arg.GetOscBytes();
         }
 
 
@@ -392,7 +392,7 @@ namespace OscLib
         /// <returns> A binary blob - still a byte array but correctly formatted. </returns>
         public static byte[] GetBytes(byte[] arg)
         {
-            byte[] resultArray = new byte[GetLength(arg) + OscConvert.Chunk32];
+            byte[] resultArray = new byte[GetLength(arg) + OscProtocol.Chunk32];
 
             int pointer = 0;
 
@@ -481,7 +481,7 @@ namespace OscLib
             AddBytes(arg, array, extPointer);
 
             // shift the external pointer
-            extPointer += OscConvert.Chunk64;
+            extPointer += OscProtocol.Chunk64;
         }
 
 
