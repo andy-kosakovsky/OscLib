@@ -16,7 +16,7 @@ namespace OscLib
         public const int MarkerStringLength = 8;
 
         // bundles are marked by having "#bundle" as their address string. this is a "prerendered" bundle message
-        private static readonly byte[] _markerString = new byte[8] { OscConvert.BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
+        private static readonly byte[] _markerString = new byte[8] { OscProtocol.BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
 
         // these are used to return empty arrays of messages and bundles
         private static readonly OscMessage[] _messagesEmpty = new OscMessage[0];

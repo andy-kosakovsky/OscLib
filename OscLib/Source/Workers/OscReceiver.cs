@@ -130,7 +130,7 @@ namespace OscLib
         {
             // get pattern elements
 
-            OscString[] pattern = message.AddressPattern.Split(OscConvert.Separator);
+            OscString[] pattern = message.AddressPattern.Split(OscProtocol.Separator);
 
             // the layer of the pattern that contains method name (0 will be root)
             int methodLayer = pattern.Length - 1;
@@ -162,7 +162,7 @@ namespace OscLib
                 if (currentLayer == methodLayer)
                 {
                     // if we don't have any reserved symbols, that means there should be only one method adhering to the pattern
-                    if (!pattern[currentLayer].ContainsReservedSymbols())
+                    if (!pattern[currentLayer].ContainsPatternMatching())
                     {
                         if (stack[currentLayer][pattern[currentLayer]] is OscMethod part)
                         {
@@ -194,7 +194,7 @@ namespace OscLib
                 }
                 else
                 {
-                    if (!pattern[currentLayer].ContainsReservedSymbols())
+                    if (!pattern[currentLayer].ContainsPatternMatching())
                     {
                         if (stack[currentLayer][pattern[currentLayer]] is OscContainer container)
                         {
@@ -327,17 +327,12 @@ namespace OscLib
                 _addressSpaceAccess.WaitOne();
 
                 // get the address pattern and check it for any crap we don't need
-                OscString[] pattern = addressPattern.Split(OscConvert.Separator);
+                OscString[] pattern = addressPattern.Split(OscProtocol.Separator);
 
                 OscContainer container = _root;
 
                 for (int i = 0; i < pattern.Length; i++)
-                {
-                    if (pattern[i].ContainsReservedSymbols())
-                    {
-                        throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern contains invalid symbols");
-                    }
-
+                {                 
                     // if we're not at the last bit of the address, let's find an appropriate container, or create a new one 
                     if (i != pattern.Length - 1)
                     {
@@ -394,17 +389,13 @@ namespace OscLib
                 _addressSpaceAccess.WaitOne();
 
             // get the address pattern and check it for any crap we don't need
-            OscString[] pattern = addressPattern.Split(OscConvert.Separator);
+            OscString[] pattern = addressPattern.Split(OscProtocol.Separator);
 
             OscContainer container = _root;
 
                 for (int i = 0; i < pattern.Length; i++)
                 {
-                    if (pattern[i].ContainsReservedSymbols())
-                    {
-                        throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern contains invalid symbols");
-                    }
-
+                 
                     // if we're not at the last bit of the address, let's find an appropriate container, or create a new one 
                     if (i != pattern.Length - 1)
                     {
@@ -462,14 +453,14 @@ namespace OscLib
                 _addressSpaceAccess.WaitOne();
 
                 // get the address pattern and check it for any crap we don't need
-                OscString[] pattern = addressPattern.Split(OscConvert.Separator);
+                OscString[] pattern = addressPattern.Split(OscProtocol.Separator);
 
                 OscContainer container = _root;
 
                 for (int i = 0; i < pattern.Length; i++)
                 {
                     // bumping into a reserved symbol at this stage means that there was an attempt at pattern matching, and we can't have that just yet
-                    if (pattern[i].ContainsReservedSymbols())
+                    if (pattern[i].ContainsPatternMatching())
                     {
                         throw new ArgumentException("Please no pattern-matching, I beg you.");
                     }

@@ -5,8 +5,8 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// An implementation of a basic, bare-bones version of OSC Protocol - only supporting Int32, Float32, Osc-String and Osc-Blob as arguments. Everything else will be converted into one of these,
-    /// or discarded outright.
+    /// An implementation of a basic, bare-bones version of OSC Protocol - only supporting Int32, Float32, Osc-String and Osc-Blob as arguments. Everything else will be converted into one of these if
+    /// possible, or discarded outright.
     /// </summary>
     public class OscConvertMini : OscConvert
     {
@@ -14,6 +14,9 @@ namespace OscLib
         private const byte _float32 = (byte)'f';
         private const byte _string = (byte)'s';
         private const byte _blob = (byte)'b';
+
+        // used to handle nulls
+        private const string _nullString = "NULL";
 
         public OscConvertMini()
         {
@@ -78,7 +81,15 @@ namespace OscLib
                 // if argument type is not supported, convert it to string and add ass such
                 default:
                     typeTag = _string;
-                    OscSerializer.AddBytes(arg.ToString(), array, ref extPointer);
+
+                    if (arg == null)
+                    {
+                        OscSerializer.AddBytes(_nullString, array, ref extPointer);
+                    }
+                    else
+                    {
+                        OscSerializer.AddBytes(arg.ToString(), array, ref extPointer);
+                    }
                     break;
 
             }
@@ -103,7 +114,7 @@ namespace OscLib
                     return OscDeserializer.GetBlob(array, ref extPointer);
 
                 default:
-                    throw new ArgumentException("OSC Protocol ERROR: Can't deserialize argument, argument type is not supported.");
+                    throw new ArgumentException("OSC Converter ERROR: Can't deserialize argument, argument type is not supported.");
             }
 
         }
@@ -119,8 +130,7 @@ namespace OscLib
                 case long _:
                 case double _:
                 case OscTimetag _:
-                case ulong _:
-                    return Chunk32;
+                    return OscProtocol.Chunk32;
 
                 case string argString:
                     return OscSerializer.GetLength(argString);
@@ -132,6 +142,11 @@ namespace OscLib
                     return OscSerializer.GetLength(argBlob);
 
                 default:
+                    if (arg == null)
+                    {
+                        return OscSerializer.GetLength(_nullString);
+                    }
+
                     return OscSerializer.GetLength(arg.ToString());
 
             }

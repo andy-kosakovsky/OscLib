@@ -26,7 +26,8 @@ namespace OscLib
         public readonly int OscLength;
         public readonly int Length;
 
-        private Trit _containsReservedSymbols;
+        private Trit _containsPatternMatching;
+        private Trit _containsSpecialSymbols;
    
         /// <summary>
         /// Indexer access to the characters of this string, as ASCII codes.
@@ -60,7 +61,9 @@ namespace OscLib
             _chars = bytes;
             OscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             Length = _chars.Length;
-            _containsReservedSymbols = Trit.Maybe;
+
+            _containsPatternMatching = Trit.Maybe;
+            _containsSpecialSymbols = Trit.Maybe;
         }
 
 
@@ -77,7 +80,9 @@ namespace OscLib
 
             OscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             Length = _chars.Length;
-            _containsReservedSymbols = Trit.Maybe;
+
+            _containsPatternMatching = Trit.Maybe;
+            _containsSpecialSymbols = Trit.Maybe;
         }
 
 
@@ -91,8 +96,9 @@ namespace OscLib
 
             OscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             Length = _chars.Length;
-            _containsReservedSymbols = Trit.Maybe;
 
+            _containsPatternMatching = Trit.Maybe;
+            _containsSpecialSymbols = Trit.Maybe;
         }
 
 
@@ -101,57 +107,14 @@ namespace OscLib
         /// </summary>
         /// <param name="bytes"></param>
         /// <param name="specialSymbols"></param>
-        private OscString(byte[] bytes, Trit specialSymbols)
+        private OscString(byte[] bytes, Trit hasSpecialSymbols, Trit hasPatternMatching)
         {
             _chars = bytes;
             OscLength = OscUtil.GetNextMultipleOfFour(_chars.Length);
             Length = _chars.Length;
 
-            _containsReservedSymbols = specialSymbols;
-        }
-
-
-        /// <summary>
-        /// Returns a modified copy of this string, swapping any special characters with an "_".
-        /// </summary>
-        public OscString ScrubReservedSymbols()
-        {
-            byte[] newStringBytes = new byte[_chars.Length];
-            _chars.CopyTo(newStringBytes, 0);
-
-            for (int i = 0; i < newStringBytes.Length; i++)
-            {
-                if (OscConvert.IsAReservedSymbol(newStringBytes[i]))
-                {
-                    newStringBytes[i] = (byte)'_';
-                }
-            }
-
-            return new OscString(newStringBytes, Trit.False);
-
-        }
-
-
-        /// <summary>
-        /// Removes any symbols from the string that are reserved by the OSC protocol, swapping them with "_", and returns the resulting string.
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        public static OscString ScrubReservedSymbols(string input)
-        {
-            byte[] newStringBytes = new byte[input.Length];
-            Encoding.ASCII.GetBytes(input).CopyTo(newStringBytes, 0);
-
-            for (int i = 0; i < newStringBytes.Length; i++)
-            {
-                if (OscConvert.IsAReservedSymbol(newStringBytes[i]))
-                {
-                    newStringBytes[i] = (byte)'_';
-                }
-            }
-
-            return new OscString(newStringBytes, Trit.False);
-
+            _containsPatternMatching = hasPatternMatching;
+            _containsSpecialSymbols = hasSpecialSymbols;
         }
 
 
@@ -171,7 +134,7 @@ namespace OscLib
         /// <returns></returns>
         public OscString Copy()
         { 
-            return new OscString(this._chars, _containsReservedSymbols);
+            return new OscString(_chars, _containsSpecialSymbols, _containsPatternMatching);
         }
 
 
@@ -237,7 +200,7 @@ namespace OscLib
         /// <summary> 
         /// Returns a copy of an array containing all characters (their ASCII codes as bytes, that is) in this string. 
         /// </summary>
-        public byte[] GetGetChars()
+        public byte[] GetChars()
         {
             byte[] copy = new byte[Length];
             _chars.CopyTo(copy, 0);
@@ -248,7 +211,7 @@ namespace OscLib
         /// <summary>
         /// Returns a copy of an array containing all chars (their ASCII codes as bytes, that is). 
         /// </summary>
-        public byte[] GetGetOscBytes()
+        public byte[] GetOscBytes()
         {
             byte[] copy = new byte[OscLength];
             _chars.CopyTo(copy, 0);
@@ -283,19 +246,18 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown when either the curly brackets or the square brackets aren't closed in the pattern. </exception>
         public bool PatternMatch(OscString pattern)
         {
+            // check if this string is eligible for pattern-matching (eg. it's not a pattern itself)
+            if (ContainsPatternMatching())
+            {
+                throw new ArgumentException("OSC String ERROR: Can't pattern-match two patterns");
+            }
+            
             // first, let's cover some common situations
             // if pattern consists of only one "*" symbol then it'll match to anything
-            if ((pattern._chars.Length == 1) && (pattern[0] == OscConvert.MatchAnySequence))
-            {
+            if ((pattern._chars.Length == 1) && (pattern[0] == OscProtocol.MatchAnySequence))
+            {               
                 return true;
             }
-
-            // if strings are the same, might as well return true
-            if (!pattern.ContainsReservedSymbols())
-            {
-                return (this == pattern);
-            }
-
 
             int patIndex = 0, strIndex = 0;
 
@@ -308,7 +270,7 @@ namespace OscLib
                 if (patIndex >= pattern.Length)
                 {
                     if (patRevert < 0)
-                    {
+                    {                     
                         return false;
                     }
 
@@ -317,8 +279,9 @@ namespace OscLib
 
 
                 // check for '*'
-                if (pattern[patIndex] == OscConvert.MatchAnySequence)
+                if (pattern[patIndex] == OscProtocol.MatchAnySequence)
                 {
+                    
                     patRevert = ++patIndex;
                     strRevert = strIndex;
 
@@ -330,13 +293,14 @@ namespace OscLib
 
                 }
                 // check for []
-                else if (pattern[patIndex] == OscConvert.MatchCharArrayOpen)
-                {
+                else if (pattern[patIndex] == OscProtocol.MatchCharArrayOpen)
+                {                  
                     if (!CharMatchesSquareBrackets(this[strIndex], ref patIndex, ref pattern))
                     {
                         // if we don't have something to return to
                         if (patRevert < 0)
                         {
+
                             return false;
                         }
 
@@ -350,8 +314,8 @@ namespace OscLib
                     }
                 }
                 // check for {}
-                else if (pattern[patIndex] == OscConvert.MatchStringArrayOpen)
-                {
+                else if (pattern[patIndex] == OscProtocol.MatchStringArrayOpen)
+                {                 
                     if (!StringMatchesCurlyBrackets(ref pattern, ref strIndex, ref patIndex))
                     {
                         // if we don't have something to return to
@@ -393,7 +357,7 @@ namespace OscLib
 
             }
 
-            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscConvert.MatchAnySequence))
+            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscProtocol.MatchAnySequence))
             {
                 patIndex++;
             }
@@ -406,26 +370,18 @@ namespace OscLib
         /// <summary>
         /// Whether this string contains special symbols reserved by OSC protocol. Checks when first called (can get quite expensive, depending on the length of the string), then caches the result.
         /// </summary>
-        public bool ContainsReservedSymbols()
-        {
-            if (_containsReservedSymbols == Trit.Maybe)
+        public bool ContainsSpecialSymbols()
+        {       
+            if (_containsSpecialSymbols == Trit.Maybe)
             {
                 // let's find out, shall we
-                bool contains = OscConvert.ContainsReservedSymbols(_chars);
+                bool contains = _chars.ContainsOscSpecialSymbols();
 
-                if (contains)
-                {
-                    _containsReservedSymbols = Trit.True;
-                    return true;
-                }
-                else
-                {
-                    _containsReservedSymbols = Trit.False;
-                    return false;
-                }
+                _containsSpecialSymbols = contains.ToTrit();
+                return contains;
 
             }
-            else if (_containsReservedSymbols == Trit.True)
+            else if (_containsSpecialSymbols == Trit.True)
             {
                 return true;
             }
@@ -434,6 +390,43 @@ namespace OscLib
                 return false;
             }
 
+        }
+
+        /// <summary>
+        /// Whether this string contains any pattern-matching symbols reserved by OSC protocol. Checks when first called (can get quite expensive, depending on the length of the string), then caches the result.
+        /// </summary>
+        public bool ContainsPatternMatching()
+        {
+            if (_containsPatternMatching == Trit.Maybe)
+            {
+                // let's find out, shall we
+                bool contains = _chars.ContainsOscPatternMatching();
+
+                _containsPatternMatching = contains.ToTrit();
+                return contains;
+
+            }
+            else if (_containsPatternMatching == Trit.True)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+
+        public void SetSpecialSymbols(bool value)
+        {
+            _containsSpecialSymbols = value.ToTrit();
+        }
+
+
+        public void SetPatternMatching(bool value)
+        {
+            _containsPatternMatching = value.ToTrit();
         }
 
 
@@ -595,7 +588,6 @@ namespace OscLib
 
         }
 
-
         private bool CharMatchesSquareBrackets(byte checkChar, ref int pointer, ref OscString pattern)
         {
             // find the end
@@ -608,7 +600,7 @@ namespace OscLib
 
             while (pointer < pattern.Length)
             {
-                if (pattern[pointer] == OscConvert.MatchCharArrayClose)
+                if (pattern[pointer] == OscProtocol.MatchCharArrayClose)
                 {
                     bracketEnd = pointer;
                     // make sure the pointer is going past the bracket
@@ -620,7 +612,7 @@ namespace OscLib
                 if (!found)
                 {
 
-                    if (pattern[pointer] == OscConvert.MatchNot)
+                    if (pattern[pointer] == OscProtocol.MatchNot)
                     {
                         // if it's at the beginning, make sure that it's noted, and keep a space for it in the return array 
                         if (bracketStart == (pointer - 1))
@@ -629,10 +621,10 @@ namespace OscLib
                         }
 
                     }
-                    else if (pattern[pointer] == OscConvert.MatchRange)
+                    else if (pattern[pointer] == OscProtocol.MatchRange)
                     {
                         // if we're not at the start, and if we're not by the end of the char array, so we can safely check back and forth
-                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != OscConvert.MatchCharArrayClose)))
+                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != OscProtocol.MatchCharArrayClose)))
                         {
                             if (OscUtil.IsNumberBetween(checkChar, pattern[pointer - 1], pattern[pointer + 1]))
                             {
@@ -684,7 +676,7 @@ namespace OscLib
 
             while (patPointer < pattern.Length)
             {
-                if ((pattern[patPointer] == OscConvert.Comma) || (pattern[patPointer] == OscConvert.MatchStringArrayClose))
+                if ((pattern[patPointer] == OscProtocol.Comma) || (pattern[patPointer] == OscProtocol.MatchStringArrayClose))
                 {
                     if (substringFits)
                     {
@@ -697,7 +689,7 @@ namespace OscLib
 
                     substringFits = true;
 
-                    if (pattern[patPointer] == OscConvert.MatchStringArrayClose)
+                    if (pattern[patPointer] == OscProtocol.MatchStringArrayClose)
                     {
                         curlyEnd = patPointer;
                         patPointer++;
@@ -741,7 +733,7 @@ namespace OscLib
 
         private bool CharIsEqual(byte strChar, byte patChar)
         {
-            if (patChar == OscConvert.MatchAnyChar)
+            if (patChar == OscProtocol.MatchAnyChar)
             {
                 return true;
             }

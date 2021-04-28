@@ -68,8 +68,21 @@ namespace OscLib
                     break;
 
                 case float argFloat:
+                    if (float.IsInfinity(argFloat))
+                    {
+                        typeTag = _inf;
+                        break;
+                    }
+                    
+                    if (float.IsNaN(argFloat))
+                    {
+                        typeTag = _nil;
+                        break;
+                    }
+                    
                     typeTag = _float32;
                     OscSerializer.AddBytes(argFloat, array, ref extPointer);
+                    
                     break;
 
                 case string argString:
@@ -94,6 +107,18 @@ namespace OscLib
                     break;
 
                 case double argDouble:
+                    if (double.IsInfinity(argDouble))
+                    {
+                        typeTag = _inf;
+                        break;
+                    }
+
+                    if (double.IsNaN(argDouble))
+                    {
+                        typeTag = _nil;
+                        break;
+                    }
+
                     typeTag = _float64;
                     OscSerializer.AddBytes(argDouble, array, ref extPointer);
                     break;
@@ -114,19 +139,41 @@ namespace OscLib
                     OscSerializer.AddBytes(argMidi, array, ref extPointer);
                     break;
 
-                default:
-                    throw new Exception();
-                
+                // TODO: make sure that char-over-osc is correct
+                case char argChar:
+                    byte trueChar = (byte)argChar;
+                    
+                    typeTag = _char;
+                    OscSerializer.AddBytes((int)trueChar, array, ref extPointer);
+                    break;
 
+                case bool boolean:
+                    if (boolean)
+                        typeTag = _true;
+                    else
+                        typeTag = _false;
+                    // don't add any bytes to the byte array
+                    break;
+
+                default:
+                    if (arg == null)
+                    {
+                        typeTag = _nil;
+                        break;
+                    }
+
+                    throw new ArgumentException("OSC Converter ERROR: Cannot convert argument to bytes, argument of unsupported type.");
+               
             }
 
         }
 
 
-        protected override T BytesToArg<T>(byte[] array, ref int extPointer, byte typeTag) 
+        protected override object BytesToArg(byte[] array, ref int extPointer, byte typeTag) 
         {
             switch (typeTag)
             {
+                // basics
                 case _int32:
                     return OscDeserializer.GetInt32(array, ref extPointer);
 
@@ -134,13 +181,50 @@ namespace OscLib
                     return OscDeserializer.GetFloat32(array, ref extPointer);
 
                 case _string:
-                    return OscDeserializer.GetString(array, ref extPointer);
+                    return OscDeserializer.GetOscString(array, ref extPointer);
 
                 case _blob:
                     return OscDeserializer.GetBlob(array, ref extPointer);
 
+                // 64bit stuff
+                case _int64:
+                    return OscDeserializer.GetInt64(array, ref extPointer);
+
+                case _float64:
+                    return OscDeserializer.GetFloat64(array, ref extPointer);
+
+                case _timetag:
+                    return OscDeserializer.GetTimetag(array, ref extPointer);
+
+                // special bits
+                case _stringAlt:
+                    return OscDeserializer.GetString(array, ref extPointer);
+
+                case _char:
+                    int intChar = OscDeserializer.GetInt32(array, ref extPointer);
+                    return (char)intChar;
+
+                case _color:
+                    return OscDeserializer.GetOscColor(array, ref extPointer);
+
+                case _midi:
+                    return OscDeserializer.GetOscMidi(array, ref extPointer);
+
+                // type-tag-only bits
+                case _nil:
+                    return null;
+
+                case _inf:
+                    return float.PositiveInfinity;
+
+                case _true:
+                    return true;
+
+                case _false:
+                    return false;
+
                 default:
-                    throw new ArgumentException("OSC Protocol ERROR: Can't deserialize argument, argument type is not supported.");
+                    throw new ArgumentException("OSC Converter ERROR: Can't deserialize argument, argument type is not supported.");
             }
 
         }
@@ -150,15 +234,33 @@ namespace OscLib
         {
             switch (arg)
             {
-                // 64bit vars will be shortened to 32bit in this particular implementation
                 case int _:
-                case float _:
-                case long _:
-                case double _:
-                case OscTimetag _:
-                case ulong _:
-                    return Chunk32;
+                case char _:
+                case OscMidi _:
+                case OscColor _:
+                    return OscProtocol.Chunk32;
 
+                case long _:               
+                case OscTimetag _:
+                    return OscProtocol.Chunk64;
+
+                // zero-length args
+                case float argFloat:
+                    if (float.IsInfinity(argFloat))
+                        return 0;
+                    else
+                        return OscProtocol.Chunk32;
+
+                case double argDouble:
+                    if (double.IsInfinity(argDouble))
+                        return 0;
+                    else
+                        return OscProtocol.Chunk64;
+
+                case bool _:
+                    return 0;
+               
+                // the rest
                 case string argString:
                     return OscSerializer.GetLength(argString);
 
@@ -169,7 +271,12 @@ namespace OscLib
                     return OscSerializer.GetLength(argBlob);
 
                 default:
-                    return OscSerializer.GetLength(arg.ToString());
+                    if (arg == null)
+                        return 0;
+                    else
+                        throw new ArgumentException("OSC Converter ERROR: Can't deserialize argument, argument type is not supported.");
+
+                    
 
             }
 
