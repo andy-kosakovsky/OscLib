@@ -170,6 +170,7 @@ namespace OscLib
 
         #endregion
 
+
         #region EVENTS
         /// <summary> Invoked when this OSC Link receives a message. The message is deserialized. </summary>
         public event OscMessageHandler MessageReceived;
@@ -194,6 +195,7 @@ namespace OscLib
 
         #endregion
 
+
         #region CONSTRUCTORS
         /// <summary>
         /// Creates a new OSC Link.
@@ -204,19 +206,19 @@ namespace OscLib
         /// <param name="callEventsOnReceive"> Controls whether the "message/bundles received" events get called. </param>
         /// <param name="callEventsOnReceiveAsBytes"> Controls whether the "packet received as bytes" events get called. </param>
         /// <param name="callEventsOnSend"> Controls whether the "bundles/message sent" events get called. </param>
-        public OscLink(string name, OscConvert converter, int udpClientMaxBufferSize = 256, bool callEventsOnReceive = true, bool callEventsOnReceiveAsBytes = false, bool callEventsOnSend = false)
+        public OscLink(string name, OscConvert converter)
         {
 
             _name = name;
             _converter = converter;
 
             _receiveTaskTokenSource = new CancellationTokenSource();
-            _udpClientMaxBufferSize = udpClientMaxBufferSize;
 
-            // get settings
-            _callEventsOnReceive = callEventsOnReceive;
-            _callEventsOnReceiveAsBytes = callEventsOnReceiveAsBytes;
-            _callEventsOnSend = callEventsOnSend;
+            // default settings
+            _udpClientMaxBufferSize = 256;
+            _callEventsOnReceive = true;
+            _callEventsOnReceiveAsBytes = false;
+            _callEventsOnSend = false;
 
             _targetEndPoint = null;
             _mode = LinkMode.Closed;
@@ -226,6 +228,7 @@ namespace OscLib
         }
      
         #endregion
+
 
         #region METHODS
 
@@ -249,7 +252,6 @@ namespace OscLib
         /// </summary>
         /// <param name="targetEndPoint"> The target end point to which OSC Link will be connected. </param>
         /// <exception cref="ArgumentNullException"> Thrown if the provided EndPoint is null. </exception>
-        /// <exception cref="InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> The port number is out of range. </exception>
         /// <exception cref="SocketException"> Couldn't open a socket. </exception>
         public void OpenToTarget(IPEndPoint targetEndPoint)
@@ -261,7 +263,7 @@ namespace OscLib
 
             if (_mode != LinkMode.Closed)
             {
-                throw new InvalidOperationException("OSCLink Error: Link " + _name + " is already open.");
+                return;
             }
 
             _targetEndPoint = targetEndPoint;
@@ -279,9 +281,8 @@ namespace OscLib
         /// Opens the OSC Link to the specified end point, limiting communications to only that end point. The OSC Link will use the specified port.
         /// </summary>
         /// <param name="targetEndPoint"> The OSC Link will only communicate with this IP end point. </param>
-        /// <param name="port"> The port that  </param>
+        /// <param name="port"> The port used by this OSC Link.  </param>
         /// <exception cref="ArgumentNullException"> Thrown if the provided IP end point is null. </exception>
-        /// <exception cref="InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> The port number is out of range. </exception>
         /// <exception cref="SocketException"> Couldn't open a socket. </exception>
         public void OpenToTarget(int port, IPEndPoint targetEndPoint)
@@ -293,7 +294,7 @@ namespace OscLib
 
             if (_mode != LinkMode.Closed)
             {
-                throw new InvalidOperationException("OSCLink Error: Link " + _name + " is already open.");
+                return;
             }
 
             _targetEndPoint = targetEndPoint;
@@ -312,13 +313,12 @@ namespace OscLib
         /// <summary>
         /// Opens the OSC Link to send and receive to and from any end point. The OSC Link will use any random available port.
         /// </summary>
-        /// <exception cref="InvalidOperationException" > Thrown if the OSC Link is already open. </exception>
         /// <exception cref="SocketException"> Couldn't open a socket. </exception>
         public void OpenWide()
         {
             if (_mode != LinkMode.Closed)
             {
-                throw new InvalidOperationException("OSCLink Error: Link " + _name + " is already open.");
+                return;
             }
 
             _targetEndPoint = null;
@@ -337,14 +337,13 @@ namespace OscLib
         /// Opens the OSC Link to send and receive to and from any end point. The OSC Link will use the specified port.
         /// </summary>
         /// <param name="port"> Port number for the OSC link. </param>
-        /// <exception cref="InvalidOperationException"> Thrown when OSC Link is already open. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> The port number is out of range. </exception>
         /// <exception cref="SocketException"> Couldn't open a socket with the provided port number. </exception>
         public void OpenWide(int port)
         {
             if (_mode != LinkMode.Closed)
             {
-                throw new InvalidOperationException("OSCLink Error: Link " + _name + " is already open.");
+                return;
             }
    
             _targetEndPoint = null;
@@ -363,12 +362,11 @@ namespace OscLib
         /// <summary>
         /// Closes the OSC Link.
         /// </summary>
-        /// <exception cref="InvalidOperationException"> Thrown if the OSC Link is already closed. </exception>
         public void Close()
         {
             if (_mode == LinkMode.Closed)
             {
-                throw new InvalidOperationException("OSCLink Error: Link " + _name + " is already closed.");
+                return;
             }
             
             _receiveTaskTokenSource.Cancel();
@@ -402,7 +400,7 @@ namespace OscLib
             _udpClient.Send(packet.BinaryData, packet.OscLength);
 
             OnDataSent(packet.BinaryData, TargetEndPoint);
-
+            
         }
 
         /// <summary>
@@ -420,8 +418,9 @@ namespace OscLib
             OscPacket packet = _converter.GetPacket(oscMessage);
 
             _udpClient.Send(packet.BinaryData, packet.OscLength, endPoint);
-
+  
             OnDataSent(packet.BinaryData, endPoint);
+           
         }
 
 
@@ -440,9 +439,10 @@ namespace OscLib
             }
 
             _udpClient.Send(oscPacket.BinaryData, oscPacket.OscLength);
-              
-            OnDataSent(oscPacket.BinaryData, TargetEndPoint);
 
+
+            OnDataSent(oscPacket.BinaryData, TargetEndPoint);
+            
         }
 
 
@@ -469,6 +469,7 @@ namespace OscLib
             _udpClient.Send(oscPacket.BinaryData, length);
 
             OnDataSent(oscPacket.BinaryData, TargetEndPoint);
+            
 
         }
 
@@ -490,8 +491,8 @@ namespace OscLib
             }
 
             _udpClient.Send(oscPacket.BinaryData, oscPacket.OscLength, endPoint);
-                
-            OnDataSent(oscPacket.BinaryData, endPoint);
+
+            OnDataSent(oscPacket.BinaryData, endPoint);         
 
         }
 
@@ -520,11 +521,12 @@ namespace OscLib
             _udpClient.Send(oscPacket.BinaryData, length, endPoint);
 
             OnDataSent(oscPacket.BinaryData, TargetEndPoint);
-
+            
         }
 
 
         #endregion
+
 
         #region TASKS
 
@@ -565,6 +567,7 @@ namespace OscLib
         }
 
         #endregion
+
 
         #region EVENT WRAPPERS
         /// <summary>

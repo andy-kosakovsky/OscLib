@@ -548,6 +548,14 @@
             <param name="data"> Byte array containing the data. </param>
             <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
         </member>
+        <member name="M:OscLib.OscDeserializer.GetOscString(System.Byte[],System.Int32@)">
+            <summary>
+            Gets a string out of the byte array, using an external pointer. Returns it in the form of an OscString struct.
+            </summary>
+            <param name="data"> Byte array containing the data. </param>
+            <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+            <returns></returns>
+        </member>
         <member name="F:OscLib.OscProtocol.Chunk32">
             <summary> Length in bytes of a single (32 bits/4 bytes long) OSC data chunk. </summary>
         </member>
@@ -717,7 +725,7 @@
             <param name="array"> The target byte array. </param>
             <param name="pointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetLength(System.String)">
+        <member name="M:OscLib.OscSerializer.GetOscLength(System.String)">
             <summary>
             Returns the OSC protocol-compliant byte length of the string.
             </summary>
@@ -747,7 +755,7 @@
             <param name="array"> The target byte array. </param>
             <param name="pointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetLength(OscLib.OscString)">
+        <member name="M:OscLib.OscSerializer.GetOscLength(OscLib.OscString)">
             <summary>
             Returns the OSC protocol-compliant byte length of the string.
             </summary>
@@ -777,7 +785,7 @@
             <param name="array"> The target byte array. </param>
             <param name="pointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         </member>
-        <member name="M:OscLib.OscSerializer.GetLength(System.Byte[])">
+        <member name="M:OscLib.OscSerializer.GetOscLength(System.Byte[])">
             <summary>
             Returns the OSC Protocol-compliant length of the byte array.
             </summary>
@@ -975,9 +983,16 @@
         </member>
         <member name="M:OscLib.OscUtil.GetNextMultipleOfFour(System.Int32)">
             <summary>
-            Returns the nearest multiple of four larger than the input.
+            Returns the next multiple of four that is larger than the input.
             </summary>
             <param name="number"> Input number. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscUtil.GetNearestMultipleOfFour(System.Int32)">
+            <summary>
+            Returns the nearest multiple of four larger or equal to the input.
+            </summary>
+            <param name="number"></param>
             <returns></returns>
         </member>
         <member name="M:OscLib.OscUtil.GetDigits(System.Int32)">
@@ -1202,6 +1217,103 @@
             possible, or discarded outright.
             </summary>
         </member>
+        <member name="T:OscLib.OscAddressSpace">
+            <summary>
+            Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Link, pattern matching if needed.
+            <para> To Do: implement a buffer and delay system to properly adhere OSC Protocol's rules on timestamps, etc. Currently all bundles will be processed as they come, unless their timestamp is in the past. </para>
+            </summary>
+        </member>
+        <member name="F:OscLib.OscAddressSpace.RootContainerName">
+            <summary> The default name of the root container. </summary>
+        </member>
+        <member name="F:OscLib.OscAddressSpace._root">
+            <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
+        </member>
+        <member name="F:OscLib.OscAddressSpace._addressSpaceAccess">
+            <summary> Controls access to the OSC Address Space when trying to add/remove addresses. </summary>
+        </member>
+        <member name="F:OscLib.OscAddressSpace._connectedLinksAccess">
+            <summary> Controls access to the list of connected links. </summary>
+        </member>
+        <member name="F:OscLib.OscAddressSpace._connectedLinks">
+            <summary> Contains all links this receiver is connected to. </summary>
+        </member>
+        <member name="P:OscLib.OscAddressSpace.Root">
+            <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.#ctor">
+            <summary>
+            Creates a new OSC Receiver.
+            </summary>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.Connect(OscLib.OscLink)">
+            <summary>
+            Connects this Receiver to an OSC Link.
+            </summary>
+            <param name="link">An OSC Link to receive messages from. Make sure its "message/bundle received" events are on, otherwise nothing will happen.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.Disconnect(OscLib.OscLink)">
+            <summary>
+            Disconnects this Receiver from an OSC Link. 
+            </summary>
+            <param name="link">The OSC Link to be disconnected.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.Process(OscLib.OscMessage[])">
+            <summary>
+            Processes incoming message batches, invoking the appropriate OSC Methods.
+            </summary>
+            <param name="messages"> A batch of OSC messages to process. </param>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.Process(OscLib.OscMessage)">
+            <summary>
+            Processes a single incoming message, invoking the appropriate OSC Methods.
+            </summary>
+            <param name="message"> An OSC message to process. </param>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.ReceiveBundle(OscLib.OscBundle,System.Net.IPEndPoint)">
+            <summary>
+            Processes an incoming bundle. Invoked when the connected OSC Link receives bundles.
+            </summary>
+            <param name="bundle"> OSC Bundle to process. </param>
+            <param name="receivedFrom"> The IP end point from which the bundle was received. </param>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.ReceiveMessage(OscLib.OscMessage,System.Net.IPEndPoint)">
+            <summary>
+            Processes an incoming message. Invoked when the connected OSC Link receives a message.
+            </summary>
+            <param name="message"> An OSC message to process. </param>
+            <param name="receivedFrom"> The IP end point from which the message was received. </param>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.AddMethod(OscLib.OscString,OscLib.OscMethodDelegate)">
+            <summary>
+            Adds an OSC Method to the specified address in the OSC Address Space.
+            </summary>
+            <param name="addressPattern"> The address of this OSC Method. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the method's name. </param>
+            <param name="method"> The method delegate that will be attached to the OSC Method, to be invoked when the method is triggered by an OSC message. </param>
+            <exception cref="T:System.ArgumentException"> Thrown when the address pattern is invalid. </exception>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.AddContainer(OscLib.OscString)">
+            <summary>
+            Adds an OSC Container to the specified address in the OSC Address Space.
+            </summary>
+            <param name="addressPattern"> The address of this OSC Container. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the container's name. </param>
+            <exception cref="T:System.ArgumentException"> Thrown when the address pattern is invalid. </exception>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.RemoveAddress(OscLib.OscString)">
+            <summary>
+            Removes the specified address (be it a container or a method) from the address space.
+            <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
+            </summary>
+            <param name="addressPattern"></param>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.ToString">
+            <summary>
+            Prints the entire OSC Address Space as a tree.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="T:OscLib.LinkMode">
             <summary>
             Describes the current mode of operation of an OSC Link.
@@ -1322,7 +1434,7 @@
         <member name="E:OscLib.OscLink.ReceiveTaskExceptionRaised">
             <summary> Invoked when there is an exception inside the receive task. Allows to catch exceptions without crashing the task, if desired. </summary>
         </member>
-        <member name="M:OscLib.OscLink.#ctor(System.String,OscLib.OscConvert,System.Int32,System.Boolean,System.Boolean,System.Boolean)">
+        <member name="M:OscLib.OscLink.#ctor(System.String,OscLib.OscConvert)">
             <summary>
             Creates a new OSC Link.
             </summary>
@@ -1344,7 +1456,6 @@
             </summary>
             <param name="targetEndPoint"> The target end point to which OSC Link will be connected. </param>
             <exception cref="T:System.ArgumentNullException"> Thrown if the provided EndPoint is null. </exception>
-            <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
             <exception cref="T:System.ArgumentOutOfRangeException"> The port number is out of range. </exception>
             <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket. </exception>
         </member>
@@ -1353,9 +1464,8 @@
             Opens the OSC Link to the specified end point, limiting communications to only that end point. The OSC Link will use the specified port.
             </summary>
             <param name="targetEndPoint"> The OSC Link will only communicate with this IP end point. </param>
-            <param name="port"> The port that  </param>
+            <param name="port"> The port used by this OSC Link.  </param>
             <exception cref="T:System.ArgumentNullException"> Thrown if the provided IP end point is null. </exception>
-            <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already open. </exception>
             <exception cref="T:System.ArgumentOutOfRangeException"> The port number is out of range. </exception>
             <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket. </exception>
         </member>
@@ -1363,7 +1473,6 @@
             <summary>
             Opens the OSC Link to send and receive to and from any end point. The OSC Link will use any random available port.
             </summary>
-            <exception cref="T:System.InvalidOperationException" > Thrown if the OSC Link is already open. </exception>
             <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket. </exception>
         </member>
         <member name="M:OscLib.OscLink.OpenWide(System.Int32)">
@@ -1371,7 +1480,6 @@
             Opens the OSC Link to send and receive to and from any end point. The OSC Link will use the specified port.
             </summary>
             <param name="port"> Port number for the OSC link. </param>
-            <exception cref="T:System.InvalidOperationException"> Thrown when OSC Link is already open. </exception>
             <exception cref="T:System.ArgumentOutOfRangeException"> The port number is out of range. </exception>
             <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket with the provided port number. </exception>
         </member>
@@ -1379,7 +1487,6 @@
             <summary>
             Closes the OSC Link.
             </summary>
-            <exception cref="T:System.InvalidOperationException"> Thrown if the OSC Link is already closed. </exception>
         </member>
         <member name="M:OscLib.OscLink.SendToTarget(OscLib.OscMessage)">
             <summary>
@@ -1387,7 +1494,7 @@
             </summary>
             <param name="oscMessage"> The OSC Message to be sent. </param>
         </member>
-        <member name="M:OscLib.OscLink.SentToEndPoint(OscLib.OscMessage,System.Net.IPEndPoint)">
+        <member name="M:OscLib.OscLink.SendToEndPoint(OscLib.OscMessage,System.Net.IPEndPoint)">
             <summary>
             Converts an OSC Message into an OSC Packet and sends it to the specified end point.
             </summary>
@@ -1477,113 +1584,16 @@
             </summary>
             <returns> A formatted string containing status information. </returns>
         </member>
-        <member name="T:OscLib.OscReceiver">
-            <summary>
-            Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Link, pattern matching if needed.
-            <para> To Do: implement a buffer and delay system to properly adhere OSC Protocol's rules on timestamps, etc. Currently all bundles will be processed as they come, unless their timestamp is in the past. </para>
-            </summary>
-        </member>
-        <member name="F:OscLib.OscReceiver.RootContainerName">
-            <summary> The default name of the root container. </summary>
-        </member>
-        <member name="F:OscLib.OscReceiver._root">
-            <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
-        </member>
-        <member name="F:OscLib.OscReceiver._addressSpaceAccess">
-            <summary> Controls access to the OSC Address Space when trying to add/remove addresses. </summary>
-        </member>
-        <member name="F:OscLib.OscReceiver._connectedLinksAccess">
-            <summary> Controls access to the list of connected links. </summary>
-        </member>
-        <member name="F:OscLib.OscReceiver._connectedLinks">
-            <summary> Contains all links this receiver is connected to. </summary>
-        </member>
-        <member name="P:OscLib.OscReceiver.Root">
-            <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
-        </member>
-        <member name="M:OscLib.OscReceiver.#ctor">
-            <summary>
-            Creates a new OSC Receiver.
-            </summary>
-        </member>
-        <member name="M:OscLib.OscReceiver.Connect(OscLib.OscLink)">
-            <summary>
-            Connects this Receiver to an OSC Link.
-            </summary>
-            <param name="link">An OSC Link to receive messages from. Make sure its "message/bundle received" events are on, otherwise nothing will happen.</param>
-            <exception cref="T:System.ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
-        </member>
-        <member name="M:OscLib.OscReceiver.Disconnect(OscLib.OscLink)">
-            <summary>
-            Disconnects this Receiver from an OSC Link. 
-            </summary>
-            <param name="link">The OSC Link to be disconnected.</param>
-            <exception cref="T:System.ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
-        </member>
-        <member name="M:OscLib.OscReceiver.Process(OscLib.OscMessage[])">
-            <summary>
-            Processes incoming message batches, invoking the appropriate OSC Methods.
-            </summary>
-            <param name="messages"> A batch of OSC messages to process. </param>
-        </member>
-        <member name="M:OscLib.OscReceiver.Process(OscLib.OscMessage)">
-            <summary>
-            Processes a single incoming message, invoking the appropriate OSC Methods.
-            </summary>
-            <param name="message"> An OSC message to process. </param>
-        </member>
-        <member name="M:OscLib.OscReceiver.ReceiveBundle(OscLib.OscBundle,System.Net.IPEndPoint)">
-            <summary>
-            Processes an incoming bundle. Invoked when the connected OSC Link receives bundles.
-            </summary>
-            <param name="bundle"> OSC Bundle to process. </param>
-            <param name="receivedFrom"> The IP end point from which the bundle was received. </param>
-        </member>
-        <member name="M:OscLib.OscReceiver.ReceiveMessage(OscLib.OscMessage,System.Net.IPEndPoint)">
-            <summary>
-            Processes an incoming message. Invoked when the connected OSC Link receives a message.
-            </summary>
-            <param name="message"> An OSC message to process. </param>
-            <param name="receivedFrom"> The IP end point from which the message was received. </param>
-        </member>
-        <member name="M:OscLib.OscReceiver.AddMethod(OscLib.OscString,OscLib.OscMethodDelegate)">
-            <summary>
-            Adds an OSC Method to the specified address in the OSC Address Space.
-            </summary>
-            <param name="addressPattern"> The address of this OSC Method. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the method's name. </param>
-            <param name="method"> The method delegate that will be attached to the OSC Method, to be invoked when the method is triggered by an OSC message. </param>
-            <exception cref="T:System.ArgumentException"> Thrown when the address pattern is invalid. </exception>
-        </member>
-        <member name="M:OscLib.OscReceiver.AddContainer(OscLib.OscString)">
-            <summary>
-            Adds an OSC Container to the specified address in the OSC Address Space.
-            </summary>
-            <param name="addressPattern"> The address of this OSC Container. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the container's name. </param>
-            <exception cref="T:System.ArgumentException"> Thrown when the address pattern is invalid. </exception>
-        </member>
-        <member name="M:OscLib.OscReceiver.RemoveAddress(OscLib.OscString)">
-            <summary>
-            Removes the specified address (be it a container or a method) from the address space.
-            <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
-            </summary>
-            <param name="addressPattern"></param>
-        </member>
-        <member name="M:OscLib.OscReceiver.ToString">
-            <summary>
-            Prints the entire OSC Address Space as a tree.
-            </summary>
-            <returns></returns>
-        </member>
         <member name="T:OscLib.OscSender`1">
             <summary>
-            Implements a multi-priority sender queue to work with an OSC Link, for message bundling and orderly sending. OSC Link needs to be in targeted mode when operating.
+            Implements a multi-priority sender queue to work with an OSC Link, for message bundling and orderly sending. OSC Link needs to be in targeted mode when operating, otherwise nothing will get sent.
             </summary>
             <typeparam name="Packet"> The particular type of the OSC Packet used with this Sender. Should implement the IOscPacket interface. </typeparam>
         </member>
         <member name="F:OscLib.OscSender`1._oscLink">
-            <summary> OSC Link in use with this Sender. Needs to be in targeted mode. </summary>
+            <summary> OSC Link in use with this Sender. </summary>
         </member>
-        <member name="F:OscLib.OscSender`1._packetHeapPriorityLayersTotal">
+        <member name="F:OscLib.OscSender`1._packetHeapTotalLayers">
             <summary> The total amount of priority levels in this Sender's packet heap. </summary>
         </member>
         <member name="F:OscLib.OscSender`1._cycleLengthMs">
@@ -1604,7 +1614,7 @@
         <member name="F:OscLib.OscSender`1._cycleBinaryDataHolder">
             <summary> Holds the binary data pertaining to the current heap check cycle. </summary>
         </member>
-        <member name="F:OscLib.OscSender`1._packetMaxLength">
+        <member name="F:OscLib.OscSender`1._packetBundleMaxSize">
             <summary> Maximum amount of data sent per packet, in bytes. As per UDP spec, sending more than 508 bytes per packet is not advisable. </summary> 
         </member>
         <member name="F:OscLib.OscSender`1._packetHeapTask">
@@ -1641,9 +1651,9 @@
             <summary>
             Creates a new OSC Sender.
             </summary>
-            <param name="packetMaxLength"> Maximum amount of data sent per packet, in bytes. As per UDP spec, sending more than 508 bytes per packet is not advisable. </param>
+            <param name="packetBundleMaxSize"> Maximum amount of data sent per packet when bundling packets, in bytes. As per UDP spec, sending more than 508 bytes per packet is not advisable. </param>
             <param name="cycleLengthMs"> The length of the heap check cycle of this Sender - that is, the time between heap checks, in milliseconds. Shoudln't be less than 1. </param>
-            <param name="priorityLayersTotal"> The total amount of priority levels in this Sender's packet heap. </param>
+            <param name="packetHeapTotalLayers"> The total amount of priority levels in this Sender's packet heap. </param>
             <param name="bundlePacketsBefureSending"> Should this Sender bundle the packets before sending, or just send them as separate messages as they come. </param>
         </member>
         <member name="M:OscLib.OscSender`1.Activate(OscLib.OscLink)">
@@ -1670,15 +1680,13 @@
             </summary>
             <param name="shouldRemovePacketMethod"> The method to be used for removing packets. </param>
         </member>
-        <member name="M:OscLib.OscSender`1.SendOscPacket(`0)">
+        <member name="M:OscLib.OscSender`1.SendPacket(`0)">
             <summary>
-            Gets the binary data from the OSC packet and immediately sends it through the OSC Link as a message.
+            Gets the binary data from the OSC packet and immediately sends it through the OSC Link.
             </summary>
             <param name="packet"> A reference to the OSC binary data packet to be sent. </param>
-            <exception cref="T:System.InvalidOperationException"> Thrown when attempting to send data while the sender is not active. </exception>
-            <exception cref="T:System.ArgumentOutOfRangeException"> Thrown when the size of the packet is too large to be sent. </exception>
         </member>
-        <member name="M:OscLib.OscSender`1.AddOscPacketToHeapHead(`0,System.Int32)">
+        <member name="M:OscLib.OscSender`1.AddPacketToHeapHead(`0,System.Int32)">
             <summary>
             Inserts the packet to the beginning of the heap at the specified priority level, passing the packet directly.
             <para> Important to note: heap levels are processed tail-to-head, so the packet added by this method will be last in line.</para>
@@ -1689,7 +1697,7 @@
             <exception cref="T:System.InvalidOperationException"> Thrown when attempting to add data while the sender is not active. </exception>
             <exception cref="T:System.ArgumentOutOfRangeException"> Thrown when the size of the binary data packet is too large to be sent. </exception>
         </member>
-        <member name="M:OscLib.OscSender`1.AddOscPacketToHeapTail(`0,System.Int32)">
+        <member name="M:OscLib.OscSender`1.AddPacketToHeapTail(`0,System.Int32)">
             <summary>
             Adds the OSC packet to the end of the heap at the specified priority level, passing the packet directly.
             <para> Important to note: heap levels are processed tail-to-head, so the packet added by this method will be first in line.</para>

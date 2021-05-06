@@ -133,21 +133,21 @@ namespace OscLib
                     return OscProtocol.Chunk32;
 
                 case string argString:
-                    return OscSerializer.GetLength(argString);
+                    return OscSerializer.GetOscLength(argString);
 
                 case OscString oscString:
-                    return OscSerializer.GetLength(oscString);
+                    return OscSerializer.GetOscLength(oscString);
 
                 case byte[] argBlob:
-                    return OscSerializer.GetLength(argBlob);
+                    return OscSerializer.GetOscLength(argBlob) + OscProtocol.Chunk32;
 
                 default:
                     if (arg == null)
                     {
-                        return OscSerializer.GetLength(_nullString);
+                        return OscSerializer.GetOscLength(_nullString);
                     }
 
-                    return OscSerializer.GetLength(arg.ToString());
+                    return OscSerializer.GetOscLength(arg.ToString());
 
             }
 

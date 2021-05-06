@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
 
 namespace OscLib
 {
@@ -320,7 +319,7 @@ namespace OscLib
         /// </summary>
         /// <param name="arg"> String to be measured. </param>
         /// <returns> OSC length of the string. </returns>
-        public static int GetLength(string arg)
+        public static int GetOscLength(string arg)
         {
             return OscUtil.GetNextMultipleOfFour(arg.Length);
         }
@@ -374,7 +373,7 @@ namespace OscLib
         /// </summary>
         /// <param name="arg"> String to be measured. </param>
         /// <returns> OSC length of the string. </returns>
-        public static int GetLength(OscString arg)
+        public static int GetOscLength(OscString arg)
         {
             return arg.OscLength;
         }
@@ -392,7 +391,7 @@ namespace OscLib
         /// <returns> A binary blob - still a byte array but correctly formatted. </returns>
         public static byte[] GetBytes(byte[] arg)
         {
-            byte[] resultArray = new byte[GetLength(arg) + OscProtocol.Chunk32];
+            byte[] resultArray = new byte[GetOscLength(arg)];
 
             int pointer = 0;
 
@@ -411,12 +410,13 @@ namespace OscLib
         public static void AddBytes(byte[] arg, byte[] array, ref int extPointer)
         {
             // TODO: adding blobs needs testing
-            // add length
+            // add length         
             AddBytes(arg.Length, array, ref extPointer);
             // add data
             arg.CopyTo(array, extPointer);
 
-            extPointer += GetLength(arg); 
+            extPointer += GetOscLength(arg);
+
         }
 
 
@@ -441,9 +441,9 @@ namespace OscLib
         /// </summary>
         /// <param name="arg"> Byte array to be measured. </param>
         /// <returns> OSC length of the array. </returns>
-        public static int GetLength(byte[] arg)
+        public static int GetOscLength(byte[] arg)
         {
-            return OscUtil.GetNextMultipleOfFour(arg.Length);
+            return OscUtil.GetNearestMultipleOfFour(arg.Length);
         }
 
         #endregion

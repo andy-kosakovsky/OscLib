@@ -10,7 +10,7 @@ namespace OscLib
     /// Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Link, pattern matching if needed.
     /// <para> To Do: implement a buffer and delay system to properly adhere OSC Protocol's rules on timestamps, etc. Currently all bundles will be processed as they come, unless their timestamp is in the past. </para>
     /// </summary>
-    public class OscReceiver
+    public class OscAddressSpace
     {
         /// <summary> The default name of the root container. </summary>
         public const string RootContainerName = "root";
@@ -33,7 +33,7 @@ namespace OscLib
         /// <summary>
         /// Creates a new OSC Receiver.
         /// </summary>
-        public OscReceiver()
+        public OscAddressSpace()
         {
             _root = new OscContainer(RootContainerName);
             _connectedLinks = new List<OscLink>();

@@ -262,13 +262,13 @@ namespace OscLib
                
                 // the rest
                 case string argString:
-                    return OscSerializer.GetLength(argString);
+                    return OscSerializer.GetOscLength(argString);
 
                 case OscString oscString:
-                    return OscSerializer.GetLength(oscString);
+                    return OscSerializer.GetOscLength(oscString);
 
                 case byte[] argBlob:
-                    return OscSerializer.GetLength(argBlob);
+                    return OscSerializer.GetOscLength(argBlob) + OscProtocol.Chunk32;
 
                 default:
                     if (arg == null)

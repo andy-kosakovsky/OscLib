@@ -28,6 +28,22 @@ namespace OscLib
 
             return output;
         }
+
+        public static int Clamp(int input, int min, int max)
+        {
+            if (input < min)
+            {
+                return min;
+            }
+            else if (input > max)
+            {
+                return max;
+            }
+            else
+            {
+                return input;
+            }
+        }
         
 
         /// <summary>
@@ -123,13 +139,26 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns the nearest multiple of four larger than the input.
+        /// Returns the next multiple of four that is larger than the input.
         /// </summary>
         /// <param name="number"> Input number. </param>
         /// <returns></returns>
         public static int GetNextMultipleOfFour(int number)
         {
             return ((number / 4) + 1) * 4;
+        }
+
+        /// <summary>
+        /// Returns the nearest multiple of four larger or equal to the input.
+        /// </summary>
+        /// <param name="number"></param>
+        /// <returns></returns>
+        public static int GetNearestMultipleOfFour(int number)
+        {
+            if (number % 4 == 0)
+                return number;
+            else
+                return number + (4 - (number % 4)); 
         }
 
         /// <summary>

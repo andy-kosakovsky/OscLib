@@ -255,15 +255,10 @@ namespace OscLib
         public static byte[] GetBlob(byte[] data, ref int pointer)
         {
             // get length
-            int length = GetInt32(data, ref pointer);
+            byte[] resultArray = GetBlob(data, pointer);
 
-            byte[] resultArray = new byte[length];
-
-            // get result
-            Array.Copy(data, pointer, resultArray, 0, length);
-
-            // shift pointer (by length + a few empty bytes at the end)
-            pointer += OscUtil.GetNextMultipleOfFour(length);
+            // shift pointer (by length + array + a few empty bytes at the end)
+            pointer += OscSerializer.GetOscLength(resultArray) + OscProtocol.Chunk32;
 
             return resultArray;
         }
@@ -292,6 +287,12 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Gets a string out of the byte array, using an external pointer. Returns it in the form of an OscString struct.
+        /// </summary>
+        /// <param name="data"> Byte array containing the data. </param>
+        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        /// <returns></returns>
         public static OscString GetOscString(byte[] data, ref int pointer)
         {
             int start = pointer;
