@@ -410,7 +410,7 @@ namespace OscLib
         /// </summary>
         /// <param name="oscMessage"> The OSC Message to be sent. </param>
         /// <param name="endPoint"> The end point to which the message will be sent. </param>
-        public void SentToEndPoint(OscMessage oscMessage, IPEndPoint endPoint)
+        public void SendToEndPoint(OscMessage oscMessage, IPEndPoint endPoint)
         {
             if (_mode != LinkMode.Wide)
             {
