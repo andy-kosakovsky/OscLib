@@ -635,12 +635,11 @@ namespace OscLib
 
         #region ABSTRACT METHODS
 
+        // the idea is to have the specific behaviour of these methods be defined in the derived classes - depending on how the target implements OSC Protocol
+
         /// <summary>
         /// Serializes the provided argument into its OSC byte data form and returns it as an array of bytes, provides the corresponding type tag.
         /// </summary>
-        /// <remarks>
-        /// Implemented the way it is to minimize boxing.
-        /// </remarks>
         /// <param name="arg"> Argument to be serialized. </param>
         /// <param name="typeTag"> Will return the OSC type tag for the provided argument. </param>
         /// <returns> The byte array containing the argument converted to OSC Protocol-compliant binary. </returns>
@@ -651,9 +650,7 @@ namespace OscLib
         /// <summary>
         /// Serializes the provided argument into its OSC byte data form and adds it into an existing byte array, provides the corresponding type tag.  
         /// </summary>
-        /// <remarks>
-        /// Implemented the way it is to minimize boxing.
-        /// </remarks>
+
         /// <param name="arg"> The argument to be serialized. </param>
         /// <param name="array"> The target byte array. </param>
         /// <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>

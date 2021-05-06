@@ -386,17 +386,42 @@ namespace OscLib
                     
         }
 
+        /// <summary>
+        /// Converts an OSC Message into an OSC Packet and sends it to the target end point of this OSC Link.
+        /// </summary>
+        /// <param name="oscMessage"> The OSC Message to be sent. </param>
         public void SendToTarget(OscMessage oscMessage)
         {
             if (_mode != LinkMode.Targeted)
             {
                 throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + " needs to be in TARGET MODE (current mode: " + _mode.ToString() + ").");
             }
+
             OscPacket packet = _converter.GetPacket(oscMessage);
 
             _udpClient.Send(packet.BinaryData, packet.OscLength);
 
             OnDataSent(packet.BinaryData, TargetEndPoint);
+
+        }
+
+        /// <summary>
+        /// Converts an OSC Message into an OSC Packet and sends it to the specified end point.
+        /// </summary>
+        /// <param name="oscMessage"> The OSC Message to be sent. </param>
+        /// <param name="endPoint"> The end point to which the message will be sent. </param>
+        public void SentToEndPoint(OscMessage oscMessage, IPEndPoint endPoint)
+        {
+            if (_mode != LinkMode.Wide)
+            {
+                throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + " needs to be in TARGET MODE (current mode: " + _mode.ToString() + ").");
+            }
+
+            OscPacket packet = _converter.GetPacket(oscMessage);
+
+            _udpClient.Send(packet.BinaryData, packet.OscLength, endPoint);
+
+            OnDataSent(packet.BinaryData, endPoint);
         }
 
 
