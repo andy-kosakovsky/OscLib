@@ -190,7 +190,13 @@ namespace OscLib
             return 11;
         }
         
-
+        /// <summary>
+        /// Checks whether the number falls between two bounds - both are inclusive.
+        /// </summary>
+        /// <param name="check"> The number to check. </param>
+        /// <param name="boundOne"></param>
+        /// <param name="boundTwo"></param>
+        /// <returns></returns>
         public static bool IsNumberBetween(int check, int boundOne, int boundTwo)
         {
             int min, max;

@@ -3,8 +3,7 @@
 namespace OscLib
 {
     /// <summary>
-    /// Represents a deserialized OSC packet bundle.
-    /// May contain both messages and bundles. Bundles inside a bundle should be time-tagged 
+    /// Represents a deserialized OSC packet bundle. May contain both messages and bundles.
     /// </summary>
 
     public readonly struct OscBundle

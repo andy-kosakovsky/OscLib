@@ -6,9 +6,12 @@ using System.Threading;
 
 namespace OscLib
 {
+    // TODO: Bit of a mess going on here, get the address space iteration stuff into a separate method or something
+    // TODO: related to that, implement GetElement(s) methods
+
     /// <summary>
-    /// Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Link, pattern matching if needed.
-    /// <para> To Do: implement a buffer and delay system to properly adhere OSC Protocol's rules on timestamps, etc. Currently all bundles will be processed as they come, unless their timestamp is in the past. </para>
+    /// Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Receivers, pattern matching if needed.
+    /// Can handle multiple OSC Receivers.
     /// </summary>
     public class OscAddressSpace
     {
@@ -21,245 +24,99 @@ namespace OscLib
         /// <summary> Controls access to the OSC Address Space when trying to add/remove addresses. </summary>
         protected Mutex _addressSpaceAccess;
 
-        /// <summary> Controls access to the list of connected links. </summary>
-        protected Mutex _connectedLinksAccess;
+        /// <summary> Contains all OSC Receivers this Address Space is connected to, and the associated converters. </summary>
+        protected List<OscReceiver> _receivers;
 
-        /// <summary> Contains all links this receiver is connected to. </summary>
-        protected List<OscLink> _connectedLinks;
+        /// <summary> Controls access to the list of connected links. </summary>
+        protected Mutex _receiversAccess;
 
         /// <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
         public OscContainer Root { get => _root; }
 
         /// <summary>
-        /// Creates a new OSC Receiver.
+        /// Creates a new OSC Address Space.
         /// </summary>
         public OscAddressSpace()
         {
             _root = new OscContainer(RootContainerName);
-            _connectedLinks = new List<OscLink>();
+            _receivers = new List<OscReceiver>();
 
             _addressSpaceAccess = new Mutex();
-            _connectedLinksAccess = new Mutex();
+            _receiversAccess = new Mutex();
         }
 
+        #region CONNECTIONS
+
         /// <summary>
-        /// Connects this Receiver to an OSC Link.
+        /// Connects this Address Space to an OSC Receiver.
         /// </summary>
-        /// <param name="link">An OSC Link to receive messages from. Make sure its "message/bundle received" events are on, otherwise nothing will happen.</param>
-        /// <exception cref="ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
-        public void Connect(OscLink link)
+        /// <param name="receiver"> An OSC Receiver to receive messages/bundles from. </param>
+        /// <exception cref="ArgumentNullException"> Thrown if the provided OSC Receiver is null. </exception>
+        public void Connect(OscReceiver receiver)
         {
-            if (link == null)
+            if (receiver == null)
             {
-                throw new ArgumentNullException(nameof(link));
+                throw new ArgumentNullException(nameof(receiver));
             }
 
             try
             {
-                _connectedLinksAccess.WaitOne();
+                _receiversAccess.WaitOne();
 
-                if (!_connectedLinks.Contains(link))
+                if (!_receivers.Contains(receiver))
                 {
-                    _connectedLinks.Add(link);
-                    link.BundleReceived += ReceiveBundle;
-                    link.MessageReceived += ReceiveMessage;
+                    _receivers.Add(receiver);
+                    receiver.MessageReceived += ReceiveMessage;
+                    receiver.BundleReceived += ReceiveBundle;
                 }
                 
             }
             finally
             {
-                _connectedLinksAccess.ReleaseMutex();
+                _receiversAccess.ReleaseMutex();
             }
+
         }
 
 
         /// <summary>
-        /// Disconnects this Receiver from an OSC Link. 
+        /// Disconnects an OSC Receiver from this Address Space (provided it was connected in the first place). 
         /// </summary>
-        /// <param name="link">The OSC Link to be disconnected.</param>
-        /// <exception cref="ArgumentNullException">Thrown if the provided OSC Link is null.</exception>
-        public void Disconnect(OscLink link)
+        /// <param name="receiver"> The OSC Receiver to be disconnected. </param>
+        /// <exception cref="ArgumentNullException"> Thrown if the provided OSC Receiver is null. </exception>
+        public void Disconnect(OscReceiver receiver)
         {
-            if (link == null)
+            if (receiver == null)
             {
-                throw new ArgumentNullException(nameof(link));
+                throw new ArgumentNullException(nameof(receiver));
             }
 
             try
             {
-                _connectedLinksAccess.WaitOne();
+                _receiversAccess.WaitOne();
 
-                if (_connectedLinks.Contains(link))
+                if (_receivers.Contains(receiver))
                 {
-                    _connectedLinks.Remove(link);
-                    link.BundleReceived -= ReceiveBundle;
-                    link.MessageReceived -= ReceiveMessage;
+                    _receivers.Remove(receiver);
+                    receiver.BundleReceived -= ReceiveBundle;
+                    receiver.MessageReceived -= ReceiveMessage;
                 }
 
             }
             finally
             {
-                _connectedLinksAccess.ReleaseMutex();
-            }
-
-
-        }
-
-        
-        /// <summary>
-        /// Processes incoming message batches, invoking the appropriate OSC Methods.
-        /// </summary>
-        /// <param name="messages"> A batch of OSC messages to process. </param>
-        protected virtual void Process(OscMessage[] messages)
-        {
-            // get pattern elements
-
-            for (int i = 0; i < messages.Length; i++)
-            {
-                Process(messages[i]);
+                _receiversAccess.ReleaseMutex();
             }
 
         }
 
+        #endregion // CONNECTIONS
+
+
+        #region RECEIVING AND PROCESSING
 
         /// <summary>
-        /// Processes a single incoming message, invoking the appropriate OSC Methods.
-        /// </summary>
-        /// <param name="message"> An OSC message to process. </param>
-        protected virtual void Process(OscMessage message)
-        {
-            // get pattern elements
-
-            OscString[] pattern = message.AddressPattern.Split(OscProtocol.Separator);
-
-            // the layer of the pattern that contains method name (0 will be root)
-            int methodLayer = pattern.Length - 1;
-
-            int currentLayer = 0;
-
-            object[] arguments = message.Arguments;
-
-            // array for the container stack. its length equals the maximum depth at which we'll be checking
-            OscContainer[] stack = new OscContainer[pattern.Length];
-            // a span for layer indices
-            int[] indices = new int[pattern.Length];
-
-            // add root to stack
-            stack[currentLayer] = _root;
-
-            // horrible, horrible iterative bit to avoid recursion (these address spaces might get just a tad too large for safe use of recursion)
-
-            while (currentLayer >= 0)
-            {
-                // index of -1 for the current layer indicates that we're done with this particular layer and can safely go back
-                if (indices[currentLayer] == -1)
-                {
-                    currentLayer--;
-                    continue;
-                }
-
-                // if we're at method layer of the received message, let's check for methods, otherwise we'll be checking for containers
-                if (currentLayer == methodLayer)
-                {
-                    // if we don't have any reserved symbols, that means there should be only one method adhering to the pattern
-                    if (!pattern[currentLayer].ContainsPatternMatching())
-                    {
-                        if (stack[currentLayer][pattern[currentLayer]] is OscMethod part)
-                        {
-                            part.Invoke(arguments);
-                        }
-                        // go up a layer
-                        indices[currentLayer] = -1;
-                        currentLayer--;
-
-                    }
-                    else
-                    {
-                        for (int j = 0; j < stack[currentLayer].Length; j++)
-                        {
-                            if (stack[currentLayer][j] is OscMethod method)
-                            {
-                                if (method.Name.PatternMatch(pattern[currentLayer]))
-                                {
-                                    method.Invoke(arguments);
-                                }
-                            }
-                        }
-                        // go up a layer
-                        indices[currentLayer] = -1;
-                        currentLayer--;
-
-                    }
-
-                }
-                else
-                {
-                    if (!pattern[currentLayer].ContainsPatternMatching())
-                    {
-                        if (stack[currentLayer][pattern[currentLayer]] is OscContainer container)
-                        {
-                            // it's the only container we need, so index for the current layer should be set to -1
-                            indices[currentLayer] = -1;
-
-                            // then, let's go up a layer, and prepare everything for the next cycle 
-                            currentLayer++;
-                            stack[currentLayer] = container;
-                            indices[currentLayer] = 0;
-                        }
-                        else
-                        {
-                            // if we couldn't find the container, return up a layer
-                            indices[currentLayer] = -1;
-                            currentLayer--;
-
-                        }
-
-                    }
-                    else
-                    {
-                        // go through address parts contained in this container, trying to pattern match
-                        // the cycle starts from where it was left off the previous time we were at this level
-                        for (int j = indices[currentLayer]; j < stack[currentLayer].Length; j++)
-                        {
-                            if (stack[currentLayer][j] is OscContainer container)
-                            {
-                                // shift to that layer
-                                if (container.Name.PatternMatch(pattern[currentLayer]))
-                                {
-                                    
-                                    indices[currentLayer] = j + 1;
-
-                                    currentLayer++;
-                                    stack[currentLayer] = container;
-                                    indices[currentLayer] = 0;
-                                    break;
-                                }
-
-                            }
-
-                            // save the next index for this layer 
-                            indices[currentLayer] = j + 1;
-
-                        }
-
-                        // if we've reached the end of this cycle, clear this layer and go back one layer
-                        if (indices[currentLayer] >= stack[currentLayer].Length)
-                        {
-                            indices[currentLayer] = -1;
-                            currentLayer--;
-                        }
-
-                    }
-
-                }
-
-            }
-                         
-        }
-
-
-        /// <summary>
-        /// Processes an incoming bundle. Invoked when the connected OSC Link receives bundles.
+        /// Processes an incoming bundle. Invoked when the connected OSC Receiver receives bundles.
         /// </summary>
         /// <param name="bundle"> OSC Bundle to process. </param>
         /// <param name="receivedFrom"> The IP end point from which the bundle was received. </param>
@@ -310,16 +167,177 @@ namespace OscLib
         }
 
         /// <summary>
+        /// Processes batches of messages, invoking the appropriate OSC Methods.
+        /// </summary>
+        /// <param name="messages"> A batch of OSC messages to process. </param>
+        protected virtual void Process(OscMessage[] messages)
+        {
+            // get pattern elements
+
+            for (int i = 0; i < messages.Length; i++)
+            {
+                Process(messages[i]);
+            }
+
+        }
+
+
+        /// <summary>
+        /// Processes a single incoming message, invoking the appropriate OSC Methods.
+        /// </summary>
+        /// <param name="message"> An OSC message to process. </param>
+        protected virtual void Process(OscMessage message)
+        {
+            // get pattern elements
+
+            OscString[] elementNames = message.AddressPattern.Split(OscProtocol.Separator);
+
+            // the layer of the pattern that contains method name (0 will be root)
+            int methodLayer = elementNames.Length - 1;
+
+            int currentLayer = 0;
+
+            // array for the container stack. its length equals the maximum depth at which we'll be checking
+            OscContainer[] stack = new OscContainer[elementNames.Length];
+
+            // array for layer indices - i. e. what was the last index we checked when we were at this layer. if the index is -1, go up a layer
+            int[] indices = new int[elementNames.Length];
+
+            // add root to stack
+            stack[currentLayer] = _root;
+
+            // horrible, horrible iterative bit to avoid recursion (these address spaces might get just a tad too large for safe use of recursion)
+
+            while (currentLayer >= 0)
+            {
+                // index of -1 for the current layer indicates that we're done with this particular layer and can safely go back
+                if (indices[currentLayer] == -1)
+                {
+                    currentLayer--;
+                    continue;
+                }
+
+                // if we're at method layer of the received message, let's check for methods, otherwise we'll be checking for containers
+                if (currentLayer == methodLayer)
+                {
+                    // if we don't have any reserved symbols, that means there should be only one method adhering to the pattern
+                    if (!elementNames[currentLayer].ContainsPatternMatching())
+                    {
+                        if (stack[currentLayer][elementNames[currentLayer]] is OscMethod part)
+                        {
+                            part.Invoke(message.Arguments);
+                        }
+
+                        // go up a layer
+                        indices[currentLayer] = -1;
+                        currentLayer--;
+
+                    }
+                    else
+                    {
+                        for (int j = 0; j < stack[currentLayer].Length; j++)
+                        {
+                            if (stack[currentLayer][j] is OscMethod method)
+                            {
+                                if (method.Name.PatternMatch(elementNames[currentLayer]))
+                                {
+                                    method.Invoke(message.Arguments);
+                                }
+                            }
+                        }
+                        // go up a layer
+                        indices[currentLayer] = -1;
+                        currentLayer--;
+
+                    }
+
+                }
+                else // we don't expect a method at the current layer, but we still need to check the containers
+                {
+                    if (!elementNames[currentLayer].ContainsPatternMatching())
+                    {
+                        if (stack[currentLayer][elementNames[currentLayer]] is OscContainer container)
+                        {
+                            // it's the only container we need, so index for the current layer should be set to -1
+                            indices[currentLayer] = -1;
+
+                            // then, let's go down a layer, and prepare everything for the next cycle 
+                            currentLayer++;
+                            stack[currentLayer] = container;
+                            indices[currentLayer] = 0;
+                        }
+                        else
+                        {
+                            // if we couldn't find the container, return up a layer
+                            indices[currentLayer] = -1;
+                            currentLayer--;
+
+                        }
+
+                    }
+                    else
+                    {
+                        // go through address parts contained in this container, trying to pattern match
+                        // the cycle starts from where it was left off the previous time we were at this level
+                        for (int j = indices[currentLayer]; j < stack[currentLayer].Length; j++)
+                        {
+                            if (stack[currentLayer][j] is OscContainer container)
+                            {
+                                // shift to that layer
+                                if (container.Name.PatternMatch(elementNames[currentLayer]))
+                                {
+                                    
+                                    indices[currentLayer] = j + 1;
+
+                                    currentLayer++;
+                                    stack[currentLayer] = container;
+                                    indices[currentLayer] = 0;
+                                    break;
+                                }
+
+                            }
+
+                            // save the next index for this layer 
+                            indices[currentLayer] = j + 1;
+
+                        }
+
+                        // if we've reached the end of this cycle, clear this layer and go back one layer
+                        if (indices[currentLayer] >= stack[currentLayer].Length)
+                        {
+                            indices[currentLayer] = -1;
+                            currentLayer--;
+                        }
+
+                    }
+
+                }
+
+            }
+                         
+        }
+
+        #endregion // RECEIVING AND PROCESSING
+
+
+        #region ELEMENT MANAGEMENT
+
+        /// <summary>
         /// Adds an OSC Method to the specified address in the OSC Address Space.
         /// </summary>
-        /// <param name="addressPattern"> The address of this OSC Method. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the method's name. </param>
+        /// <param name="address"> The address pattern of this OSC Method. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the method's name. </param>
         /// <param name="method"> The method delegate that will be attached to the OSC Method, to be invoked when the method is triggered by an OSC message. </param>
         /// <exception cref="ArgumentException"> Thrown when the address pattern is invalid. </exception>
-        public void AddMethod(OscString addressPattern, OscMethodDelegate method)
+        public void AddMethod(OscString address, OscMethodDelegate method)
         {
-            if (addressPattern.Length < 1)
+            if (address.Length < 1)
             {
                 throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern is invalid.");
+            }
+
+            if (method == null)
+            {
+                throw new ArgumentNullException(nameof(method));
             }
 
             try
@@ -327,7 +345,7 @@ namespace OscLib
                 _addressSpaceAccess.WaitOne();
 
                 // get the address pattern and check it for any crap we don't need
-                OscString[] pattern = addressPattern.Split(OscProtocol.Separator);
+                OscString[] pattern = address.Split(OscProtocol.Separator);
 
                 OscContainer container = _root;
 
@@ -343,21 +361,21 @@ namespace OscLib
                         else
                         {
                             newContainer = new OscContainer(pattern[i]);
-                            container.AddPart(newContainer);
+                            container.AddElement(newContainer);
                             container = newContainer;
                         }
                     }
                     else
                     {
-                        if (!container.ContainsPart(pattern[i]))
+                        if (!container.ContainsElement(pattern[i]))
                         {
-                            container.AddPart(new OscMethod(pattern[i], method));
+                            container.AddElement(new OscMethod(pattern[i], method));
                         }
                         else
                         {
                             // delete the part that is there and overwrite it with a new one
-                            container.RemovePart(pattern[i]);
-                            container.AddPart(new OscMethod(pattern[i], method));
+                            container.RemoveElement(pattern[i]);
+                            container.AddElement(new OscMethod(pattern[i], method));
                         }
 
                     }
@@ -375,11 +393,11 @@ namespace OscLib
         /// <summary>
         /// Adds an OSC Container to the specified address in the OSC Address Space.
         /// </summary>
-        /// <param name="addressPattern"> The address of this OSC Container. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the container's name. </param>
+        /// <param name="address"> The address of this OSC Container. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the container's name. </param>
         /// <exception cref="ArgumentException"> Thrown when the address pattern is invalid. </exception>
-        public void AddContainer(OscString addressPattern)
+        public void AddContainer(OscString address)
         {
-            if (addressPattern.Length < 1)
+            if (address.Length < 1)
             {
                 throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern is invalid.");
             }
@@ -389,7 +407,7 @@ namespace OscLib
                 _addressSpaceAccess.WaitOne();
 
             // get the address pattern and check it for any crap we don't need
-            OscString[] pattern = addressPattern.Split(OscProtocol.Separator);
+            OscString[] pattern = address.Split(OscProtocol.Separator);
 
             OscContainer container = _root;
 
@@ -406,21 +424,21 @@ namespace OscLib
                         else
                         {
                             newContainer = new OscContainer(pattern[i]);
-                            container.AddPart(newContainer);
+                            container.AddElement(newContainer);
                             container = newContainer;
                         }
                     }
                     else
                     {
-                        if (!container.ContainsPart(pattern[i]))
+                        if (!container.ContainsElement(pattern[i]))
                         {
-                            container.AddPart(new OscContainer(pattern[i]));
+                            container.AddElement(new OscContainer(pattern[i]));
                         }
                         else
                         {
                             // delete the part that is there and overwrite it with a new one
-                            container.RemovePart(pattern[i]);
-                            container.AddPart(new OscContainer(pattern[i]));
+                            container.RemoveElement(pattern[i]);
+                            container.AddElement(new OscContainer(pattern[i]));
                         }
 
                     }
@@ -436,12 +454,23 @@ namespace OscLib
         }
 
 
+        public OscAddressElement GetElement(OscString address)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public OscAddressElement[] GetElements(OscString pattern)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Removes the specified address (be it a container or a method) from the address space.
         /// <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
         /// </summary>
         /// <param name="addressPattern"></param>
-        public void RemoveAddress(OscString addressPattern)
+        public void RemoveElement(OscString addressPattern)
         {
             if (addressPattern.Length < 1)
             {
@@ -479,14 +508,14 @@ namespace OscLib
                     }
                     else
                     {
-                        if (!container.ContainsPart(pattern[i]))
+                        if (!container.ContainsElement(pattern[i]))
                         {
                             throw new ArgumentException("OSC Receiver ERROR: Can't delete address " + addressPattern + ", container " + container.Name + " doesn't contain an address " + pattern[i]);
                         }
                         else
                         {
                             // delete the part
-                            container.RemovePart(pattern[i]);                           
+                            container.RemoveElement(pattern[i]);                           
                         }
 
                     }
@@ -500,6 +529,8 @@ namespace OscLib
             }
 
         }
+
+        #endregion // ELEMENT MANAGEMENT
 
 
         /// <summary>
@@ -574,18 +605,18 @@ namespace OscLib
                                  
                 }
 
-                _connectedLinksAccess.WaitOne();
+                _receiversAccess.WaitOne();
 
                 returnString.Append('\n');
                 returnString.Append("OSC Links connected:\n");
 
-                for (int i = 0; i < _connectedLinks.Count; i++)
+                for (int i = 0; i < _receivers.Count; i++)
                 {
                     returnString.Append('[');
                     returnString.Append(i);
                     returnString.Append(']');
                     returnString.Append(": ");
-                    returnString.Append(_connectedLinks[i].Name);
+                    returnString.Append(_receivers[i].ToString());
                     returnString.Append('\n');
                 }
 
@@ -593,7 +624,7 @@ namespace OscLib
             finally
             {
                 _addressSpaceAccess.ReleaseMutex();
-                _connectedLinksAccess.ReleaseMutex();
+                _receiversAccess.ReleaseMutex();
 
             }
 

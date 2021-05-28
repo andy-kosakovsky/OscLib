@@ -5,14 +5,18 @@ using System.Threading;
 
 namespace OscLib
 {
+    // TODO: Add a "OscAdressElement[] GetElements(pattern)" method that would return all elements within this container that match to a pattern
+
     /// <summary>
-    /// Represents an OSC method container, to be used within the OSC Address Space - basically a folder for methods and containers.
+    /// Represents an OSC method container, to be used within the OSC Address Space - basically a folder for other address elements.
     /// </summary>
-    public class OscContainer : OscAddressPart
+    public class OscContainer : OscAddressElement
     {
-        private List<OscAddressPart> _contents;
-        // this dictionary links the indices of elements inside the list with their names, for ease of access and checks.
-        private Dictionary<OscString, int> _contentsNames;
+        /// <summary> All child elements contained in this container. </summary>
+        protected List<OscAddressElement> _contents;
+
+        /// <summary> Connects the names of elements with their indeces in the "contents" list, to ease lookup and pattern-matching. </summary>
+        protected Dictionary<OscString, int> _contentsNames;
 
         /// <summary> The number of elements within this container. </summary>
         public int Length { get => _contents.Count; }
@@ -21,8 +25,8 @@ namespace OscLib
         /// Indexer access to the elements of this container, using their names.
         /// </summary>
         /// <param name="name"> Name of the element. </param>
-        /// <returns> The element with the provided name, or null if it's not in this container. </returns>
-        public OscAddressPart this[OscString name] 
+        /// <returns> The element with the provided name - or null, if there isn't one. </returns>
+        public OscAddressElement this[OscString name] 
         { 
             get
             {
@@ -43,12 +47,20 @@ namespace OscLib
         /// Indexer access to the elements of this container, using their indices.
         /// </summary>
         /// <param name="index"> Index of the element. </param>
-        /// <returns> The element under the provided index. </returns>
-        public OscAddressPart this[int index]
+        /// <returns> The element under the provided index - or null, if the index is out of bounds. </returns>
+        public OscAddressElement this[int index]
         {
             get
             {
-                return _contents[index];
+                if (OscUtil.IsNumberBetween(index, 0, _contents.Count - 1))
+                {
+                    return _contents[index];
+                }
+                else
+                {
+                    return null;
+                }
+
             }
 
         }
@@ -56,67 +68,71 @@ namespace OscLib
         /// <summary>
         /// Creates a new OSC Container.
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="name"> The name for this container. Note: no need to include a "/" symbol. </param>
         public OscContainer(OscString name) 
             :base(name)
         {
             _contentsNames = new Dictionary<OscString, int>();
-            _contents = new List<OscAddressPart>();
+            _contents = new List<OscAddressElement>();
         }
 
         /// <summary>
-        /// Adds an OSC container or a method to this container.
+        /// Adds an address element to this container.
         /// </summary>
-        /// <param name="part"></param>
-        public void AddPart(OscAddressPart part)
-        {                       
-            _contents.Add(part);
+        /// <param name="element"></param>
+        /// <param name="part"> The element to add. </param>
+        /// <exception cref="ArgumentException"> Thrown when this container already contains an element with this name. </exception>
+        public void AddElement(OscAddressElement element)
+        {
+            if (_contentsNames.ContainsKey(element.Name))
+            {
+                throw new ArgumentException("OSC Address ERROR: Can't add element " + element.ToString() + " to OSC Container " + this.ToString() + "; " + this.ToString() + " already contains an element with that name. ");
+            }
+
+            _contents.Add(element);
             // new address part should be the last index of the list 
             RefreshNames();                
         }
 
         /// <summary>
-        /// Removes an OSC container or a method from this container, if it's inside this container.
+        /// Removes an address element from this container - if it's inside this container.
         /// </summary>
-        /// <param name="part"></param>
-        public void RemovePart(OscAddressPart part)
+        /// <param name="element"></param>
+        public void RemoveElement(OscAddressElement element)
         {
-            if (_contentsNames.ContainsKey(part.Name))
-            {             
-                _contents.Remove(part);
+            if (_contents.Contains(element))
+            {
+                _contents.Remove(element);
                 RefreshNames();
             }
 
         }
 
         /// <summary>
-        /// Removes an OSC container or a method with a specified name from this container, if it's inside this container.
+        /// Removes an address element with the specified name from this container, if it's inside this container.
         /// </summary>
-        /// <param name="partName"></param>
-        /// <exception cref="ArgumentException"> Thrown when an element with the provided name is not present inside this container. </exception>
-        public void RemovePart(OscString partName)
+        /// <param name="elementName"></param>
+        public void RemoveElement(OscString elementName)
         {
-            if (!_contentsNames.ContainsKey(partName))
+            if (_contentsNames.ContainsKey(elementName))
             {
-                throw new ArgumentException("Address Pattern ERROR: OSC Container " + _name + " doesn't have an element with name " + partName);
+                _contents.RemoveAt(_contentsNames[elementName]);
+                RefreshNames();
             }    
 
-            _contents.RemoveAt(_contentsNames[partName]);
-            RefreshNames();
-     
         }
 
         /// <summary>
-        /// Checks if container contains an address part with a provided name (or adhering to a provided pattern).
+        /// Checks if container contains an address element with the provided name (or adhering to the provided pattern).
         /// </summary>
-        public bool ContainsPart(OscString partName)
+        public bool ContainsElement(OscString elementName)
         {           
             // if it's a pattern
-            if (partName.ContainsPatternMatching())
+            if (elementName.ContainsPatternMatching())
             {
                 for (int i = 0; i < _contents.Count; i++)
                 {
-                    if (_contents[i].Name.PatternMatch(partName))
+                    if (_contents[i].Name.PatternMatch(elementName))
                     {
                         return true;
                     }
@@ -128,12 +144,15 @@ namespace OscLib
             }
             else
             {
-                return _contentsNames.ContainsKey(partName);
+                return _contentsNames.ContainsKey(elementName);
             }
 
         }
 
-        private void RefreshNames()
+        /// <summary>
+        /// Used to update the element names and the corresponding indices in the name dictionary.
+        /// </summary>
+        protected void RefreshNames()
         {
             _contentsNames.Clear();
 

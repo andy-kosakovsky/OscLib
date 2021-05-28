@@ -10,25 +10,34 @@ namespace OscLib
     /// Used to handle sent or received OSC Messages after they've been deserialized.
     /// </summary>
     /// <param name="message"> An OSC Message, deserialized. </param>
-    /// <param name="from"> The source end point of the message. </param>
-    public delegate void OscMessageHandler(OscMessage message, IPEndPoint from);
+    /// <param name="endPoint"> The end point associated with the message. </param>
+    public delegate void MessageHandler(OscMessage message, IPEndPoint endPoint);
 
 
     /// <summary>
     /// Used to handle sent or received OSC Bundles after they've been deserialized.
     /// </summary>
     /// <param name="bundle"> An OSC Bundle, deserialized. </param>
-    /// <param name="from"> The source end point of the bundle. </param>
-    public delegate void OscBundleHandler(OscBundle bundle, IPEndPoint from);
+    /// <param name="endPoint"> The end point associated with the bundle. </param>
+    public delegate void BundleHandler(OscBundle bundle, IPEndPoint endPoint);
 
 
     /// <summary>
     /// Used to handle serialized OSC Packets.
     /// </summary>
     /// <param name="packet"> An OSC Packet, containing serialized data. </param>
-    /// <param name="from"> The source end point of the packet. </param>
+    /// <param name="endPoint"> The end point associated with the packet. </param>
     /// <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
-    public delegate void OscPacketHandler<Packet>(Packet packet, IPEndPoint from) where Packet : IOscPacket;
+    public delegate void PacketHandler<Packet>(Packet packet, IPEndPoint endPoint) where Packet : IOscPacket;
+
+
+    /// <summary>
+    /// Used to handle any non-OSC or corrupted-looking data that's been received.
+    /// </summary>
+    /// <param name="data"> The array containing supposedly non-OSC data. </param>
+    /// <param name="endPoint"> The end point associated with the data. </param>
+    public delegate void BadDataHandler(byte[] data, IPEndPoint endPoint);
+    
 
     #endregion
 
@@ -36,7 +45,7 @@ namespace OscLib
     #region EXCEPTIONS
 
     /// <summary>
-    /// Used to safely extract exceptions from the tasks, preventing it from stopping
+    /// Used to safely extract exceptions from the tasks, preventing it from stopping.
     /// </summary>
     /// <param name="exception"></param>
     public delegate void OscTaskExceptionHandler(Exception exception);
@@ -68,10 +77,11 @@ namespace OscLib
     #region OSC ADDRESS SPACE
 
     /// <summary>
-    /// Used in conjunction with the OSC address system to assign actual methods to OSC Methods.
+    /// Used in conjunction with the OSC Address Space system to link C# methods with OSC Methods.
     /// </summary>
-    /// <param name="arguments"> Arguments to be passed from the received OSC Message to the method when invoked. </param>
-    public delegate void OscMethodDelegate(object[] arguments);
+    /// <param name="messageArguments"> Arguments to be passed from the received OSC Message to the method when invoked. </param>
+    /// <param name="extras"> Used to pass any extra information/arguments/details, if needed. </param>
+    public delegate void OscMethodDelegate(object[] messageArguments, object extras);
 
     #endregion
 }

@@ -5,23 +5,38 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// An implementation of a basic, bare-bones version of OSC Protocol - only supporting Int32, Float32, Osc-String and Osc-Blob as arguments. Everything else will be converted into one of these if
-    /// possible, or discarded outright.
+    /// Used to communicate with SuperCollider's scsynth part.
     /// </summary>
-    public class OscConvertMini : OscConverter
+    public class OscConvertScsynth : OscConverter
     {
+
         private const byte _int32 = (byte)'i';
         private const byte _float32 = (byte)'f';
         private const byte _string = (byte)'s';
         private const byte _blob = (byte)'b';
 
+        private const byte _float64 = (byte)'d';
+
         // used to handle nulls
         private const string _nullString = "NULL";
 
-        public OscConvertMini()
+        public OscConvertScsynth()
         {
             // set it to add empty address strings by default
             _settingEmptyTypeTagStrings = true;
+        }
+
+
+        protected override byte[] GetArgAsBytes<T>(T arg, out byte typeTag)
+        {
+            int length = GetArgLength(arg);
+            int pointer = 0;
+
+            byte[] data = new byte[length];
+
+            AddArgAsBytes(arg, data, ref pointer, out typeTag);
+
+            return data;
         }
 
 
@@ -61,8 +76,8 @@ namespace OscLib
                     break;
 
                 case double argDouble:
-                    typeTag = _float32;
-                    OscSerializer.AddBytes((float)argDouble, array, ref extPointer);
+                    typeTag = _float64;
+                    OscSerializer.AddBytes(argDouble, array, ref extPointer);
                     break;
 
                 // if argument type is not supported, convert it to string and add ass such
@@ -94,19 +109,22 @@ namespace OscLib
                 case _float32:
                     return OscDeserializer.GetFloat32(array, ref extPointer);
 
+                case _float64:
+                    return OscDeserializer.GetFloat64(array, ref extPointer);
+
                 case _string:
                     return OscDeserializer.GetString(array, ref extPointer);
 
                 case _blob:
                     return OscDeserializer.GetBlob(array, ref extPointer);
-
+           
                 default:
                     throw new ArgumentException("OSC Converter ERROR: Can't deserialize argument, argument type is not supported.");
             }
 
         }
 
-        
+
         protected override int GetArgLength<T>(T arg)
         {
             switch (arg)
@@ -115,9 +133,11 @@ namespace OscLib
                 case int _:
                 case float _:
                 case long _:
-                case double _:
                 case OscTimetag _:
                     return OscProtocol.Chunk32;
+
+                case double _:
+                    return OscProtocol.Chunk64;
 
                 case string argString:
                     return OscSerializer.GetOscLength(argString);
@@ -141,4 +161,6 @@ namespace OscLib
         }
 
     }
+
 }
+

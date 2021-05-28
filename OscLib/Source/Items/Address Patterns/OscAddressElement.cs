@@ -5,26 +5,26 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Represents a part of an OSC Address Space.
+    /// A base class for representing elements of OSC Address Spaces
     /// </summary>
-    public abstract class OscAddressPart
+    public abstract class OscAddressElement
     {
         /// <summary>
-        /// Name of this address part.
+        /// Name of this element.
         /// </summary>
         protected readonly OscString _name;
 
         /// <summary>
-        /// Name of this address part. 
+        /// Name of this element. 
         /// </summary>
         public OscString Name { get => _name; }
 
         /// <summary>
-        /// Creates a new address part.
+        /// Creates a new address element.
         /// </summary>
-        /// <param name="name"> Name of this address part. Can't contain reserved symbols. </param>
+        /// <param name="name"> Name of this element. Can't contain reserved symbols or symbols involved in pattern-matching - no need to start it with a "/". </param>
         /// <exception cref="ArgumentException"> Thrown when name does contain reserved symbols. Pls no, thx. </exception>
-        public OscAddressPart(OscString name)
+        public OscAddressElement(OscString name)
         {
             if (name.ContainsSpecialSymbols() || name.ContainsPatternMatching())
             {

@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace OscLib
 {
     /// <summary>
-    /// Manages timing and timestamps. Provides a session tick for ease of timekeeping.
+    /// Manages timekeeping and timetags. Provides a session tick to make timekeeping easier.
     /// </summary>
     public static class OscTime
     {
@@ -23,7 +23,7 @@ namespace OscLib
         /// <summary> Provides the current "global" UTC tick. </summary>
         public static long GlobalTick { get => _sessionTimer.Elapsed.Ticks + _sessionStart; }
 
-        /// <summary> Provides the OSC-compliant "DO IT. DO IT NOW." OSC Timetag. </summary>
+        /// <summary> Provides the OSC-compliant "DO IT. DO IT NOW." timetag. </summary>
         public static OscTimetag Immediately { get => _immediately; }
 
         /// <summary> Provides a "pre-rendered" byte representation of the "DO IT NOW" OSC Timetag. </summary>
@@ -49,7 +49,7 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Returns an OSC timestamp that occurs after the provided number of seconds has passed.
+        /// Returns an OSC Timetag that occurs after the provided number of seconds has passed.
         /// </summary>
         /// <param name="seconds"></param>
         /// <returns></returns>

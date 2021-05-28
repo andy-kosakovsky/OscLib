@@ -15,7 +15,7 @@ namespace OscLib
     /// floats, some use an integer equal to 1 or 0 instead of T and F typetags for sending booleans, some use custom typetags, and so on. Some applications don't even allow any arguments
     /// apart from the bare standard int32, float32, OSC-string and OSC-blob. All this can be accounted for in method overloads in the derived classes. 
     /// </remarks>
-    public abstract class OscConvert
+    public abstract class OscConverter
     {
 
         /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
@@ -23,6 +23,14 @@ namespace OscLib
 
         /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
         public virtual bool SettingEmptyTypeTagStrings { get => _settingEmptyTypeTagStrings; set => _settingEmptyTypeTagStrings = value; }
+
+
+        #region EVENTS
+
+
+
+
+        #endregion // EVENTS
 
 
 
@@ -181,7 +189,7 @@ namespace OscLib
             {
                 OscSerializer.AddBytes(packets[i].OscLength, array, ref extPointer);
 
-                packets[i].BinaryData.CopyTo(array, extPointer);
+                packets[i].CopyToByteArray(array, extPointer);
                 extPointer += packets[i].OscLength;
             }
 
@@ -194,7 +202,7 @@ namespace OscLib
         #region PACKET SERIALIZATION
 
         /// <summary>
-        /// Converts the provided OSC Message into an OSC Packet. 
+        /// Converts the provided OSC Message into bytes and packs them into an OSC Packet. 
         /// </summary>
         /// <param name="message"> The OSC Message to be converted. </param>
         /// <returns></returns>
@@ -211,7 +219,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates an OSC Message out of the provided address pattern and argument array, converts it into an OSC Packet.
+        /// Creates an OSC Message out of the provided address pattern and argument array, converts it into bytes and packs them into an OSC Packet.
         /// </summary>
         /// <param name="addressPattern"> The address pattern of the message. </param>
         /// <param name="arguments"> The arguments </param>
@@ -292,7 +300,7 @@ namespace OscLib
         #region PACKET DESERIALIZATION
 
         /// <summary>
-        /// Deserializes an OSC message from the byte array, using an external pointer to navigate it.
+        /// Deserializes a single OSC message from the byte array, using an external pointer to navigate it (subject to there being an OSC Message at the pointer's initial position, of course).
         /// </summary>
         /// <param name="data"> The byte array containing the message. </param>
         /// <param name="extPointer"> Points at the start of the message. Will be shifted forwards to the end of the message. </param>
@@ -435,7 +443,7 @@ namespace OscLib
         /// <remarks> The method is generic to avoid the struct-as-interface boxing/unboxing shenanigans. </remarks>
         public OscMessage GetMessage<Packet>(Packet oscPacket) where Packet : IOscPacket
         {
-            return GetMessage(oscPacket.BinaryData);
+            return GetMessage(oscPacket.GetBytes());
         }
 
 
@@ -561,7 +569,7 @@ namespace OscLib
         /// <returns></returns>
         public OscBundle GetBundle<Packet>(Packet oscPacket) where Packet : IOscPacket
         {
-            return GetBundle(oscPacket.BinaryData);
+            return GetBundle(oscPacket.GetBytes());
         }
 
         #endregion
@@ -633,7 +641,7 @@ namespace OscLib
 
 
 
-        #region ABSTRACT METHODS
+        #region ABSTRACT/VIRTUAL METHODS
 
         // the idea is to have the specific behaviour of these methods be defined in the derived classes - depending on how the target implements OSC Protocol
 
@@ -644,7 +652,17 @@ namespace OscLib
         /// <param name="typeTag"> Will return the OSC type tag for the provided argument. </param>
         /// <returns> The byte array containing the argument converted to OSC Protocol-compliant binary. </returns>
         /// <exception cref="ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
-        protected abstract byte[] GetArgAsBytes<T>(T arg, out byte typeTag);
+        protected virtual byte[] GetArgAsBytes<T>(T arg, out byte typeTag)
+        {
+            int length = GetArgLength(arg);
+            int pointer = 0;
+
+            byte[] data = new byte[length];
+
+            AddArgAsBytes(arg, data, ref pointer, out typeTag);
+
+            return data;
+        }
 
 
         /// <summary>
