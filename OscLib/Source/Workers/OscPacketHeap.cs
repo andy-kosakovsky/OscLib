@@ -279,7 +279,7 @@ namespace OscLib
                 throw new InvalidOperationException("SC Server Sender Error: Sender is not active.");
             }
 
-            if (packet.OscLength > _packetBundleMaxSize)
+            if (packet.Length > _packetBundleMaxSize)
             {
                 throw new ArgumentOutOfRangeException(nameof(packet), "OSC Sender Error: Too much OSC data to safely send in one message.");
             }
@@ -317,7 +317,7 @@ namespace OscLib
                 throw new InvalidOperationException("SC Server Sender Error: Sender is not running.");
             }
 
-            if (packet.OscLength > _packetBundleMaxSize)
+            if (packet.Length > _packetBundleMaxSize)
             {
                 throw new ArgumentOutOfRangeException("OSC Sender Error: Too much OSC data to safely send in one message.");
             }
@@ -455,7 +455,7 @@ namespace OscLib
                         {
                             // cache stuff
                             packetData = packetHeapLevel[i].GetBytes();
-                            packetLength = packetHeapLevel[i].OscLength;
+                            packetLength = packetHeapLevel[i].Length;
 
                             // check whether this packet will fit (
                             if ((byteCounter + packetLength + OscBundle.BundleHeaderLength) < _packetBundleMaxSize) 

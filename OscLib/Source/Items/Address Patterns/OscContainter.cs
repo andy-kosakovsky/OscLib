@@ -163,6 +163,19 @@ namespace OscLib
 
         }
 
+        public override string ToString()
+        {
+            StringBuilder returnString = new StringBuilder();
+            returnString.Append("CONTAINER: ");
+            returnString.Append(_name.ToString());
+            returnString.Append(" (elements inside: ");
+            returnString.Append(Length);
+            returnString.Append(')');
+
+            return returnString.ToString();
+
+        }
+
     }
 
 }

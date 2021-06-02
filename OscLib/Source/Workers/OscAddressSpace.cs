@@ -8,6 +8,7 @@ namespace OscLib
 {
     // TODO: Bit of a mess going on here, get the address space iteration stuff into a separate method or something
     // TODO: related to that, implement GetElement(s) methods
+    // TODO: Make it work with method events
 
     /// <summary>
     /// Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Receivers, pattern matching if needed.
@@ -225,7 +226,7 @@ namespace OscLib
                     {
                         if (stack[currentLayer][elementNames[currentLayer]] is OscMethod part)
                         {
-                            part.Invoke(message.Arguments);
+                            part.Invoke(this, message.GetArguments());
                         }
 
                         // go up a layer
@@ -241,7 +242,7 @@ namespace OscLib
                             {
                                 if (method.Name.PatternMatch(elementNames[currentLayer]))
                                 {
-                                    method.Invoke(message.Arguments);
+                                    method.Invoke(this, message.GetArguments());
                                 }
                             }
                         }
@@ -323,13 +324,16 @@ namespace OscLib
         #region ELEMENT MANAGEMENT
 
         /// <summary>
-        /// Adds an OSC Method to the specified address in the OSC Address Space.
+        /// Adds a method to the Address Space, connecting the specified address to the specified OSC Method. If the address doesn't exist, it will be created.
         /// </summary>
-        /// <param name="address"> The address pattern of this OSC Method. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the method's name. </param>
+        /// <param name="address"> The address to which the method should be added. Shouldn't contain any reserved symbols except for separators. </param>
         /// <param name="method"> The method delegate that will be attached to the OSC Method, to be invoked when the method is triggered by an OSC message. </param>
+        /// <returns> The OSC Method to which the method was added, or null if there is already an OSC Container present at the address. </returns>
         /// <exception cref="ArgumentException"> Thrown when the address pattern is invalid. </exception>
-        public void AddMethod(OscString address, OscMethodDelegate method)
+        public virtual OscMethod AddMethod(OscString address, OscMethodHandler method)
         {
+            OscMethod added = null;
+
             if (address.Length < 1)
             {
                 throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern is invalid.");
@@ -369,13 +373,21 @@ namespace OscLib
                     {
                         if (!container.ContainsElement(pattern[i]))
                         {
-                            container.AddElement(new OscMethod(pattern[i], method));
+                            added = new OscMethod(pattern[i]);
+                            added.OscMethodInvoked += method;
+
+                            container.AddElement(added);
+
+                            
                         }
                         else
                         {
-                            // delete the part that is there and overwrite it with a new one
-                            container.RemoveElement(pattern[i]);
-                            container.AddElement(new OscMethod(pattern[i], method));
+                            if (container[pattern[i]] is OscMethod target)
+                            {
+                                added = target;
+                                added.OscMethodInvoked += method;
+                            }
+
                         }
 
                     }
@@ -388,15 +400,21 @@ namespace OscLib
                 _addressSpaceAccess.ReleaseMutex();
             }
 
+            return added;
+
         }
 
         /// <summary>
-        /// Adds an OSC Container to the specified address in the OSC Address Space.
+        /// Adds an OSC Container to the specified address in the OSC Address Space. If the address doesn't exist, it will be created.
         /// </summary>
-        /// <param name="address"> The address of this OSC Container. Shouldn't contain any reserved symbols except for separators. The last part of the pattern is used as the container's name. </param>
+        /// <param name="address"> The address of this OSC Container. Shouldn't contain any reserved symbols except for separators. </param>
+        /// <returns> The added container, or the existing container at the specified address (if one does exist already), or null if there is already an OSC Method at the specified address instead. </returns>
         /// <exception cref="ArgumentException"> Thrown when the address pattern is invalid. </exception>
-        public void AddContainer(OscString address)
+        public virtual OscContainer AddContainer(OscString address)
         {
+
+            OscContainer added = null;
+
             if (address.Length < 1)
             {
                 throw new ArgumentException("OSC Receiver ERROR: Can't add method, address pattern is invalid.");
@@ -412,8 +430,7 @@ namespace OscLib
             OscContainer container = _root;
 
                 for (int i = 0; i < pattern.Length; i++)
-                {
-                 
+                {             
                     // if we're not at the last bit of the address, let's find an appropriate container, or create a new one 
                     if (i != pattern.Length - 1)
                     {
@@ -432,13 +449,17 @@ namespace OscLib
                     {
                         if (!container.ContainsElement(pattern[i]))
                         {
+                            added = new OscContainer(pattern[i]);
+
                             container.AddElement(new OscContainer(pattern[i]));
                         }
                         else
                         {
-                            // delete the part that is there and overwrite it with a new one
-                            container.RemoveElement(pattern[i]);
-                            container.AddElement(new OscContainer(pattern[i]));
+                            if (container[pattern[i]] is OscContainer target)
+                            {
+                                added = target;
+                            }
+                            
                         }
 
                     }
@@ -450,6 +471,8 @@ namespace OscLib
             {
                 _addressSpaceAccess.ReleaseMutex();
             }
+
+            return added;
 
         }
 
@@ -470,7 +493,7 @@ namespace OscLib
         /// <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
         /// </summary>
         /// <param name="addressPattern"></param>
-        public void RemoveElement(OscString addressPattern)
+        public virtual void RemoveElement(OscString addressPattern)
         {
             if (addressPattern.Length < 1)
             {
@@ -564,6 +587,7 @@ namespace OscLib
                     // index of -1 for the current layer indicates that we're done with this particular layer and can safely go back
                     if (indices[currentLayer] >= currentPath[currentLayer].Length)
                     {
+                        returnString.Append('\n');
                         indices.RemoveAt(currentLayer);
                         currentPath.RemoveAt(currentLayer);
                         currentLayer--;
@@ -571,19 +595,11 @@ namespace OscLib
                     }
 
                     // append the spaces to designate the current depth
-                    for (int i = 0; i < (currentLayer + 1) * 4; i++)
-                    {
-                        returnString.Append(' ');
-                    }
-
-                                                          
+                    returnString.Append(OscUtil.GetRepeatingChar(' ', (currentLayer + 1) * 4));
+                                                     
                     if (currentPath[currentLayer][indices[currentLayer]] is OscContainer container)
                     {
-                        returnString.Append("CONTAINER: ");
-                        returnString.Append(container.Name.ToString());
-                        returnString.Append('(');
-                        returnString.Append(container.Length);
-                        returnString.Append(')');
+                        returnString.Append(container.ToString());
                         returnString.Append('\n');
 
                         indices[currentLayer]++;
@@ -594,12 +610,8 @@ namespace OscLib
                     }
                     else if (currentPath[currentLayer][indices[currentLayer]] is OscMethod method)
                     {
-                        returnString.Append("METHOD: ");
-                        returnString.Append(method.Name.ToString());
-                        returnString.Append(", delegate: ");
-                        returnString.Append(method.DelegateName);
+                        returnString.Append(method.ToString());
                         returnString.Append('\n');
-
                         indices[currentLayer]++;
                     }
                                  

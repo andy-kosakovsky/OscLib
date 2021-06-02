@@ -364,7 +364,7 @@ namespace OscLib
                 throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + " needs to be in TARGET MODE (current mode: " + _mode.ToString() + ").");
             }
 
-            _udpClient.Send(oscPacket.GetBytes(), oscPacket.OscLength);
+            _udpClient.Send(oscPacket.GetBytes(), oscPacket.Length);
 
 
             OnPacketSent(oscPacket.GetBytes(), TargetEndPoint);
@@ -415,7 +415,7 @@ namespace OscLib
                 throw new InvalidOperationException("OSC Link Error: OSC Link " + _name + " needs to be in WIDE MODE (current mode: " + _mode.ToString() + ").");
             }
 
-            _udpClient.Send(oscPacket.GetBytes(), oscPacket.OscLength, endPoint);
+            _udpClient.Send(oscPacket.GetBytes(), oscPacket.Length, endPoint);
 
             OnPacketSent(oscPacket.GetBytes(), endPoint);         
 

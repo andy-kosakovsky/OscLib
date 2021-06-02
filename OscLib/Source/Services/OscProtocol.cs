@@ -4,6 +4,9 @@ using System.Text;
 
 namespace OscLib
 {
+    /// <summary>
+    /// Contains common constants, values and symbols as defined by the Open Sound Control Protocol specification.
+    /// </summary>
     public static class OscProtocol
     {
         // byte lengths of data chunks used by OSC
@@ -62,24 +65,22 @@ namespace OscLib
 
         #endregion // SPECIAL SYMBOL CONSTS
 
-        // reserved symbols that shouldn't be used in osc method or container names - just to have them all in nice containers
-        private static readonly byte[] _specialSymbols = new byte[] { Space, BundleMarker, Comma, Separator };
+        // reserved characters that shouldn't be used in osc method or container names - just to have them all in nice arrays
+        private static readonly byte[] _specialChars = new byte[] { Space, BundleMarker, Comma, Separator };
 
-        private static readonly byte[] _patternMatchSymbols = new byte[] { Comma, MatchAnySequence, MatchAnyChar, MatchNot, MatchRange, 
+        private static readonly byte[] _patternMatchChars = new byte[] { Comma, MatchAnySequence, MatchAnyChar, MatchNot, MatchRange, 
                                                                            MatchCharArrayOpen, MatchCharArrayClose, MatchStringArrayOpen, MatchStringArrayClose };
 
 
 
         /// <summary>
-        /// Checks whether the provided byte represents an ASCII symbol reserved by the OSC Protocol.
+        /// Checks whether the provided byte represents an ASCII character reserved by the OSC Protocol.
         /// </summary>
-        /// <param name="symbol"> ASCII symbol as a byte. </param>
-        /// <returns></returns>
-        public static bool IsSpecialSymbol(byte symbol)
+        public static bool IsSpecialChar(byte asciiChar)
         {
-            for (int i = 0; i < _specialSymbols.Length; i++)
+            for (int i = 0; i < _specialChars.Length; i++)
             {
-                if (symbol == _specialSymbols[i])
+                if (asciiChar == _specialChars[i])
                     return true;
             }
 
@@ -88,11 +89,14 @@ namespace OscLib
         }
 
 
-        public static bool IsPatternMatchSymbol(byte symbol)
+        /// <summary>
+        /// Checks whether the provided byte represents an ASCII character used in the OSC Protocol-specified pattern-matching.
+        /// </summary>
+        public static bool IsPatternMatchChar(byte asciiChar)
         {
-            for (int i = 0; i < _patternMatchSymbols.Length; i++)
+            for (int i = 0; i < _patternMatchChars.Length; i++)
             {
-                if (symbol == _patternMatchSymbols[i])
+                if (asciiChar == _patternMatchChars[i])
                     return true;
             }
 
@@ -100,11 +104,14 @@ namespace OscLib
         }
 
 
-        public static bool ContainsOscSpecialSymbols(this byte[] array)
+        /// <summary>
+        /// Checks whether the provided byte array contains ASCII characters reserved by the OSC Protocol.
+        /// </summary>
+        public static bool ContainsOscSpecialChars(this byte[] array)
         {
             for (int i = 0; i < array.Length; i++)
             {
-                if (IsSpecialSymbol(array[i]))
+                if (IsSpecialChar(array[i]))
                 {
                     return true;
                 }
@@ -116,11 +123,14 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Checks whether the provided byte array contains ASCII characters used in the OSC Protocol-specified pattern-matching.
+        /// </summary>
         public static bool ContainsOscPatternMatching(this byte[] array)
         {
             for (int i = 0; i < array.Length; i++)
             {
-                if (IsPatternMatchSymbol(array[i]))
+                if (IsPatternMatchChar(array[i]))
                 {
                     return true;
                 }

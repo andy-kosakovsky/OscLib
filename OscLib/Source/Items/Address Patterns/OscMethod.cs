@@ -5,45 +5,102 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Represents an OSC Method inside the OSC Address Space. Allows to connect methods to specific messages or patterns.
+    /// Represents an OSC Method within an OSC Address Space. Allows connecting event handlers to OSC Methods, to be invoked when an appropriate message is received by the Address Space.
     /// </summary>
     public class OscMethod : OscAddressElement
     {
-        /// <summary> Points to a method that will be invoked when this OSC Method is called. </summary>
-        protected readonly OscMethodDelegate _delegate;
-
-        /// <summary> Caches the name of the delegate method. </summary>
-        protected readonly string _delegateName;
-
-        /// <summary> The name of the attached method delegate. </summary>
-        public string DelegateName { get => _delegateName; }
-
         /// <summary>
-        /// Creates a new OSC Method and links it with the provided delegate.
+        /// How many event handlers are connected to this OSC Method.
         /// </summary>
-        /// <param name="name"> The name of the OSC Method. Shouldn't contain special symbols - that includes the "/" in the beginning. </param>
-        /// <param name="method"> Points to a method that this OSC Method will invoke when called. </param>
-        /// <exception cref="ArgumentNullException"> Thrown when the provided delegate is null. </exception>
-        public OscMethod(OscString name, OscMethodDelegate method)
-            :base(name)
+        public int TotalHandlersConnected
         {
-            if (method == null)
+            get
             {
-                throw new ArgumentNullException(nameof(method));
+                if (OscMethodInvoked == null)
+                {
+                    return 0;
+                }
+
+                return OscMethodInvoked.GetInvocationList().Length;
             }
 
-            _delegate = method;
-            _delegateName = method.Method.Name;
+        }
+
+
+        /// <summary>
+        /// Invoked when a message correlating to this OSC Method is received by the Address Space.
+        /// </summary>
+        public event OscMethodHandler OscMethodInvoked;
+
+        /// <summary>
+        /// Creates a new OSC Method and links it with the provided method.
+        /// </summary>
+        /// <param name="name"> The name of the OSC Method. Shouldn't contain reserved symbols, not even the "/" in the beginning. </param>
+        /// <exception cref="ArgumentNullException"> Thrown when the provided delegate is null. </exception>
+        public OscMethod(OscString name)
+            :base(name)
+        {
+  
         }
 
         /// <summary>
         /// Invokes the attached method delegate.
         /// </summary>
-        /// <param name="arguments"> An array of arguments to pass to the delegate. </param>
-        /// <param name="extras"> Used to optionally pass any extra arguments/information unrelated to the OSC Message's arguments. </param>
-        public void Invoke(object[] arguments, object extras = null)
+        /// <param name="source"> The source of the arguments. </param>
+        /// <param name="arguments"> An array of arguments to pass on. </param>
+        public virtual void Invoke(object source, object[] arguments)
         {
-            _delegate?.Invoke(arguments, extras);
+            OscMethodInvoked?.Invoke(source, arguments);
+        }
+
+        /// <summary>
+        /// Disconnects all the attached methods from this OSC Method's event.
+        /// </summary>
+        public virtual void Clear()
+        {
+            OscMethodInvoked = null;
+        }
+
+
+        public override string ToString()
+        {
+            StringBuilder returnString = new StringBuilder();
+
+            returnString.Append("OSC METHOD: ");
+            returnString.Append(_name.ToString());
+            returnString.Append(" (event handlers connected: ");
+            returnString.Append(TotalHandlersConnected);
+            returnString.Append(')');
+
+            return returnString.ToString();
+
+        }
+
+        public string GetConnectedEventHandlersNames()
+        {
+            StringBuilder returnString = new StringBuilder(_name.ToString());
+            returnString.Append(" attached methods:\n");
+
+            if (OscMethodInvoked != null)
+            {
+                Delegate[] list = OscMethodInvoked.GetInvocationList();
+
+                for (int i = 0; i < list.Length; i++)
+                {
+                    returnString.Append(" > ");
+                    returnString.Append(list[i].Method.Name);
+                    returnString.Append('\n');
+                }
+
+            }
+            else
+            {
+                returnString.Append(" > NONE");
+                returnString.Append('\n');
+            }
+
+            return returnString.ToString();
+
         }
 
     }

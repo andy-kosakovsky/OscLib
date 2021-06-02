@@ -17,26 +17,48 @@ namespace OscLib
         /// <summary> OSC address pattern of this message. </summary>
         public OscString AddressPattern { get => _addressPattern; }
 
-
-        /// <summary> Arguments of this message. </summary>
-        public object[] Arguments
+        /// <summary> The number of arguments inside this OSC Message. </summary>
+        public int ArgumentsCount
         {
             get
             {
-                if (_arguments == null)
+                if (_arguments != null)
                 {
-                    return _argumentsEmpty;
+                    return _arguments.Length;
                 }
                 else
                 {
-                    return _arguments;
+                    return 0;
                 }
 
             }
 
         }
 
-         
+        /// <summary>
+        /// Indexer access to arguments contained in this OSC Message.
+        /// </summary>
+        /// <param name="index"> Argument index. </param>
+        /// <returns> The argument at the specified index, or null if index is out of bounds. </returns>
+        public object this[int index]
+        {
+            get
+            {
+                if (OscUtil.IsNumberBetween(index, 0, _arguments.Length - 1))
+                {
+                    return _arguments[index];
+                }
+                else
+                {
+                    return null;
+                }
+
+            }
+
+        }
+        
+
+
         /// <summary>
         /// Creates a new OSC message out of an address pattern and an array of arguments.
         /// </summary>
@@ -58,6 +80,24 @@ namespace OscLib
 
             _addressPattern = addressPattern;
             _arguments = arguments;
+
+        }
+
+
+        /// <summary>
+        /// Retrieves the array of arguments attached to this message.
+        /// </summary>
+        /// <returns> An array of arguments, or an empty array if there are none. </returns>
+        public object[] GetArguments()
+        {
+            if (_arguments == null)
+            {
+                return _argumentsEmpty;
+            }
+            else
+            {
+                return _arguments;
+            }
 
         }
 

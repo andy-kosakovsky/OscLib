@@ -50,23 +50,23 @@ namespace OscLib
             int msgStart = extPointer;
 
        
-            message.AddressPattern.CopyTo(array, msgStart);
+            message.AddressPattern.CopyBytesToArray(array, msgStart);
 
             extPointer += addrLength;
 
-            if (message.Arguments.Length > 0)
+            if (message.ArgumentsCount > 0)
             {
                 // add the address pattern comma
                 array[msgStart + addrLength] = OscProtocol.Comma;
 
                 // find the length of type tag, " + 1" accounts for the comma
-                int typeTagLength = OscUtil.GetNextMultipleOfFour(message.Arguments.Length + 1);
+                int typeTagLength = OscUtil.GetNextMultipleOfFour(message.ArgumentsCount + 1);
 
                 extPointer = msgStart + addrLength + typeTagLength;
 
-                for (int i = 0; i < message.Arguments.Length; i++)
+                for (int i = 0; i < message.ArgumentsCount; i++)
                 {
-                    AddArgAsBytes(message.Arguments[i], array, ref extPointer, out array[msgStart + addrLength + 1 + i]);
+                    AddArgAsBytes(message[i], array, ref extPointer, out array[msgStart + addrLength + 1 + i]);
                 }
 
             }
@@ -187,10 +187,10 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                OscSerializer.AddBytes(packets[i].OscLength, array, ref extPointer);
+                OscSerializer.AddBytes(packets[i].Length, array, ref extPointer);
 
-                packets[i].CopyToByteArray(array, extPointer);
-                extPointer += packets[i].OscLength;
+                packets[i].CopyBytesToArray(array, extPointer);
+                extPointer += packets[i].Length;
             }
 
         }
@@ -257,7 +257,7 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                length += packets[i].OscLength + OscProtocol.Chunk32;
+                length += packets[i].Length + OscProtocol.Chunk32;
             }
 
             byte[] data = new byte[length];
@@ -278,7 +278,7 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                length += packets[i].OscLength + OscProtocol.Chunk32;
+                length += packets[i].Length + OscProtocol.Chunk32;
             }
 
             byte[] data = new byte[length];
@@ -587,15 +587,15 @@ namespace OscLib
         {
             int length = message.AddressPattern.OscLength;
 
-            for (int i = 0; i < message.Arguments.Length; i++)
+            for (int i = 0; i < message.ArgumentsCount; i++)
             {
-                length += GetArgLength(message.Arguments[i]);
+                length += GetArgLength(message[i]);
             }
 
             // account for the argument string length
-            if (message.Arguments.Length > 0)
+            if (message.ArgumentsCount > 0)
             {
-                length += OscUtil.GetNextMultipleOfFour(message.Arguments.Length + 1);
+                length += OscUtil.GetNextMultipleOfFour(message.ArgumentsCount + 1);
             }
             else
             {

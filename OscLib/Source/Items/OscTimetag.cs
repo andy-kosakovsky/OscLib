@@ -5,11 +5,14 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Describes an OSC Timetag both as a 64 bit fixed-point NTP timestamp and a tick value useable by DateTime and TimeSpan.
+    /// Represens an OSC Timetag, both as a 64 bit fixed-point NTP timestamp and a tick value compatible with .Net classes like DateTime and TimeSpan.
     /// </summary>
     public readonly struct OscTimetag
-    {       
+    {   
+        /// <summary> This timetag represented as a NTP-compliant fixed-point 64 bit timestamp.
         public readonly ulong NtpTimestamp;
+
+        /// <summary> This timetag represented as ticks - compatible with DateTime and TimeSpan classes, based on Coordinated Universal Time (UTC).
         public readonly long Ticks;     
 
         /// <summary>
@@ -38,7 +41,6 @@ namespace OscLib
         /// <param name="tick"> UTC-based tick value. </param>
         public OscTimetag(long tick)
         {
-
             Ticks = tick;
 
             long tickMinusEpoch = Ticks - OscTime.NtpEpochStart;
@@ -63,6 +65,7 @@ namespace OscLib
         public OscTimetag(ulong ntpTimestamp)
         {
             NtpTimestamp = ntpTimestamp;
+
             Ticks = 0;
 
             uint seconds = (uint)((NtpTimestamp >> 32) & 0xFFFFFFFF);
@@ -76,7 +79,7 @@ namespace OscLib
 
 
         /// <summary> 
-        /// Returns this timetag represented as a DateTime object, corresponding to the time zone of the system.
+        /// Returns this timetag represented as a DateTime struct, corresponding to the current time zone of the system.
         /// </summary>
         public DateTime GetDateTime()
         {

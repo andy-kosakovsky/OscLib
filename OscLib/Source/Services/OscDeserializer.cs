@@ -5,9 +5,8 @@ using System.Collections.Generic;
 
 namespace OscLib
 {
-
     /// <summary>
-    /// Deserializes OSC binary data, translating it into readable messages and bundles.
+    /// Contains methods for deserializing OSC binary data.
     /// </summary>
     public static class OscDeserializer
     {
@@ -15,7 +14,7 @@ namespace OscLib
         #region GET ARGUMENTS (WITH DIRECT POINTER)
 
         /// <summary>
-        /// Gets an int out of the byte array.
+        /// Gets a 32-bit integer out of the byte array.
         /// </summary>
         /// <param name="data"> Byte array containing the data. </param>
         /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
@@ -34,7 +33,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Gets a long out of the byte array.
+        /// Gets a 64-bit integer out of the byte array.
         /// </summary>
         /// <param name="data"> Byte array containing the data. </param>
         /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>

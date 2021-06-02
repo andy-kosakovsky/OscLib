@@ -5,9 +5,9 @@ namespace OscLib
 {
 
     /// <summary>
-    /// Implements an OSC Protocol-compliant string - ASCII-based, null-terminated, length a multiple of 4 - that can be used with and easily converted to and from standard .NET strings.  
+    /// Implements an OSC Protocol-compliant string (ASCII-based, null-terminated, length a multiple of 4) that can be used with and easily converted to and from standard .NET strings.  
     /// </summary>
-    public struct OscString
+    public struct OscString : IBinaryContainer
     {
         private static readonly OscString _nullString = new OscString("\0");
 
@@ -23,24 +23,27 @@ namespace OscLib
 
         private readonly byte[] _chars;
 
+        /// <summary> The "OSC Protocol-compliant" length of this string - including the null terminator and extra null bytes at the end to make it a multiple of 4. </summary>
         public readonly int OscLength;
+
+        /// <summary> The "real" length of this string - only the bytes containing characters, that is. </summary>
         public readonly int Length;
 
         private Trit _containsPatternMatching;
         private Trit _containsSpecialSymbols;
    
         /// <summary>
-        /// Indexer access to the characters of this string, as ASCII codes.
+        /// Indexer access to the characters of this string, recorded as ASCII bytes.
         /// </summary>
-        /// <param name="i"> Index of the char. </param>
-        /// <returns> A char as an ASCII code. Will return "0" (ASCII null) when out of range. </returns>
-        public byte this[int i] 
+        /// <param name="index"> Index of the char. </param>
+        /// <returns> A char as an ASCII byte. Will return a zero (ASCII null, that is) when out of range. </returns>
+        public byte this[int index] 
         {
             get
             {
-                if ((i >= 0) && (i < _chars.Length))
+                if ((index >= 0) && (index < _chars.Length))
                 {
-                    return _chars[i];
+                    return _chars[index];
                 }
                 else
                 {
@@ -105,8 +108,6 @@ namespace OscLib
         /// <summary>
         /// Internal constructor for copying strings while preserving the information about them containing special symbols.
         /// </summary>
-        /// <param name="bytes"></param>
-        /// <param name="specialSymbols"></param>
         private OscString(byte[] bytes, Trit hasSpecialSymbols, Trit hasPatternMatching)
         {
             _chars = bytes;
@@ -116,27 +117,6 @@ namespace OscLib
             _containsPatternMatching = hasPatternMatching;
             _containsSpecialSymbols = hasSpecialSymbols;
         }
-
-
-        /// <summary>
-        /// Copies the elements of this string's byte array into the specified one-dimentional byte array, starting from the index provided.
-        /// </summary>
-        /// <returns></returns>
-        public void CopyTo(byte[] array, int index)
-        {
-            _chars.CopyTo(array, index);
-        }
-
-
-        /// <summary>
-        /// Returns a copy of this OSC string.
-        /// </summary>
-        /// <returns></returns>
-        public OscString Copy()
-        { 
-            return new OscString(_chars, _containsSpecialSymbols, _containsPatternMatching);
-        }
-
 
         /// <summary>
         /// Splits the OSC String into an array of new OSC Strings, using the provided symbol.
@@ -196,26 +176,42 @@ namespace OscLib
 
         }
 
-
-        /// <summary> 
-        /// Returns a copy of an array containing all characters (their ASCII codes as bytes, that is) in this string. 
+        /// <summary>
+        /// Retrieves the byte array containing ASCII bytes.
         /// </summary>
-        public byte[] GetChars()
+        /// <remarks> Despite being read-only, it's still possible to modify individual elements of the array. If this behaviour is not preferable, using indexer accessor might be safer. </remarks>
+        public byte[] GetBytes()
         {
-            byte[] copy = new byte[Length];
-            _chars.CopyTo(copy, 0);
-            return copy;
+            return _chars;
         }
 
 
         /// <summary>
         /// Returns a copy of an array containing all chars (their ASCII codes as bytes, that is). 
         /// </summary>
-        public byte[] GetOscBytes()
+        public byte[] GetCopyOfBytes()
         {
             byte[] copy = new byte[OscLength];
             _chars.CopyTo(copy, 0);
             return copy;
+        }
+
+
+        /// <summary>
+        /// Copies the elements of this string's byte array into the specified one-dimentional byte array, starting from the index provided.
+        /// </summary>
+        public void CopyBytesToArray(byte[] array, int index)
+        {
+            _chars.CopyTo(array, index);
+        }
+
+
+        /// <summary>
+        /// Returns a copy of this OSC string.
+        /// </summary>
+        public OscString Copy()
+        {
+            return new OscString(GetCopyOfBytes(), _containsSpecialSymbols, _containsPatternMatching);
         }
 
 
@@ -375,7 +371,7 @@ namespace OscLib
             if (_containsSpecialSymbols == Trit.Maybe)
             {
                 // let's find out, shall we
-                bool contains = _chars.ContainsOscSpecialSymbols();
+                bool contains = _chars.ContainsOscSpecialChars();
 
                 _containsSpecialSymbols = contains.ToTrit();
                 return contains;
@@ -418,12 +414,17 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Overrides the internal "has special symbols" flag, which might help avoiding the possibly-costy check later on.
+        /// </summary>
         public void SetSpecialSymbols(bool value)
         {
             _containsSpecialSymbols = value.ToTrit();
         }
 
-
+        /// <summary>
+        /// Overrides the internal "has pattern-matching symbols" flag, which might help avoiding the possibly-costy check later on.
+        /// </summary>
         public void SetPatternMatching(bool value)
         {
             _containsPatternMatching = value.ToTrit();
@@ -433,7 +434,7 @@ namespace OscLib
         #region OVERRIDES AND OPERATORS
 
         /// <summary>
-        /// Returns the OSC string as an actual string.
+        /// Returns this OSC String as an actual string.
         /// </summary>
         /// <returns> A string of a string. </returns>
         public override string ToString()
@@ -442,10 +443,10 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Compares the OSC string to an object.
+        /// Compares this OSC String to an object.
         /// </summary>
         /// <param name="obj"> Object to compare to. </param>
-        /// <returns> Whether the OSC string is equal to object. </returns>
+        /// <returns> Whether the OSC String is equal to the object. </returns>
         public override bool Equals(object obj)
         {
             if (obj is OscString oscString)
@@ -468,8 +469,7 @@ namespace OscLib
         public override int GetHashCode()
         {
             unchecked
-            {
-                
+            {          
                 if (_chars == null)
                     return 0;
 
@@ -491,10 +491,6 @@ namespace OscLib
             }
 
         }
-
-
-        // used in pattern matching - will return true if char is compared to itself or a special symbol such as * or ?
-        
 
 
         /// <summary>
@@ -520,7 +516,7 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Allows to compare OSC strings to each other. 
+        /// Allows to compare OSC Strings to each other. 
         /// </summary>
         /// <param name="stringOne"> First string. </param>
         /// <param name="stringTwo"> Second string. </param>
@@ -543,9 +539,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Allows to implicitly convert strings to OscStrings.
+        /// Allows to implicitly convert strings to OSC Strings.
         /// </summary>
-        /// <param name="addressString"> String to be converted. </param>
+        /// <param name="addressString"> The string to be converted. </param>
         public static implicit operator OscString(string addressString)
         {
             return new OscString(addressString);
@@ -553,9 +549,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Allows to explicitly convert OscStrings to strings.
+        /// Allows to explicitly convert OSC Strings to plain strings.
         /// </summary>
-        /// <param name="oscString"> OscString to be converted. </param>
+        /// <param name="oscString"> The OSC String to be converted. </param>
         public static explicit operator string(OscString oscString)
         {
             return oscString.ToString();
@@ -565,10 +561,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns true if the provided OscString is null (only contains null symbols) or empty (doesn't contain any symbols).
+        /// Returns true if the provided OSC String is null (only contains null symbols) or empty (doesn't contain any symbols).
         /// </summary>
-        /// <param name="checkMe"> The OscString to be checked. </param>
-        /// <returns></returns>
+        /// <param name="checkMe"> The string to check. </param>
         public static bool IsNullOrEmpty(OscString checkMe)
         {
             if (checkMe.Length < 1)
@@ -587,6 +582,8 @@ namespace OscLib
             return true;
 
         }
+
+        #region PATTERN-MATCHING EXTRAS
 
         private bool CharMatchesSquareBrackets(byte checkChar, ref int pointer, ref OscString pattern)
         {
@@ -743,6 +740,8 @@ namespace OscLib
             }
 
         }
+
+        #endregion // PATTERN-MATCHING EXTRAS
 
 
     }

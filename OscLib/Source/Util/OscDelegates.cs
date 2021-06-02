@@ -77,11 +77,11 @@ namespace OscLib
     #region OSC ADDRESS SPACE
 
     /// <summary>
-    /// Used in conjunction with the OSC Address Space system to link C# methods with OSC Methods.
+    /// Used in conjunction with OSC Methods to handle incoming messages and 
     /// </summary>
-    /// <param name="messageArguments"> Arguments to be passed from the received OSC Message to the method when invoked. </param>
-    /// <param name="extras"> Used to pass any extra information/arguments/details, if needed. </param>
-    public delegate void OscMethodDelegate(object[] messageArguments, object extras);
+    /// <param name="source"> The source of the arguments - could be the OSC Method, the OSC Receiver, the OSC Message, etc. </param>
+    /// <param name="messageArguments"> Arguments attached to the received OSC Message. </param>
+    public delegate void OscMethodHandler(object source, object[] messageArguments);
 
     #endregion
 }

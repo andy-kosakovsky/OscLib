@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace OscLib
 {
     /// <summary>
-    /// Serializes data into bytes. Makes sure it is big-endian where appropriate.
+    /// Contains methods for serializing elements into OSC Protocol-compliant binary data.
     /// </summary>
     public static class OscSerializer
     {
@@ -26,6 +26,7 @@ namespace OscLib
             }
 
             return BitConverter.GetBytes(value);
+
         }
 
 
@@ -277,7 +278,7 @@ namespace OscLib
             // just to simplify conversion. will create two small byte[] arrays but who cares lol
             OscString oscString = arg;
 
-            return oscString.GetOscBytes();
+            return oscString.GetCopyOfBytes();
         }
 
 
@@ -292,7 +293,7 @@ namespace OscLib
             // this shouldn't actually create more than one byte array
             OscString oscString = arg;
 
-            oscString.CopyTo(array, extPointer);
+            oscString.CopyBytesToArray(array, extPointer);
 
             // shift the external pointer
             extPointer += oscString.OscLength;
@@ -310,7 +311,7 @@ namespace OscLib
             // this shouldn't actually create more than one byte array
             OscString oscString = arg;
 
-            oscString.CopyTo(array, pointer);
+            oscString.CopyBytesToArray(array, pointer);
         }
 
 
@@ -337,7 +338,7 @@ namespace OscLib
         /// <returns> A byte array. </returns>
         public static byte[] GetBytes(OscString arg)
         {
-            return arg.GetOscBytes();
+            return arg.GetBytes();
         }
 
 
@@ -349,7 +350,7 @@ namespace OscLib
         /// <param name="extPointer">The index from which to add data. Will be shifted forwards by the length of added data. </param>
         public static void AddBytes(OscString arg, byte[] array, ref int extPointer)
         {
-            arg.CopyTo(array, extPointer);
+            arg.CopyBytesToArray(array, extPointer);
 
             extPointer += arg.OscLength;
         }
@@ -364,7 +365,7 @@ namespace OscLib
         public static void AddBytes(OscString arg, byte[] array, int pointer)
         {
             // for consistency's sake
-            arg.CopyTo(array, pointer);
+            arg.CopyBytesToArray(array, pointer);
         }
 
 
@@ -509,33 +510,48 @@ namespace OscLib
 
 
         #region COLOR
-
-        public static byte[] GetBytes(OscColor color)
+        /// <summary>
+        /// Converts an OSC Color struct into a byte array.
+        /// </summary>
+        /// <param name="arg"> The OSC Color struct to be converted. </param>
+        /// <returns> A byte array. </returns>
+        public static byte[] GetBytes(OscColor arg)
         {
             byte[] result = new byte[4];
 
-            result[0] = color.Red;
-            result[1] = color.Green;
-            result[2] = color.Blue;
-            result[3] = color.Alpha;
+            result[0] = arg.Red;
+            result[1] = arg.Green;
+            result[2] = arg.Blue;
+            result[3] = arg.Alpha;
 
             return result;
         }
 
 
-        public static void AddBytes(OscColor color, byte[] array, ref int extPointer)
+        /// <summary>
+        /// Converts an OSC Color struct into bytes and adds them to an existing array. Shifts the pointer forward accordingly.
+        /// </summary>
+        /// <param name="arg"> The OSC Color struct to be converted. </param>
+        /// <param name="array"> The target byte array. </param>
+        /// <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
+        public static void AddBytes(OscColor arg, byte[] array, ref int extPointer)
         {
-            array[extPointer++] = color.Red;
-            array[extPointer++] = color.Green;
-            array[extPointer++] = color.Blue;
-            array[extPointer++] = color.Alpha;
+            array[extPointer++] = arg.Red;
+            array[extPointer++] = arg.Green;
+            array[extPointer++] = arg.Blue;
+            array[extPointer++] = arg.Alpha;
         }
 
-
-        public static void AddBytes(OscColor color, byte[] array, int pointer)
+        /// <summary>
+        /// Converts an OSC Color struct into bytes and adds them to an existing array.
+        /// </summary>
+        /// <param name="arg"> The timetag to be converted. </param>
+        /// <param name="array"> The target byte array. </param>
+        /// <param name="pointer">The index from which to add data. </param>
+        public static void AddBytes(OscColor arg, byte[] array, int pointer)
         {
             int index = pointer;
-            AddBytes(color, array, ref index);
+            AddBytes(arg, array, ref index);
         }
 
         #endregion // COLOR

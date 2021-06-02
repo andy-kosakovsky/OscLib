@@ -5,28 +5,28 @@ namespace OscLib
     /// <summary>
     /// Represents a deserialized OSC packet bundle. May contain both messages and bundles.
     /// </summary>
-
     public readonly struct OscBundle
     {
+
+        #region CONSTS AND STATIC STUFF
         /// <summary> The length of the bundle header in bytes. That is, the "#bundle " + [timestamp] bit. </summary>
         public const int BundleHeaderLength = 16;
 
         /// <summary> The Length of the "#bundle " string in bytes that should be present in the beginning of a bundle. </summary>
         public const int MarkerStringLength = 8;
 
-        // bundles are marked by having "#bundle" as their address string. this is a "prerendered" bundle message
+        // bundles are marked by having "#bundle\0" as their address string. this is a "prerendered" bundle message
         private static readonly byte[] _markerString = new byte[8] { OscProtocol.BundleMarker, (byte)'b', (byte)'u', (byte)'n', (byte)'d', (byte)'l', (byte)'e', 0 };
 
         // these are used to return empty arrays of messages and bundles
         private static readonly OscMessage[] _messagesEmpty = new OscMessage[0];
         private static readonly OscBundle[] _bundlesEmpty = new OscBundle[0];
-
+        #endregion // CONSTS AND STATIC STUFF
 
         private readonly OscTimetag _timetag;
 
         private readonly OscMessage[] _messages;
         private readonly OscBundle[] _bundles;
-
 
         /// <summary> Timestamp attached to this bundle. </summary>
         public OscTimetag Timetag { get => _timetag; }
@@ -146,7 +146,7 @@ namespace OscLib
 
   
         /// <summary>
-        /// A debug method to print bundles inside of bundles easier. Does the same thing as the standard ToSpring() but adds some spaces after every new line.
+        /// A debug method that returns the contents of this bundle as a neatly formatted string. Does the same thing as the standard ToSpring() but adds some spaces after every new line.
         /// </summary>
         /// <param name="shiftAmount">How many spaces to add aftear each new line</param>
         /// <returns></returns>
