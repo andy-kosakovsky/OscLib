@@ -27,19 +27,6 @@ namespace OscLib
         }
 
 
-        protected override byte[] GetArgAsBytes<T>(T arg, out byte typeTag)
-        {
-            int length = GetArgLength(arg);
-            int pointer = 0;
-
-            byte[] data = new byte[length];
-
-            AddArgAsBytes(arg, data, ref pointer, out typeTag);
-
-            return data;
-        }
-
-
         protected override void AddArgAsBytes<T>(T arg, byte[] array, ref int extPointer, out byte typeTag)
         {
             switch (arg)
@@ -80,7 +67,7 @@ namespace OscLib
                     OscSerializer.AddBytes(argDouble, array, ref extPointer);
                     break;
 
-                // if argument type is not supported, convert it to string and add ass such
+                // if argument type is not supported, convert it to string and add as such
                 default:
                     typeTag = _string;
 
@@ -146,7 +133,7 @@ namespace OscLib
                     return OscSerializer.GetOscLength(oscString);
 
                 case byte[] argBlob:
-                    return OscSerializer.GetOscLength(argBlob) + OscProtocol.Chunk32;
+                    return OscSerializer.GetOscLength(argBlob);
 
                 default:
                     if (arg == null)

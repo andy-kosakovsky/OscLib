@@ -3,7 +3,6 @@ using System.Text;
 
 namespace OscLib
 {
-
     /// <summary>
     /// Implements an OSC Protocol-compliant string (ASCII-based, null-terminated, length a multiple of 4) that can be used with and easily converted to and from standard .NET strings.  
     /// </summary>
@@ -21,6 +20,7 @@ namespace OscLib
 
         }
 
+        /// <summary> Contains all characters making up this string, recorded as ASCII codes. </summary>
         private readonly byte[] _chars;
 
         /// <summary> The "OSC Protocol-compliant" length of this string - including the null terminator and extra null bytes at the end to make it a multiple of 4. </summary>
@@ -33,10 +33,10 @@ namespace OscLib
         private Trit _containsSpecialSymbols;
    
         /// <summary>
-        /// Indexer access to the characters of this string, recorded as ASCII bytes.
+        /// Indexer access to the characters of this string, recorded as ASCII codes.
         /// </summary>
-        /// <param name="index"> Index of the char. </param>
-        /// <returns> A char as an ASCII byte. Will return a zero (ASCII null, that is) when out of range. </returns>
+        /// <param name="index"> Character index. </param>
+        /// <returns> A character as an ASCII code. Will return a zero (ASCII null, that is) when out of range. </returns>
         public byte this[int index] 
         {
             get
@@ -121,7 +121,7 @@ namespace OscLib
         /// <summary>
         /// Splits the OSC String into an array of new OSC Strings, using the provided symbol.
         /// </summary>
-        /// <param name="splitByte"> The ASCII encoding of a symbol by which to split the string. </param>
+        /// <param name="splitByte"> The ASCII code of a symbol by which to split the string. </param>
         /// <returns> An array of resulting OSC Strings. </returns>
         public OscString[] Split(byte splitByte)
         {
@@ -177,7 +177,7 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Retrieves the byte array containing ASCII bytes.
+        /// Retrieves the byte array containing all characters of this string.
         /// </summary>
         /// <remarks> Despite being read-only, it's still possible to modify individual elements of the array. If this behaviour is not preferable, using indexer accessor might be safer. </remarks>
         public byte[] GetBytes()
@@ -187,7 +187,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns a copy of an array containing all chars (their ASCII codes as bytes, that is). 
+        /// Returns a copy of the byte array containing all characters of this string.
         /// </summary>
         public byte[] GetCopyOfBytes()
         {
@@ -198,7 +198,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Copies the elements of this string's byte array into the specified one-dimentional byte array, starting from the index provided.
+        /// Copies all characters into the specified one-dimentional byte array, starting from the index provided.
         /// </summary>
         public void CopyBytesToArray(byte[] array, int index)
         {
@@ -207,7 +207,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns a copy of this OSC string.
+        /// Returns a copy of this OSC String.
         /// </summary>
         public OscString Copy()
         {

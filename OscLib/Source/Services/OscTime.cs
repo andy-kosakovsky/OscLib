@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace OscLib
 {
     /// <summary>
-    /// Manages timekeeping and timetags. Provides a session tick to make timekeeping easier.
+    /// Manages timekeeping and timetags. Provides a session tick, to make timekeeping easier.
     /// </summary>
     public static class OscTime
     {

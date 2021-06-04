@@ -10,14 +10,13 @@ namespace OscLib
     /// </summary>
     public static class OscDeserializer
     {
-
-        #region GET ARGUMENTS (WITH DIRECT POINTER)
-
+        #region INT32
         /// <summary>
-        /// Gets a 32-bit integer out of the byte array.
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 32-bit integer. 
         /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static int GetInt32(byte[] data, int pointer)
         {
             int value = BitConverter.ToInt32(data, pointer);
@@ -33,10 +32,32 @@ namespace OscLib
 
 
         /// <summary>
-        /// Gets a 64-bit integer out of the byte array.
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 32-bit integer. 
+        /// The pointer is a reference, its value is increased according to the size of added data.
         /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="extPointer"> Points at the index of the first relevant byte. </param>
+        public static int GetInt32(byte[] data, ref int extPointer)
+        {
+            int value = GetInt32(data, extPointer);
+
+            // move pointer
+            extPointer += OscProtocol.Chunk32;
+
+            return value;
+        }
+
+        #endregion // INT32
+
+
+        #region INT64
+        /// <summary>
+        /// Converts eight bytes of OSC binary data - beginning at the specified index in the provided array - into a 64-bit integer. 
+        /// </summary>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static long GetInt64(byte[] data, int pointer)
         {
             long value = BitConverter.ToInt64(data, pointer);
@@ -51,10 +72,31 @@ namespace OscLib
 
 
         /// <summary>
-        /// Gets a timestamp out of the byte array.
+        /// Converts eight bytes of OSC binary data - beginning at the specified index in the provided array - into a 64-bit integer. 
+        /// The pointer is a reference, its value is increased according to the size of added data.
         /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="extPointer"> Points at the index of the first relevant byte. </param>
+        public static long GetInt64(byte[] data, ref int extPointer)
+        {
+            long value = GetInt64(data, extPointer);
+
+            extPointer += OscProtocol.Chunk64;
+
+            return value;
+        }
+
+        #endregion // INT64
+
+
+        #region TIMETAG
+        /// <summary>
+        /// Converts eight bytes of OSC binary data - beginning at the specified index in the provided array - into an OSC Timetag. 
+        /// </summary>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static OscTimetag GetTimetag(byte[] data, int pointer)
         {
             ulong ntpTimestamp = BitConverter.ToUInt64(data, pointer);
@@ -69,10 +111,31 @@ namespace OscLib
 
 
         /// <summary>
-        /// Gets a float out of the byte array.
+        /// Converts eight bytes of OSC binary data - beginning at the specified index in the provided array - into an OSC Timetag.
+        /// The pointer is a reference, its value is increased according to the size of added data.
         /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="extPointer"> Points at the index of the first relevant byte. </param>
+        public static OscTimetag GetTimetag(byte[] data, ref int extPointer)
+        {
+            OscTimetag timetag = GetTimetag(data, extPointer);
+
+            extPointer += OscProtocol.Chunk64;
+
+            return timetag;
+        }
+
+        #endregion // TIMETAG
+
+
+        #region FLOAT32
+        /// <summary>
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 32-bit (single-presicion) floating-point number. 
+        /// </summary>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static float GetFloat32(byte[] data, int pointer)
         {
             float value = BitConverter.ToSingle(data, pointer);
@@ -87,10 +150,31 @@ namespace OscLib
 
 
         /// <summary>
-        /// Gets a double out of the byte array.
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 32-bit (single-presicion) floating-point number.  
+        /// The pointer is a reference, its value is increased according to the size of added data.
         /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="extPointer"> Points at the index of the first relevant byte. </param>
+        public static float GetFloat32(byte[] data, ref int extPointer)
+        {
+            float value = GetFloat32(data, extPointer);
+
+            extPointer += OscProtocol.Chunk32;
+
+            return value;
+        }
+
+        #endregion // FLOAT32
+
+
+        #region FLOAT64
+        /// <summary>
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 64-bit (double-presicion) floating-point number. 
+        /// </summary>
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static double GetFloat64(byte[] data, int pointer)
         {
             double value = BitConverter.ToDouble(data, pointer);
@@ -105,32 +189,73 @@ namespace OscLib
 
 
         /// <summary>
-        /// Gets a binary blob out of the byte array.
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 64-bit (double-presicion) floating-point number.  
+        /// The pointer is a reference, its value is increased according to the size of added data.
         /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        /// <returns> A byte array. </returns>
-        public static byte[] GetBlob(byte[] data, int pointer)
+        /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="extPointer"> Points at the index of the first relevant byte. </param>
+        public static double GetFloat64(byte[] data, ref int extPointer)
         {
-            int index = pointer;
+            double value = GetFloat64(data, extPointer);
 
+            extPointer += OscProtocol.Chunk64;
+
+            return value;
+        }
+
+        #endregion // FLOAT64
+
+
+        #region BLOB
+        /// <summary>
+        /// Retreives a binary blob of OSC data from a larger set, as per OSC specification. Returns it as a separate byte array.
+        /// </summary>
+        /// <remarks> This method is chiefly intended for retreiving "blob" arguments from OSC Messages. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
+        public static byte[] GetBlob(byte[] data, int pointer)
+        {          
             // get length
-            int length = GetInt32(data, ref index);
+            int length = GetInt32(data, pointer);
 
             byte[] resultArray = new byte[length];
 
             // get result
-            Array.Copy(data, index, resultArray, 0, length);
+            Array.Copy(data, pointer + OscProtocol.Chunk32, resultArray, 0, length);
 
             return resultArray;
         }
 
 
         /// <summary>
-        /// Gets a string out of the byte array, using a pointer.
+        /// Retreives a binary blob of OSC data from a larger set, as per OSC specification. Returns it as a separate byte array.
+        /// The pointer is a reference, its value is increased according to the size of added data.
         /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
+        /// <remarks> This method is chiefly intended for retreiving "blob" arguments from OSC Messages. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="extPointer"> Points at the index of the first relevant byte. </param>
+        public static byte[] GetBlob(byte[] data, ref int extPointer)
+        {
+            // get array
+            byte[] resultArray = GetBlob(data, extPointer);
+
+            // shift the pointer 
+            extPointer += OscSerializer.GetOscLength(resultArray);
+
+            return resultArray;
+        }
+
+        #endregion // BLOB
+
+
+        #region STRING
+        /// <summary>
+        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification. 
+        /// </summary>
+        /// <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static string GetString(byte[] data, int pointer)
         {
             int index = pointer;
@@ -138,160 +263,56 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification. 
+        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// </summary>
+        /// <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="extPointer"> Points at the index of the first relevant byte. </param>
+        public static string GetString(byte[] data, ref int extPointer)
+        {
+            int start = extPointer;
+            int count = 0;
+
+            // scan chunks until we hit some nulls, then get to a multiple of 4 and stop
+            while (data[extPointer] != 0)
+            {
+                extPointer++;
+                count++;
+            }
+
+            extPointer = OscUtil.GetNextMultipleOfFour(extPointer);
+
+            return Encoding.ASCII.GetString(data, start, count);
+        }
+
+        #endregion // STRING
+
+
+        #region OSC STRING
+        /// <summary>
+        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification.
+        /// Returns it as an OscString struct.
+        /// </summary>
+        /// <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static OscString GetOscString(byte[] data, int pointer)
         {
             int index = pointer;
             return GetOscString(data, ref index);
         }
 
-   
-        public static OscMidi GetOscMidi(byte[] data, int pointer)
-        {
-            return new OscMidi(data[pointer],
-                               data[pointer + 1],
-                               data[pointer + 2],
-                               data[pointer + 3]);
-        }
-
-
-        public static OscColor GetOscColor(byte[] data, int pointer)
-        {
-            return new OscColor(data[pointer],
-                               data[pointer + 1],
-                               data[pointer + 2],
-                               data[pointer + 3]);
-        }
-
-        #endregion
-
-
-        #region GET ARGUMENTS (WITH EXTERNAL POINTER)
-
 
         /// <summary>
-        /// Gets an int out of the byte array, using an external pointer.
+        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification.
+        /// Returns it as an OscString struct.
+        /// The pointer is a reference, its value is increased according to the size of added data.
         /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static int GetInt32(byte[] data, ref int pointer)
-        {
-            int value = GetInt32(data, pointer);
-
-            // move pointer
-            pointer += OscProtocol.Chunk32;
-
-            return value;
-        }
-
-
-        /// <summary>
-        /// Gets a longint out of the byte array, using an external pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static long GetInt64(byte[] data, ref int pointer)
-        {
-            long value = GetInt64(data, pointer);
-
-            pointer += OscProtocol.Chunk64;
-
-            return value;
-        }
-
-
-        /// <summary>
-        /// Gets a timestamp out of the byte array, using an external pointer.
-        /// </summary>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <returns> An OscTimestamp. </returns>
-        public static OscTimetag GetTimetag(byte[] data, ref int pointer)
-        {
-            OscTimetag timetag = GetTimetag(data, pointer);
-
-            pointer += OscProtocol.Chunk64;
-
-            return timetag;
-        }
-
-
-        /// <summary>
-        /// Gets a float out of the byte array, using an external pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static float GetFloat32(byte[] data, ref int pointer)
-        {
-            float value = GetFloat32(data, pointer);
-
-            pointer += OscProtocol.Chunk32;
-
-            return value;
-        }
-
-
-        /// <summary>
-        /// Gets a double out of the byte array, using an external pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static double GetFloat64(byte[] data, ref int pointer)
-        {
-            double value = GetFloat64(data, pointer);
-
-            pointer += OscProtocol.Chunk64;
-
-            return value;
-        }
-
-
-        /// <summary>
-        /// Gets a binary blob out of the byte array, using an external pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        /// <returns> A byte array. </returns>
-        public static byte[] GetBlob(byte[] data, ref int pointer)
-        {
-            // get length
-            byte[] resultArray = GetBlob(data, pointer);
-
-            // shift pointer (by length + array + a few empty bytes at the end)
-            pointer += OscSerializer.GetOscLength(resultArray) + OscProtocol.Chunk32;
-
-            return resultArray;
-        }
-
-
-        /// <summary>
-        /// Gets a string out of the byte array, using an external pointer.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        public static string GetString(byte[] data, ref int pointer)
-        {
-            int start = pointer;
-            int count = 0;
-
-            // scan chunks until we hit some nulls, then get to a multiple of 4 and stop
-            while (data[pointer] != 0)
-            {
-                pointer++;
-                count++;
-            }
-
-            pointer = OscUtil.GetNextMultipleOfFour(pointer);
-
-            return Encoding.ASCII.GetString(data, start, count);
-        }
-
-
-        /// <summary>
-        /// Gets a string out of the byte array, using an external pointer. Returns it in the form of an OscString struct.
-        /// </summary>
-        /// <param name="data"> Byte array containing the data. </param>
-        /// <param name="pointer"> Pointing at the index from which the relevant bytes begin. </param>
-        /// <returns></returns>
+        /// <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static OscString GetOscString(byte[] data, ref int pointer)
         {
             int start = pointer;
@@ -309,27 +330,68 @@ namespace OscLib
 
         }
 
+        #endregion // OSC STRING
 
+
+        #region OSC MIDI
+        /// <summary>
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a MIDI message, represented by the OscMidi struct.
+        /// </summary>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
+        public static OscMidi GetOscMidi(byte[] data, int pointer)
+        {
+            return new OscMidi(data[pointer],
+                               data[pointer + 1],
+                               data[pointer + 2],
+                               data[pointer + 3]);
+        }
+
+
+        /// <summary>
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a MIDI message, represented by the OscMidi struct.
+        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// </summary>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static OscMidi GetOscMidi(byte[] data, ref int pointer)
         {
             pointer += OscProtocol.Chunk32;
             return GetOscMidi(data, pointer - OscProtocol.Chunk32);
         }
 
+        #endregion // OSC MIDI
 
+
+        #region OSC COLOR
+        /// <summary>
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into an 32-bit RGBA color, represented by the OscColor struct.
+        /// </summary>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
+        public static OscColor GetOscColor(byte[] data, int pointer)
+        {
+            return new OscColor(data[pointer],
+                               data[pointer + 1],
+                               data[pointer + 2],
+                               data[pointer + 3]);
+        }
+
+
+        /// <summary>
+        /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into an 32-bit RGBA color, represented by the OscColor struct.
+        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// </summary>
+        /// <param name="data"> Byte array containing OSC binary data. </param>
+        /// <param name="pointer"> Points at the index of the first relevant byte. </param>
         public static OscColor GetOscColor(byte[] data, ref int pointer)
         {
             pointer += OscProtocol.Chunk32;
             return GetOscColor(data, pointer - OscProtocol.Chunk32);
         }
 
-
-        #endregion
+        #endregion // OSC COLOR
 
     }
 
 }
-
-
-
-

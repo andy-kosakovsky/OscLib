@@ -25,15 +25,6 @@ namespace OscLib
         public virtual bool SettingEmptyTypeTagStrings { get => _settingEmptyTypeTagStrings; set => _settingEmptyTypeTagStrings = value; }
 
 
-        #region EVENTS
-
-
-
-
-        #endregion // EVENTS
-
-
-
         #region ADDING BYTES OF WHOLE MESSAGES / BUNDLES
 
         /// <summary>
@@ -631,6 +622,7 @@ namespace OscLib
             {
                 length += GetBundleOscLength(bundle.Bundles[i]);
 
+                // account for length's bytes as well
                 length += OscProtocol.Chunk32;
             }
 
@@ -668,7 +660,6 @@ namespace OscLib
         /// <summary>
         /// Serializes the provided argument into its OSC byte data form and adds it into an existing byte array, provides the corresponding type tag.  
         /// </summary>
-
         /// <param name="arg"> The argument to be serialized. </param>
         /// <param name="array"> The target byte array. </param>
         /// <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
@@ -705,8 +696,6 @@ namespace OscLib
 
 
         #region STATIC METHODS
-
-      
 
         #region ADDING BUNDLE HEADERS
 
