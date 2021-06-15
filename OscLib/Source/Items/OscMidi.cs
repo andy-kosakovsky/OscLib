@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace OscLib
 {
     /// <summary>
     /// Represents a MIDI message, as per OSC Protocol specification. 
     /// </summary>
+    /// <remarks> Intended to be used as an argument in OSC Messages. </remarks>
     public readonly struct OscMidi
     {
         /// <summary> The port ID. </summary>
@@ -21,6 +19,7 @@ namespace OscLib
         /// <summary> The second data byte. </summary>
         public readonly byte Data2;
 
+
         /// <summary>
         /// Creates a new MIDI message struct that can interact with OSC.
         /// </summary>
@@ -31,6 +30,7 @@ namespace OscLib
             Data1 = data1;
             Data2 = data2;
         }
+
 
         /// <summary>
         /// Returns this struct formatted as a string.

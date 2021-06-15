@@ -51,7 +51,7 @@ namespace OscLib
                 array[msgStart + addrLength] = OscProtocol.Comma;
 
                 // find the length of type tag, " + 1" accounts for the comma
-                int typeTagLength = OscUtil.GetNextMultipleOfFour(message.ArgumentsCount + 1);
+                int typeTagLength = OscUtil.NextX4(message.ArgumentsCount + 1);
 
                 extPointer = msgStart + addrLength + typeTagLength;
 
@@ -387,7 +387,7 @@ namespace OscLib
                 arguments = new object[typeTagsTotal];
 
                 // move the pointer to the next 4-byte point after the end of the type tags
-                extPointer = OscUtil.GetNextMultipleOfFour(extPointer);
+                extPointer = extPointer.NextX4();
 
                 if (typeTagsTotal > 0)
                 {
@@ -586,7 +586,7 @@ namespace OscLib
             // account for the argument string length
             if (message.ArgumentsCount > 0)
             {
-                length += OscUtil.GetNextMultipleOfFour(message.ArgumentsCount + 1);
+                length += OscUtil.NextX4(message.ArgumentsCount + 1);
             }
             else
             {

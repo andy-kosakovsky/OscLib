@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace OscLib
 {
@@ -135,7 +134,6 @@ namespace OscLib
         #endregion // INT64
 
 
-
         #region FLOAT32
 
         /// <summary>
@@ -198,7 +196,6 @@ namespace OscLib
         }
 
         #endregion // FLOAT32
-
 
 
         #region FLOAT64
@@ -320,7 +317,7 @@ namespace OscLib
         /// <param name="arg"> The string to be measured. </param>
         public static int GetOscLength(string arg)
         {
-            return OscUtil.GetNextMultipleOfFour(arg.Length);
+            return arg.Length.NextX4();
         }
 
         #endregion // STRING
@@ -415,7 +412,7 @@ namespace OscLib
             arg.CopyTo(array, extPointer);
 
             // move pointer
-            extPointer += OscUtil.GetNearestMultipleOfFour(arg.Length);
+            extPointer += arg.Length.ThisOrNextX4();
 
         }
 
@@ -440,7 +437,7 @@ namespace OscLib
         /// <param name="arg"> Byte array to be measured. </param>
         public static int GetOscLength(byte[] arg)
         {
-            return OscUtil.GetNearestMultipleOfFour(arg.Length) + OscProtocol.Chunk32;
+            return arg.Length.ThisOrNextX4() + OscProtocol.Chunk32;
         }
 
         #endregion // BLOB

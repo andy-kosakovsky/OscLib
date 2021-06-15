@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Collections.Generic;
-
 
 namespace OscLib
 {
@@ -282,7 +280,7 @@ namespace OscLib
                 count++;
             }
 
-            extPointer = OscUtil.GetNextMultipleOfFour(extPointer);
+            extPointer = extPointer.NextX4();
 
             return Encoding.ASCII.GetString(data, start, count);
         }
@@ -324,7 +322,7 @@ namespace OscLib
                 count++;
             }
 
-            pointer = OscUtil.GetNextMultipleOfFour(pointer);
+            pointer = pointer.NextX4();
 
             return new OscString(data, start, count);
 

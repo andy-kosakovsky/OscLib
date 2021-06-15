@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Runtime.InteropServices;
 
 namespace OscLib
 {
     /// <summary>
-    /// A static class containing various methods for swapping endianness and such.
+    /// Contains methods for swapping the endianness of data.
     /// </summary>
     public static class OscEndian
     {
@@ -29,16 +27,16 @@ namespace OscLib
 
 
         #region SWAPPING ENDIANNESS WITH BYTE ARRAYS
-
         /// <summary>
         /// Swaps the endianness of the provided array of bytes.
         /// </summary>
-        /// <param name="data"> Array of bytes to be swapped (needs to be of an even length to work). </param>
+        /// <remarks> This method will swap the data around *inside* the provided array - it doesn't return a copy. </remarks>
+        /// <param name="data"> The target array (has to be of an even length). </param>
         public static void Swap(byte[] data)
         {
             if (data.Length % 2 != 0)
             {
-                throw new ArgumentException("ERROR: Can't swap endianness, provided byte array is not of an even length (length is " + data.Length + ").");
+                throw new ArgumentException("ERROR: Can't swap endianness, provided byte array is not of an even length (length is " + data.Length.ToString() + ").");
             }
 
             for (int i = 0; i < data.Length / 2; i++)
@@ -56,12 +54,12 @@ namespace OscLib
         /// </summary>
         /// <param name="data"> The target array. </param>
         /// <param name="startIndex"> The index from which to start the swapping. </param>
-        /// <param name="length"> How many bytees to swap around (needs to be even). </param>
+        /// <param name="length"> How many bytes to swap around (has to be an even number). </param>
         public static void Swap(byte[] data, int startIndex, int length)
         {
             if (length % 2 != 0)
             {
-                throw new ArgumentException("ERROR: Can't swap endianness, provided length is not even (length is " + length + ").");
+                throw new ArgumentException("ERROR: Can't swap endianness, provided length is not even (length is " + length.ToString() + ").");
             }
 
             for (int i = 0; i < (length / 2); i++)
@@ -80,12 +78,10 @@ namespace OscLib
         // a quick-n-dirty way to swap endianness of all commonly-encountered types while avoiding going to heap or fiddling with arrays
         // kinda stupid and kinda WET but oh well. guess i like typing and copypasting
 
-        // let's deal with 32-bit types first
         /// <summary>
-        /// Swaps the endianness of a 32 bit unsigned integer.
+        /// Swaps the endianness of the specified 32-bit unsigned integer.
         /// </summary>
-        /// <param name="input"> The original unsigned integer. </param>
-        /// <returns> A 32 bit unsigned integer - encoding the same value as the original but with its bytes the other way around. </returns>
+        /// <returns> A 32-bit unsigned integer - encoding the same value as the original but with its bytes the other way around. </returns>
         public static uint Swap(uint input)
         {
             uint byte_1 = (input & 0x000000FF);
@@ -102,10 +98,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Swaps the endianness of a 32 bit integer.
+        /// Swaps the endianness of the specified 32-bit signed integer.
         /// </summary>
-        /// <param name="input"> The original integer. </param>
-        /// <returns> A 32 bit integer - encoding the same value as the original but with its bytes the other way around. </returns>
+        /// <returns> A 32-bit signed integer - encoding the same value as the original but with its bytes the other way around. </returns>
         public static int Swap(int input)
         {
             uint uinput = (uint)input;
@@ -117,10 +112,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Swaps the endianness of a 32 bit float.
+        /// Swaps the endianness of the specified 32-bit floating-point value.
         /// </summary>
-        /// <param name="input"> The original float. </param>
-        /// <returns> A 32 bit float - encoding the same value as the original but with its bytes the other way around. </returns>
+        /// <returns> A 32-bit floating-point value - encoding the same value as the original but with its bytes the other way around. </returns>
         public static float Swap(float input)
         {
             IntAndFloat intAndFloat = new IntAndFloat
@@ -134,10 +128,9 @@ namespace OscLib
         }
 
         /// <summary>
-        /// Swaps the endianness of a 64 bit unsigned integer (also known as ulong).
+        /// Swaps the endianness of the specified 64-bit unsigned integer.
         /// </summary>
-        /// <param name="input"> The original ulong. </param>
-        /// <returns> A 64 bit unsigned integer - encoding the same value as the original but with its bytes the other way around. </returns>
+        /// <returns> A 64-bit unsigned integer - encoding the same value as the original but with its bytes the other way around. </returns>
         public static ulong Swap(ulong input)
         {
             ulong byte_1 = (input & 0x0000_0000_0000_00FF);
@@ -165,10 +158,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Swaps the endianness of a 64 bit integer (also known as long).
+        /// Swaps the endianness of the specified 64-bit signed integer (also known as long).
         /// </summary>
-        /// <param name="input"> The original long. </param>
-        /// <returns> A 64 bit integer - encoding the same value as the original but with its bytes the other way around. </returns>
+        /// <returns> A 64-bit integer - encoding the same value as the original but with its bytes the other way around. </returns>
         public static long Swap(long input)
         {
             ulong uinput = (ulong)input;
@@ -180,10 +172,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Swaps the endianness of a 64 bit float (also known as double).
+        /// Swaps the endianness of the specified 64-bit floating-point value.
         /// </summary>
-        /// <param name="input"> The original double. </param>
-        /// <returns> A 64 bit float - encoding the same value as the original but with its bytes the other way around. </returns>
+        /// <returns> A 64-bit floating-point value - encoding the same value as the original but with its bytes the other way around. </returns>
         public static double Swap(double input)
         {
             LongAndDouble longAndDouble = new LongAndDouble

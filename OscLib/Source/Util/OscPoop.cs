@@ -5,6 +5,7 @@ using System.Text;
 namespace OscLib
 {
     // random bits and pieces, old methods and such, preserved for possible disassembly and spare part use lol
+    // nothing to see here, move along
 
     /*
     /// <summary>

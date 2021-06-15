@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace OscLib
 {
     /// <summary>
     /// Represents an RGBA 8-bit color, as per OSC Protocol specification.
     /// </summary>
+    /// <remarks> Intended to be used as an argument in OSC Messages. </remarks>
     public readonly struct OscColor
     {
         /// <summary> Value of red channel. </summary>
@@ -21,6 +19,7 @@ namespace OscLib
         /// <summary> Value of alpha channel. </summary>
         public readonly byte Alpha;
 
+
         /// <summary>
         /// Creates a new struct containing OSC Color.
         /// </summary>
@@ -31,6 +30,7 @@ namespace OscLib
             Blue = blue;
             Alpha = alpha;
         }
+
 
         /// <summary>
         /// Returns this struct formatted as a string.

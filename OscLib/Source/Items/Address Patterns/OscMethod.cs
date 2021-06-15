@@ -28,9 +28,10 @@ namespace OscLib
 
 
         /// <summary>
-        /// Invoked when a message correlating to this OSC Method is received by the Address Space.
+        /// Invoked when a message correlating to this OSC Method is received by the containing Address Space.
         /// </summary>
         public event OscMethodHandler OscMethodInvoked;
+
 
         /// <summary>
         /// Creates a new OSC Method and links it with the provided method.
@@ -43,18 +44,20 @@ namespace OscLib
   
         }
 
+
         /// <summary>
-        /// Invokes the attached method delegate.
+        /// Dispatches the arguments from an OSC Message to this OSC Method, triggering it.
         /// </summary>
         /// <param name="source"> The source of the arguments. </param>
-        /// <param name="arguments"> An array of arguments to pass on. </param>
-        public virtual void Invoke(object source, object[] arguments)
+        /// <param name="arguments"> An array of arguments to dispatch. </param>
+        public virtual void Dispatch(object source, object[] arguments)
         {
             OscMethodInvoked?.Invoke(source, arguments);
         }
 
+
         /// <summary>
-        /// Disconnects all the attached methods from this OSC Method's event.
+        /// Disconnects all event handlers.
         /// </summary>
         public virtual void Clear()
         {
@@ -62,6 +65,9 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Returns a string containing the name of this OSC Method and the total number of connected event handlers.
+        /// </summary>
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder();
@@ -76,6 +82,11 @@ namespace OscLib
 
         }
 
+
+        /// <summary>
+        /// Returns a formatted string containing the names of all the event handlers connected to this OSC Method.
+        /// </summary>
+        /// <returns></returns>
         public string GetConnectedEventHandlersNames()
         {
             StringBuilder returnString = new StringBuilder(_name.ToString());

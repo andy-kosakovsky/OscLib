@@ -7,7 +7,6 @@ namespace OscLib
     /// </summary>
     public readonly struct OscBundle
     {
-
         #region CONSTS AND STATIC STUFF
         /// <summary> The length of the bundle header in bytes. That is, the "#bundle " + [timestamp] bit. </summary>
         public const int BundleHeaderLength = 16;

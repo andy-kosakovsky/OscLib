@@ -155,7 +155,7 @@ namespace OscLib
             _timetagSource = DefaultTimetagSource;
 
             // set options
-            _heapTotalLayers = OscUtil.Clamp(packetHeapTotalLayers, 1, int.MaxValue);
+            _heapTotalLayers = packetHeapTotalLayers.Clamp(1, int.MaxValue);
 
             _cycleLengthMs = cycleLengthMs;
             _bundlePacketsBeforeSending = bundlePacketsBefureSending;
@@ -284,7 +284,7 @@ namespace OscLib
                 throw new ArgumentOutOfRangeException(nameof(packet), "OSC Sender Error: Too much OSC data to safely send in one message.");
             }
 
-            int priority = OscUtil.Clamp(priorityLevel, 0, _heap.Length);
+            int priority = priorityLevel.Clamp(0, _heap.Length);
 
             // finally, add data to heap
             try
@@ -327,7 +327,7 @@ namespace OscLib
             }
 
             // make sure priority level is within bounds
-            int priority = OscUtil.Clamp(priorityLevel, 0, _heap.Length - 1);
+            int priority = priorityLevel.Clamp(0, _heap.Length - 1);
             
             // finally, add data to heap
             try

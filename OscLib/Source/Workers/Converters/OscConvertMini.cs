@@ -57,7 +57,7 @@ namespace OscLib
                 // modify some of the args to fit the limits of this version of the protocol
                 case long argLong:
                     typeTag = _int32;
-                    OscSerializer.AddBytes(OscUtil.ClampLong(argLong), array, ref extPointer);
+                    OscSerializer.AddBytes(argLong.ClampToInt(), array, ref extPointer);
                     break;
 
                 case double argDouble:

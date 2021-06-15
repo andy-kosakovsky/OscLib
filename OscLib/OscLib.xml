@@ -11,12 +11,22 @@
         </member>
         <member name="F:OscLib.OscAddressElement._name">
             <summary>
-            Name of this element.
+            The name of this element.
+            </summary>
+        </member>
+        <member name="F:OscLib.OscAddressElement._address">
+            <summary>
+            The address of this element within the encompassing OSC Address Space.
             </summary>
         </member>
         <member name="P:OscLib.OscAddressElement.Name">
             <summary>
-            Name of this element. 
+            The name of this element. 
+            </summary>
+        </member>
+        <member name="P:OscLib.OscAddressElement.Address">
+            <summary>
+            The address of this element within the encompassing OSC Address Space.
             </summary>
         </member>
         <member name="M:OscLib.OscAddressElement.#ctor(OscLib.OscString)">
@@ -34,11 +44,11 @@
         </member>
         <member name="T:OscLib.OscContainer">
             <summary>
-            Represents an OSC method container, to be used within the OSC Address Space - basically a folder for other address elements.
+            Represents an OSC Address Space method container - a folder for other address elements.
             </summary>
         </member>
         <member name="F:OscLib.OscContainer._contents">
-            <summary> All child elements contained in this container. </summary>
+            <summary> All child elements inside this container. </summary>
         </member>
         <member name="F:OscLib.OscContainer._contentsNames">
             <summary> Connects the names of elements with their indeces in the "contents" list, to ease lookup and pattern-matching. </summary>
@@ -70,8 +80,7 @@
             <summary>
             Adds an address element to this container.
             </summary>
-            <param name="element"></param>
-            <param name="part"> The element to add. </param>
+            <param name="element"> The element to add. </param>
             <exception cref="T:System.ArgumentException"> Thrown when this container already contains an element with this name. </exception>
         </member>
         <member name="M:OscLib.OscContainer.RemoveElement(OscLib.OscAddressElement)">
@@ -91,6 +100,11 @@
             Checks if container contains an address element with the provided name (or adhering to the provided pattern).
             </summary>
         </member>
+        <member name="M:OscLib.OscContainer.GetElements(OscLib.OscString)">
+            <summary>
+            Returns an array of elements in this container that match the specified pattern.
+            </summary>
+        </member>
         <member name="M:OscLib.OscContainer.RefreshNames">
             <summary>
             Used to update the element names and the corresponding indices in the name dictionary.
@@ -108,7 +122,7 @@
         </member>
         <member name="E:OscLib.OscMethod.OscMethodInvoked">
             <summary>
-            Invoked when a message correlating to this OSC Method is received by the Address Space.
+            Invoked when a message correlating to this OSC Method is received by the containing Address Space.
             </summary>
         </member>
         <member name="M:OscLib.OscMethod.#ctor(OscLib.OscString)">
@@ -120,40 +134,54 @@
         </member>
         <member name="M:OscLib.OscMethod.Invoke(System.Object,System.Object[])">
             <summary>
-            Invokes the attached method delegate.
+            Invokes the .
             </summary>
             <param name="source"> The source of the arguments. </param>
             <param name="arguments"> An array of arguments to pass on. </param>
         </member>
         <member name="M:OscLib.OscMethod.Clear">
             <summary>
-            Disconnects all the attached methods from this OSC Method's event.
+            Disconnects all event handlers.
             </summary>
         </member>
-        <member name="T:OscLib.IBinaryContainer">
+        <member name="M:OscLib.OscMethod.ToString">
             <summary>
-            Specifies common methods for elements containing binary data.
+            Returns a string containing the name of this OSC Method and the total number of connected event handlers.
             </summary>
         </member>
-        <member name="P:OscLib.IBinaryContainer.Item(System.Int32)">
+        <member name="M:OscLib.OscMethod.GetConnectedEventHandlersNames">
+            <summary>
+            Returns a formatted string containing the names of all the event handlers connected to this OSC Method.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:OscLib.IOscBinaryContainer">
+            <summary>
+            Specifies common methods for structures holding OSC binary data.
+            </summary>
+        </member>
+        <member name="P:OscLib.IOscBinaryContainer.Length">
+            <summary> The total number of bytes in this container. Should be a multiple of 4. </summary>
+        </member>
+        <member name="P:OscLib.IOscBinaryContainer.Item(System.Int32)">
             <summary>
             Indexer access to the binary data inside this container.
             </summary>
             <param name="index"> Byte index. </param>
             <returns></returns>
         </member>
-        <member name="M:OscLib.IBinaryContainer.GetBytes">
+        <member name="M:OscLib.IOscBinaryContainer.GetBytes">
             <summary>
             Retrieves the array containing binary data from this container.
             </summary>
             <returns></returns>
         </member>
-        <member name="M:OscLib.IBinaryContainer.GetCopyOfBytes">
+        <member name="M:OscLib.IOscBinaryContainer.GetCopyOfBytes">
             <summary>
             Returns a copy of the byte array containing OSC data.
             </summary>
         </member>
-        <member name="M:OscLib.IBinaryContainer.CopyBytesToArray(System.Byte[],System.Int32)">
+        <member name="M:OscLib.IOscBinaryContainer.CopyBytesToArray(System.Byte[],System.Int32)">
             <summary>
             Copies the contents of this container to the provided byte array.
             </summary>
@@ -164,6 +192,7 @@
             <summary>
             Represents an RGBA 8-bit color, as per OSC Protocol specification.
             </summary>
+            <remarks> Intended to be used as an argument in OSC Messages. </remarks>
         </member>
         <member name="F:OscLib.OscColor.Red">
             <summary> Value of red channel. </summary>
@@ -191,6 +220,7 @@
             <summary>
             Represents a MIDI message, as per OSC Protocol specification. 
             </summary>
+            <remarks> Intended to be used as an argument in OSC Messages. </remarks>
         </member>
         <member name="F:OscLib.OscMidi.PortId">
             <summary> The port ID. </summary>
@@ -228,8 +258,8 @@
         <member name="F:OscLib.OscString.OscLength">
             <summary> The "OSC Protocol-compliant" length of this string - including the null terminator and extra null bytes at the end to make it a multiple of 4. </summary>
         </member>
-        <member name="F:OscLib.OscString.Length">
-            <summary> The "real" length of this string - only the bytes containing characters, that is. </summary>
+        <member name="P:OscLib.OscString.Length">
+            <summary> Returns the total number of characters in this string. </summary>
         </member>
         <member name="P:OscLib.OscString.Item(System.Int32)">
             <summary>
@@ -263,13 +293,6 @@
             Internal constructor for copying strings while preserving the information about them containing special symbols.
             </summary>
         </member>
-        <member name="M:OscLib.OscString.Split(System.Byte)">
-            <summary>
-            Splits the OSC String into an array of new OSC Strings, using the provided symbol.
-            </summary>
-            <param name="splitByte"> The ASCII code of a symbol by which to split the string. </param>
-            <returns> An array of resulting OSC Strings. </returns>
-        </member>
         <member name="M:OscLib.OscString.GetBytes">
             <summary>
             Retrieves the byte array containing all characters of this string.
@@ -291,6 +314,13 @@
             Returns a copy of this OSC String.
             </summary>
         </member>
+        <member name="M:OscLib.OscString.Split(System.Byte)">
+            <summary>
+            Splits the OSC String into an array of new OSC Strings, using the provided symbol.
+            </summary>
+            <param name="splitByte"> The ASCII code of a symbol by which to split the string. </param>
+            <returns> An array of resulting OSC Strings. </returns>
+        </member>
         <member name="M:OscLib.OscString.GetSubstring(System.Int32,System.Int32)">
             <summary>
             Gets a substring from this string.
@@ -308,7 +338,7 @@
             <returns> True if string matches the pattern, false if not (duh). </returns>
             <exception cref="T:System.ArgumentException"> Thrown when either the curly brackets or the square brackets aren't closed in the pattern. </exception>
         </member>
-        <member name="M:OscLib.OscString.ContainsSpecialSymbols">
+        <member name="M:OscLib.OscString.ContainsSpecialChars">
             <summary>
             Whether this string contains special symbols reserved by OSC protocol. Checks when first called (can get quite expensive, depending on the length of the string), then caches the result.
             </summary>
@@ -318,7 +348,7 @@
             Whether this string contains any pattern-matching symbols reserved by OSC protocol. Checks when first called (can get quite expensive, depending on the length of the string), then caches the result.
             </summary>
         </member>
-        <member name="M:OscLib.OscString.SetSpecialSymbols(System.Boolean)">
+        <member name="M:OscLib.OscString.SetSpecialChars(System.Boolean)">
             <summary>
             Overrides the internal "has special symbols" flag, which might help avoiding the possibly-costy check later on.
             </summary>
@@ -349,11 +379,35 @@
         </member>
         <member name="M:OscLib.OscString.op_Equality(OscLib.OscString,OscLib.OscString)">
             <summary>
-            Allows to compare OSC strings to each other.
+            Allows to compare OSC Strings to each other.
             </summary>
             <param name="stringOne"> First string. </param>
             <param name="stringTwo"> Second string. </param>
             <returns> Whether the strings are equal. </returns>        
+        </member>
+        <member name="M:OscLib.OscString.op_Addition(OscLib.OscString,OscLib.OscString)">
+            <summary>
+            Allows to concatenate OSC Strings to one another.
+            </summary>
+            <param name="stringOne"> First string. </param>
+            <param name="stringTwo"> Second string. </param>
+            <returns> Both OSC Strings united together forever. </returns>
+        </member>
+        <member name="M:OscLib.OscString.op_Addition(OscLib.OscString,System.String)">
+            <summary>
+            Allows to concatenate an OSC String and a standard string.
+            </summary>
+            <param name="stringOne"> First string, of an OSC variety. </param>
+            <param name="stringTwo"> Second string, the usual kind. </param>
+            <returns> An unholy union of a string and a string, contained inside an OSC String. </returns>
+        </member>
+        <member name="M:OscLib.OscString.op_Addition(System.String,OscLib.OscString)">
+            <summary>
+            Allows to concatenate a standard string with an OSC String.
+            </summary>
+            <param name="stringOne"> First string, plain and simple. </param>
+            <param name="stringTwo"> Second string, very OSC in its features. </param>
+            <returns> An immense OSC String that is a combination of two strings. </returns>
         </member>
         <member name="M:OscLib.OscString.op_Inequality(OscLib.OscString,OscLib.OscString)">
             <summary>
@@ -424,11 +478,8 @@
         </member>
         <member name="T:OscLib.IOscPacket">
             <summary>
-            Describes a packet of OSC binary data.
+            Designates a packet of valid OSC binary data.
             </summary>
-        </member>
-        <member name="P:OscLib.IOscPacket.Length">
-            <summary> Length of binary data, in bytes. Should be a multiple of 4. </summary>
         </member>
         <member name="T:OscLib.OscBundle">
             <summary>
@@ -1037,62 +1088,86 @@
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscTimetag)">
             <summary>
-            Returns the specified OSC Timetag - that is, a 64-bit unsigned integer - as a big-endian sequence of bytes.
+            Returns the specified OSC Timetag - which is a 64-bit unsigned integer - as a big-endian sequence of bytes.
             </summary>
             <param name="arg"> The timetag to convert. </param>
             <returns> An array of eight bytes. </returns>
         </member>
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscTimetag,System.Byte[],System.Int32@)">
             <summary>
-            Converts the specified OSC Timetag - that is, a 64-bit unsigned integer - into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
+            Converts the specified OSC Timetag - which is a 64-bit unsigned integer - into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
             The pointer is a reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The value to convert. </param>
-            <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
+            <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
             <param name="extPointer"> Points at the destination index for the byte sequence. </param>
         </member>
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscTimetag,System.Byte[],System.Int32)">
             <summary>
-            Converts the specified OSC Timetag - that is, a 64-bit unsigned integer - into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-            The pointer is a reference, its value is increased according to the size of added data.
+            Converts the specified OSC Timetag - which is a 64-bit unsigned integer - into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
             </summary>
             <param name="arg"> The value to convert. </param>
-            <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
-            <param name="epointer"> Points at the destination index for the byte sequence. </param>
+            <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
+            <param name="pointer"> Points at the destination index for the byte sequence. </param>
         </member>
         <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscColor)">
             <summary>
-            Converts an OSC Color struct into a byte array.
+            Returns the specified 32-bit, RGBA color - represented by an OscColor struct - as a sequence of four bytes.
             </summary>
-            <param name="arg"> The OSC Color struct to be converted. </param>
-            <returns> A byte array. </returns>
+            <param name="arg"> The OSC Color struct to convert. </param>
+            <returns> An array of four bytes. </returns>
         </member>
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscColor,System.Byte[],System.Int32@)">
             <summary>
-            Converts an OSC Color struct into bytes and adds them to an existing array. Shifts the pointer forward accordingly.
+            Converts the specified 32-bit, RGBA color - represented by an OscColor struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.
+            The pointer is a reference, its value is increased according to the size of added data.
             </summary>
-            <param name="arg"> The OSC Color struct to be converted. </param>
-            <param name="array"> The target byte array. </param>
-            <param name="extPointer"> The index from which to add data. Will be shifted forwards by the length of added data. </param>
+            <param name="arg"> The OscColor struct to convert. </param>
+            <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
+            <param name="extPointer"> Points at the destination index for the byte sequence. </param>
         </member>
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscColor,System.Byte[],System.Int32)">
             <summary>
-            Converts an OSC Color struct into bytes and adds them to an existing array.
+            Converts the specified 32-bit, RGBA color - represented by an OscColor struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.
             </summary>
-            <param name="arg"> The timetag to be converted. </param>
-            <param name="array"> The target byte array. </param>
-            <param name="pointer">The index from which to add data. </param>
+            <param name="arg"> The OscColor struct to convert. </param>
+            <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
+            <param name="pointer"> Points at the destination index for the byte sequence. </param>
+        </member>
+        <member name="M:OscLib.OscSerializer.GetBytes(OscLib.OscMidi)">
+            <summary>
+            Returns the specified MIDI message - represented by an OscMidi struct - as a sequence of four bytes.
+            </summary>
+            <param name="arg"> The OscMidi struct to convert. </param>
+            <returns> An array of four bytes. </returns>
+        </member>
+        <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscMidi,System.Byte[],System.Int32@)">
+            <summary>
+            Converts the specified MIDI message - represented by an OscMidi struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.
+            The pointer is a reference, its value is increased according to the size of added data.
+            </summary>
+            <param name="arg"> The OscColor struct to convert. </param>
+            <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
+            <param name="extPointer"> Points at the destination index for the byte sequence. </param>
+        </member>
+        <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscMidi,System.Byte[],System.Int32)">
+            <summary>
+            Converts the specified MIDI message - represented by an OscMidi struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.
+            </summary>
+            <param name="arg"> The OscColor struct to convert. </param>
+            <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
+            <param name="pointer"> Points at the destination index for the byte sequence. </param>
         </member>
         <member name="T:OscLib.OscTime">
             <summary>
-            Manages timekeeping and timetags. Provides a session tick to make timekeeping easier.
+            Manages timekeeping and timetags. Provides a global session tick, based on the .Net DateTime and StopWatch ticks.
             </summary>
         </member>
         <member name="P:OscLib.OscTime.SessionTick">
             <summary> Provides the number of ticks elapsed since the first call for this class. </summary>
         </member>
         <member name="P:OscLib.OscTime.GlobalTick">
-            <summary> Provides the current "global" UTC tick. </summary>
+            <summary> Provides the current "global" UTC tick, as far as the system is aware. </summary>
         </member>
         <member name="P:OscLib.OscTime.Immediately">
             <summary> Provides the OSC-compliant "DO IT. DO IT NOW." timetag. </summary>
@@ -1108,7 +1183,7 @@
         </member>
         <member name="M:OscLib.OscTime.AfterSeconds(System.Single)">
             <summary>
-            Returns an OSC Timetag that occurs after the provided number of seconds has passed.
+            Returns an OSC Timetag that occurs after the provided number of seconds has passed, counting from the current time.
             </summary>
             <param name="seconds"></param>
             <returns></returns>
@@ -1166,21 +1241,22 @@
         </member>
         <member name="T:OscLib.OscMethodHandler">
             <summary>
-            Used in conjunction with OSC Methods to handle incoming messages and 
+            Used with OSC Methods to 
             </summary>
             <param name="source"> The source of the arguments - could be the OSC Method, the OSC Receiver, the OSC Message, etc. </param>
             <param name="messageArguments"> Arguments attached to the received OSC Message. </param>
         </member>
         <member name="T:OscLib.OscEndian">
             <summary>
-            A static class containing various methods for swapping endianness and such.
+            Contains methods for swapping the endianness of data.
             </summary>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.Byte[])">
             <summary>
             Swaps the endianness of the provided array of bytes.
             </summary>
-            <param name="data"> Array of bytes to be swapped (needs to be of an even length to work). </param>
+            <remarks> This method will swap the data around *inside* the provided array - it doesn't return a copy. </remarks>
+            <param name="data"> The target array (has to be of an even length). </param>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.Byte[],System.Int32,System.Int32)">
             <summary>
@@ -1188,60 +1264,58 @@
             </summary>
             <param name="data"> The target array. </param>
             <param name="startIndex"> The index from which to start the swapping. </param>
-            <param name="length"> How many bytees to swap around (needs to be even). </param>
+            <param name="length"> How many bytes to swap around (has to be an even number). </param>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.UInt32)">
             <summary>
-            Swaps the endianness of a 32 bit unsigned integer.
+            Swaps the endianness of the specified 32-bit unsigned integer.
             </summary>
-            <param name="input"> The original unsigned integer. </param>
-            <returns> A 32 bit unsigned integer - encoding the same value as the original but with its bytes the other way around. </returns>
+            <returns> A 32-bit unsigned integer - encoding the same value as the original but with its bytes the other way around. </returns>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.Int32)">
             <summary>
-            Swaps the endianness of a 32 bit integer.
+            Swaps the endianness of the specified 32-bit signed integer.
             </summary>
-            <param name="input"> The original integer. </param>
-            <returns> A 32 bit integer - encoding the same value as the original but with its bytes the other way around. </returns>
+            <returns> A 32-bit signed integer - encoding the same value as the original but with its bytes the other way around. </returns>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.Single)">
             <summary>
-            Swaps the endianness of a 32 bit float.
+            Swaps the endianness of the specified 32-bit floating-point value.
             </summary>
-            <param name="input"> The original float. </param>
-            <returns> A 32 bit float - encoding the same value as the original but with its bytes the other way around. </returns>
+            <returns> A 32-bit floating-point value - encoding the same value as the original but with its bytes the other way around. </returns>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.UInt64)">
             <summary>
-            Swaps the endianness of a 64 bit unsigned integer (also known as ulong).
+            Swaps the endianness of the specified 64-bit unsigned integer.
             </summary>
-            <param name="input"> The original ulong. </param>
-            <returns> A 64 bit unsigned integer - encoding the same value as the original but with its bytes the other way around. </returns>
+            <returns> A 64-bit unsigned integer - encoding the same value as the original but with its bytes the other way around. </returns>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.Int64)">
             <summary>
-            Swaps the endianness of a 64 bit integer (also known as long).
+            Swaps the endianness of the specified 64-bit signed integer (also known as long).
             </summary>
-            <param name="input"> The original long. </param>
-            <returns> A 64 bit integer - encoding the same value as the original but with its bytes the other way around. </returns>
+            <returns> A 64-bit integer - encoding the same value as the original but with its bytes the other way around. </returns>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.Double)">
             <summary>
-            Swaps the endianness of a 64 bit float (also known as double).
+            Swaps the endianness of the specified 64-bit floating-point value.
             </summary>
-            <param name="input"> The original double. </param>
-            <returns> A 64 bit float - encoding the same value as the original but with its bytes the other way around. </returns>
+            <returns> A 64-bit floating-point value - encoding the same value as the original but with its bytes the other way around. </returns>
         </member>
         <member name="T:OscLib.OscUtil">
             <summary>
             Utility class for various helper methods.
             </summary>
         </member>
-        <member name="M:OscLib.OscUtil.ClampLong(System.Int64)">
+        <member name="M:OscLib.OscUtil.ClampToInt(System.Int64)">
             <summary>
             Clamps a long to fit into an int.
             </summary>
-            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscUtil.Clamp(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Clamps an integer value to be within the two specified values, inclusive. 
+            </summary>
         </member>
         <member name="M:OscLib.OscUtil.GetRepeatingChar(System.Char,System.Int32)">
             <summary>
@@ -1257,21 +1331,17 @@
             <param name="bytesPerLine"> How many bytes will be printed in a line. </param>
             <returns> A formatted sequence of strings. </returns>
         </member>
-        <member name="M:OscLib.OscUtil.GetNextMultipleOfFour(System.Int32)">
+        <member name="M:OscLib.OscUtil.NextX4(System.Int32)">
             <summary>
             Returns the next multiple of four that is larger than the input.
             </summary>
-            <param name="number"> Input number. </param>
-            <returns></returns>
         </member>
-        <member name="M:OscLib.OscUtil.GetNearestMultipleOfFour(System.Int32)">
+        <member name="M:OscLib.OscUtil.ThisOrNextX4(System.Int32)">
             <summary>
             Returns the nearest multiple of four larger or equal to the input.
             </summary>
-            <param name="number"></param>
-            <returns></returns>
         </member>
-        <member name="M:OscLib.OscUtil.GetDigits(System.Int32)">
+        <member name="M:OscLib.OscUtil.DigitsCount(System.Int32)">
             <summary>
             Returns the number of digits in the provided number - as in, how long it is when written as decimal value. Ignores the minus sign.
             </summary>
@@ -1289,8 +1359,20 @@
         </member>
         <member name="T:OscLib.Trit">
             <summary>
-            A basic implementation of a yes-no-maybe boolean-like thing. 
+            A basic implementation of a yes-no-maybe boolean-like ternary logic thingamajig. 
             </summary>
+        </member>
+        <member name="T:OscLib.TritUtil">
+            <summary>
+            Utility class for methods dealing with trits (ternary bits).
+            </summary>
+        </member>
+        <member name="M:OscLib.TritUtil.ToTrit(System.Boolean)">
+            <summary>
+            Converts a bool into a trit.
+            </summary>
+            <param name="input"></param>
+            <returns></returns>
         </member>
         <member name="T:OscLib.OscConverter">
             <summary>
@@ -1514,27 +1596,30 @@
         </member>
         <member name="T:OscLib.OscAddressSpace">
             <summary>
-            Implements an OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Receivers, pattern matching if needed.
-            Can handle multiple OSC Receivers.
+            Implements an instance of OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Receivers, 
+            pattern matching if needed. Can receive messages and bundles from multiple OSC Receivers.
             </summary>
         </member>
         <member name="F:OscLib.OscAddressSpace.RootContainerName">
             <summary> The default name of the root container. </summary>
         </member>
+        <member name="F:OscLib.OscAddressSpace._name">
+            <summary> The name for this Address Space. </summary>
+        </member>
         <member name="F:OscLib.OscAddressSpace._root">
-            <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
+            <summary> The root container, from which the rest of this Address Space stems. </summary>
         </member>
         <member name="F:OscLib.OscAddressSpace._addressSpaceAccess">
-            <summary> Controls access to the OSC Address Space when trying to add/remove addresses. </summary>
+            <summary> Controls access to the elements of this Address Space when adding/removing addresses. </summary>
         </member>
         <member name="F:OscLib.OscAddressSpace._receivers">
-            <summary> Contains all OSC Receivers this Address Space is connected to, and the associated converters. </summary>
+            <summary> Contains all OSC Receivers this Address Space is connected to. </summary>
         </member>
         <member name="F:OscLib.OscAddressSpace._receiversAccess">
-            <summary> Controls access to the list of connected links. </summary>
+            <summary> Controls access to the list of connected OSC Receivers. </summary>
         </member>
         <member name="P:OscLib.OscAddressSpace.Root">
-            <summary> The root container, from which the rest of the OSC Address Space stems. </summary>
+            <summary> The root container, from which the rest of this Address Space stems. </summary>
         </member>
         <member name="M:OscLib.OscAddressSpace.#ctor">
             <summary>
@@ -1543,14 +1628,14 @@
         </member>
         <member name="M:OscLib.OscAddressSpace.Connect(OscLib.OscReceiver)">
             <summary>
-            Connects this Address Space to an OSC Receiver.
+            Connects this address space to an OSC Receiver.
             </summary>
             <param name="receiver"> An OSC Receiver to receive messages/bundles from. </param>
             <exception cref="T:System.ArgumentNullException"> Thrown if the provided OSC Receiver is null. </exception>
         </member>
         <member name="M:OscLib.OscAddressSpace.Disconnect(OscLib.OscReceiver)">
             <summary>
-            Disconnects an OSC Receiver from this Address Space (provided it was connected in the first place). 
+            Disconnects an OSC Receiver from this Address Space. Provided it was connected to begin with - otherwise nothing will happen. 
             </summary>
             <param name="receiver"> The OSC Receiver to be disconnected. </param>
             <exception cref="T:System.ArgumentNullException"> Thrown if the provided OSC Receiver is null. </exception>
@@ -1583,20 +1668,53 @@
         </member>
         <member name="M:OscLib.OscAddressSpace.AddMethod(OscLib.OscString,OscLib.OscMethodHandler)">
             <summary>
-            Adds a method to the Address Space, connecting the specified address to the specified OSC Method. If the address doesn't exist, it will be created.
+            Adds a handler method to this address space. Will do one of the two things: 1. if an OSC Method already exists at the specified 
+            address, the handler method will be connected to it; 2. otherwise, a new OSC Method will be created and added to the address
+            space, and the handler method will be connected to it. If any elements of the address don't exist in this address space, 
+            they will be created and added to this address space too.
             </summary>
-            <param name="address"> The address to which the method should be added. Shouldn't contain any reserved symbols except for separators. </param>
-            <param name="method"> The method delegate that will be attached to the OSC Method, to be invoked when the method is triggered by an OSC message. </param>
-            <returns> The OSC Method to which the method was added, or null if there is already an OSC Container present at the address. </returns>
+            <param name="address"> The address to which the method should be added. Shouldn't contain any pattern-matching or reserved symbols except for separators. </param>
+            <param name="method"> The handler method that will be attached to the OSC Method, to be invoked when an appropriate OSC Message is dispatched to this address space. </param>
+            <returns> 
+            The OSC Method to which the handler method was added, or null if there is already an OSC Container present at the address and 
+            it was not possible to add the handler method.
+            </returns>
             <exception cref="T:System.ArgumentException"> Thrown when the address pattern is invalid. </exception>
         </member>
         <member name="M:OscLib.OscAddressSpace.AddContainer(OscLib.OscString)">
             <summary>
-            Adds an OSC Container to the specified address in the OSC Address Space. If the address doesn't exist, it will be created.
+            Creates an OSC Container and adds it to this address space, at the specifield address. 
+            If any elements of the address don't exist in this address space, they will be created and added to it too.
             </summary>
             <param name="address"> The address of this OSC Container. Shouldn't contain any reserved symbols except for separators. </param>
-            <returns> The added container, or the existing container at the specified address (if one does exist already), or null if there is already an OSC Method at the specified address instead. </returns>
+            <returns> 
+            The added container, or the existing container at the specified address (if one exists already), 
+            or null if there is already an OSC Method at the specified address instead. 
+            </returns>
             <exception cref="T:System.ArgumentException"> Thrown when the address pattern is invalid. </exception>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.GetElement(OscLib.OscString)">
+            <summary>
+            Looks for an element that corresponds to the provided address and retrieves it.
+            If the address is a pattern, the first element that's matched to it will be retrieved.
+            </summary>
+            <param name="address"> The full address of the element. </param>
+            <returns> An OSC Address Element corresponding to the provided address pattern, or null if nothing's been found. </returns>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.GetElementByName(OscLib.OscString,OscLib.OscString@)">
+            <summary>
+            Looks for an element with the specified name, retrieves the first one that matches.
+            </summary>
+            <param name="name"> The address element's name. </param>
+            <param name="fullAddress"> Returns the full address of the matching element. </param>
+            <returns> The OSC Address Element with a matching name. </returns>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.GetElements(OscLib.OscString)">
+            <summary>
+            Looks for elements that match the provided pattern, returns them as a list.
+            </summary>
+            <param name="pattern"></param>
+            <returns></returns>
         </member>
         <member name="M:OscLib.OscAddressSpace.RemoveElement(OscLib.OscString)">
             <summary>
@@ -1605,9 +1723,16 @@
             </summary>
             <param name="addressPattern"></param>
         </member>
-        <member name="M:OscLib.OscAddressSpace.ToString">
+        <member name="M:OscLib.OscAddressSpace.SearchAndPerform(OscLib.OscString[],System.Boolean,System.Func{OscLib.OscAddressElement,System.Boolean})">
             <summary>
-            Prints the entire OSC Address Space as a tree.
+            Searches the Address Space and performs the provided action on the elements adhering to the provided pattern, taken as an array of element names.
+            </summary>
+            <param name="elementNames"></param>
+            <param name="performOnlyOnce"></param>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.PrintAddressTree">
+            <summary>
+            Prints the entire OSC Address Space as an address tree, 
             </summary>
             <returns></returns>
         </member>

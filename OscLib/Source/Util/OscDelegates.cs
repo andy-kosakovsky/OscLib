@@ -3,7 +3,6 @@ using System.Net;
 
 namespace OscLib
 {
-
     #region MESSAGING
 
     /// <summary> 
@@ -65,6 +64,7 @@ namespace OscLib
     /// <param name="packet"> Packet to be checked. </param>
     public delegate bool OscPacketHeapCheck<Packet>(Packet packet) where Packet : IOscPacket;
 
+
     /// <summary>
     /// Used to pass methods that serve as a source for timetags.
     /// </summary>
@@ -77,7 +77,7 @@ namespace OscLib
     #region OSC ADDRESS SPACE
 
     /// <summary>
-    /// Used in conjunction with OSC Methods to handle incoming messages and 
+    /// Used with OSC Methods to 
     /// </summary>
     /// <param name="source"> The source of the arguments - could be the OSC Method, the OSC Receiver, the OSC Message, etc. </param>
     /// <param name="messageArguments"> Arguments attached to the received OSC Message. </param>

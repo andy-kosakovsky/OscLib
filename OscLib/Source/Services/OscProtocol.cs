@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace OscLib
 {
     /// <summary>
@@ -49,7 +46,7 @@ namespace OscLib
 
 
         // consts for other special symbols specified in OSC protocol
-        #region SPECIAL SYMBOL CONSTS
+        #region SPECIAL CHAR CONSTS
 
         /// <summary> Designates the start of an OSC Bundle. </summary>
         public const byte BundleMarker = (byte)'#';

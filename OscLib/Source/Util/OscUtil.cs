@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
+﻿using System.Text;
 
 namespace OscLib
 {
@@ -10,12 +7,10 @@ namespace OscLib
     /// </summary>
     public static class OscUtil
     {
-
         /// <summary>
         /// Clamps a long to fit into an int.
         /// </summary>
-        /// <returns></returns>
-        public static int ClampLong(long input)
+        public static int ClampToInt(this long input)
         {
             int output;
 
@@ -29,8 +24,24 @@ namespace OscLib
             return output;
         }
 
-        public static int Clamp(int input, int min, int max)
+        /// <summary>
+        /// Clamps an integer value to be within the two specified values, inclusive. 
+        /// </summary>
+        public static int Clamp(this int input, int boundOne, int boundTwo)
         {
+            int min, max;
+
+            if (boundOne > boundTwo)
+            {
+                min = boundTwo;
+                max = boundOne;
+            }
+            else
+            {
+                min = boundOne;
+                max = boundTwo;
+            }
+
             if (input < min)
             {
                 return min;
@@ -82,8 +93,8 @@ namespace OscLib
             int lineCounter = 0;
 
             // the worst-case scenario for lineCounter length
-            int maxLinesLength = GetDigits(array.Length / bytesPerLine) + 1;
-            int maxByteNoLength = GetDigits(array.Length) + 2;
+            int maxLinesLength = DigitsCount(array.Length / bytesPerLine) + 1;
+            int maxByteNoLength = array.Length.DigitsCount() + 2;
 
             for (int i = 0; i < array.Length; i++)
             {
@@ -94,7 +105,7 @@ namespace OscLib
                     returnString.Append('\n');
                     returnString.Append(lineCounter);
 
-                    for (int j = maxLinesLength - GetDigits(lineCounter); j >= 0; j--)
+                    for (int j = maxLinesLength - lineCounter.DigitsCount(); j >= 0; j--)
                     {
                         returnString.Append(' ');
                     }
@@ -105,7 +116,7 @@ namespace OscLib
                     returnString.Append(array.Length);
                     returnString.Append(']');
 
-                    for (int j = maxByteNoLength - GetDigits(i); j >= 0; j--)
+                    for (int j = maxByteNoLength - i.DigitsCount(); j >= 0; j--)
                     {
                         returnString.Append(' ');
                     }
@@ -119,7 +130,7 @@ namespace OscLib
                 }
 
                 // every byte equally-spaced
-                for (int j = 3 - GetDigits(array[i]); j > 0; j--)
+                for (int j = 3 - DigitsCount(array[i]); j > 0; j--)
                 {
                     returnString.Append('0');
                 }
@@ -141,32 +152,30 @@ namespace OscLib
         /// <summary>
         /// Returns the next multiple of four that is larger than the input.
         /// </summary>
-        /// <param name="number"> Input number. </param>
-        /// <returns></returns>
-        public static int GetNextMultipleOfFour(int number)
+        public static int NextX4(this int number)
         {
             return ((number / 4) + 1) * 4;
         }
 
+
         /// <summary>
         /// Returns the nearest multiple of four larger or equal to the input.
         /// </summary>
-        /// <param name="number"></param>
-        /// <returns></returns>
-        public static int GetNearestMultipleOfFour(int number)
+        public static int ThisOrNextX4(this int number)
         {
             if (number % 4 == 0)
                 return number;
             else
-                return number + (4 - (number % 4)); 
+                return number.NextX4(); 
         }
+
 
         /// <summary>
         /// Returns the number of digits in the provided number - as in, how long it is when written as decimal value. Ignores the minus sign.
         /// </summary>
         /// <param name="number"></param>
         /// <returns></returns>
-        public static int GetDigits(int number)
+        public static int DigitsCount(this int number)
         {
             if (number == 0)
                 return 1;
@@ -197,7 +206,7 @@ namespace OscLib
         /// <param name="boundOne"></param>
         /// <param name="boundTwo"></param>
         /// <returns></returns>
-        public static bool IsNumberBetween(int check, int boundOne, int boundTwo)
+        public static bool IsNumberBetween(this int check, int boundOne, int boundTwo)
         {
             int min, max;
 

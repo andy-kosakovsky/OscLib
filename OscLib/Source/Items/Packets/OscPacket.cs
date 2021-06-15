@@ -99,6 +99,7 @@ namespace OscLib
             return _binaryData;
         }
 
+
         /// <summary>
         /// Returns a copy of the byte array containing OSC data.
         /// </summary>

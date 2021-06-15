@@ -5,10 +5,12 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Specifies common methods for elements containing binary data.
+    /// Specifies common methods for structures holding OSC binary data.
     /// </summary>
-    public interface IBinaryContainer
+    public interface IOscBinaryContainer
     {
+        /// <summary> The total number of bytes in this container. Should be a multiple of 4. </summary>
+        int Length { get; }
 
         /// <summary>
         /// Indexer access to the binary data inside this container.

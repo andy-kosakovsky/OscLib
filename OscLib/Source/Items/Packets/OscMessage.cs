@@ -44,7 +44,7 @@ namespace OscLib
         {
             get
             {
-                if (OscUtil.IsNumberBetween(index, 0, _arguments.Length - 1))
+                if (index.IsNumberBetween(0, _arguments.Length - 1))
                 {
                     return _arguments[index];
                 }

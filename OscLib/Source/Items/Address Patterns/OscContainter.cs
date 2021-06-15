@@ -8,11 +8,11 @@ namespace OscLib
     // TODO: Add a "OscAdressElement[] GetElements(pattern)" method that would return all elements within this container that match to a pattern
 
     /// <summary>
-    /// Represents an OSC method container, to be used within the OSC Address Space - basically a folder for other address elements.
+    /// Represents an OSC Address Space method container - a folder for other address elements.
     /// </summary>
     public class OscContainer : OscAddressElement
     {
-        /// <summary> All child elements contained in this container. </summary>
+        /// <summary> All child elements inside this container. </summary>
         protected List<OscAddressElement> _contents;
 
         /// <summary> Connects the names of elements with their indeces in the "contents" list, to ease lookup and pattern-matching. </summary>
@@ -20,6 +20,7 @@ namespace OscLib
 
         /// <summary> The number of elements within this container. </summary>
         public int Length { get => _contents.Count; }
+
 
         /// <summary>
         /// Indexer access to the elements of this container, using their names.
@@ -43,6 +44,7 @@ namespace OscLib
         
         }
 
+
         /// <summary>
         /// Indexer access to the elements of this container, using their indices.
         /// </summary>
@@ -52,7 +54,7 @@ namespace OscLib
         {
             get
             {
-                if (OscUtil.IsNumberBetween(index, 0, _contents.Count - 1))
+                if (index.IsNumberBetween(0, _contents.Count - 1))
                 {
                     return _contents[index];
                 }
@@ -65,22 +67,23 @@ namespace OscLib
 
         }
 
+
         /// <summary>
         /// Creates a new OSC Container.
         /// </summary>
         /// <param name="name"> The name for this container. Note: no need to include a "/" symbol. </param>
-        public OscContainer(OscString name) 
+        internal OscContainer(OscString name) 
             :base(name)
         {
             _contentsNames = new Dictionary<OscString, int>();
             _contents = new List<OscAddressElement>();
         }
 
+
         /// <summary>
         /// Adds an address element to this container.
         /// </summary>
-        /// <param name="element"></param>
-        /// <param name="part"> The element to add. </param>
+        /// <param name="element"> The element to add. </param>
         /// <exception cref="ArgumentException"> Thrown when this container already contains an element with this name. </exception>
         public void AddElement(OscAddressElement element)
         {
@@ -90,9 +93,11 @@ namespace OscLib
             }
 
             _contents.Add(element);
-            // new address part should be the last index of the list 
-            RefreshNames();                
+            RefreshNames();
+
+            element.ChangeAddress(_address + _name + "/");
         }
+
 
         /// <summary>
         /// Removes an address element from this container - if it's inside this container.
@@ -104,9 +109,12 @@ namespace OscLib
             {
                 _contents.Remove(element);
                 RefreshNames();
+
+                element.ChangeAddress(OscString.NullString);
             }
 
         }
+
 
         /// <summary>
         /// Removes an address element with the specified name from this container, if it's inside this container.
@@ -122,17 +130,18 @@ namespace OscLib
 
         }
 
+
         /// <summary>
         /// Checks if container contains an address element with the provided name (or adhering to the provided pattern).
         /// </summary>
-        public bool ContainsElement(OscString elementName)
+        public bool ContainsElement(OscString pattern)
         {           
             // if it's a pattern
-            if (elementName.ContainsPatternMatching())
+            if (pattern.ContainsPatternMatching())
             {
                 for (int i = 0; i < _contents.Count; i++)
                 {
-                    if (_contents[i].Name.PatternMatch(elementName))
+                    if (_contents[i].Name.PatternMatch(pattern))
                     {
                         return true;
                     }
@@ -144,10 +153,32 @@ namespace OscLib
             }
             else
             {
-                return _contentsNames.ContainsKey(elementName);
+                return _contentsNames.ContainsKey(pattern);
             }
 
         }
+
+
+        /// <summary>
+        /// Returns an array of elements in this container that match the specified pattern.
+        /// </summary>
+        public List<OscAddressElement> GetElements(OscString pattern)
+        {
+            List<OscAddressElement> list = new List<OscAddressElement>(_contents.Count);
+
+            for (int i = 0; i < _contents.Count; i++)
+            {
+                if (_contents[i].Name.PatternMatch(pattern))
+                {
+                    list.Add(_contents[i]);
+                }
+
+            }
+
+            return list;
+
+        }
+
 
         /// <summary>
         /// Used to update the element names and the corresponding indices in the name dictionary.
@@ -162,6 +193,21 @@ namespace OscLib
             }
 
         }
+
+        /// <summary>
+        /// Changes the 
+        /// </summary>
+        /// <param name="newAddress"></param>
+        internal override void ChangeAddress(OscString newAddress)
+        {
+            _address = newAddress;
+
+            for (int i = 0; i < _contents.Count; i++)
+            {
+                _contents[i].ChangeAddress(_address + _name + "/");
+            }
+        }
+
 
         public override string ToString()
         {
