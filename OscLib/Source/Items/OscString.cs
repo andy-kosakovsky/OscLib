@@ -105,6 +105,58 @@ namespace OscLib
 
 
         /// <summary>
+        /// Creats an OSC String from an array of OSC strings.
+        /// </summary>
+        /// <param name="strings"></param>
+        public OscString(OscString[] strings)
+        {
+            _containsPatternMatching = Trit.Maybe;
+            _containsSpecialSymbols = Trit.Maybe;
+
+            int length = 0;
+
+            for (int i = 0; i < strings.Length; i++)
+            {
+                length += strings[i].Length;
+
+                // check trits while we're at it
+                if ((strings[i]._containsPatternMatching == Trit.False) && (_containsPatternMatching != Trit.True))
+                {
+                    _containsPatternMatching = Trit.False;
+                }
+                else if (strings[i]._containsPatternMatching == Trit.True)
+                {
+                    _containsPatternMatching = Trit.True;
+                }
+
+                if ((strings[i]._containsSpecialSymbols == Trit.False) && (_containsSpecialSymbols != Trit.True))
+                {
+                    _containsSpecialSymbols = Trit.False;
+                }
+                else if (strings[i]._containsSpecialSymbols == Trit.True)
+                {
+                    _containsSpecialSymbols = Trit.True;
+                }
+
+            }
+
+            byte[] data = new byte[length];
+
+            int pointer = 0;
+
+            for (int i = 0; i < strings.Length; i++)
+            {
+                strings[i].CopyBytesToArray(data, pointer);
+                pointer += strings[i].Length;
+            }
+
+            _chars = data;
+            OscLength = OscUtil.NextX4(data.Length);
+
+        }
+
+
+        /// <summary>
         /// Internal constructor for copying strings while preserving the information about them containing special symbols.
         /// </summary>
         private OscString(byte[] bytes, Trit hasSpecialSymbols, Trit hasPatternMatching)
@@ -502,6 +554,7 @@ namespace OscLib
 
                 // all my homies use magic numbers 
                 return hash % 1566083941;
+
             }
 
         }
@@ -544,7 +597,11 @@ namespace OscLib
 
             stringTwo.CopyBytesToArray(data, stringOne.Length);
 
-            return new OscString(data);
+            return new OscString(data,
+                TritUtil.Orish(stringOne._containsSpecialSymbols, stringTwo._containsSpecialSymbols),
+                TritUtil.Orish(stringOne._containsPatternMatching, stringTwo._containsPatternMatching)
+                );
+
         }
 
 
@@ -562,7 +619,11 @@ namespace OscLib
 
             OscSerializer.AddBytes(stringTwo, data, stringOne.Length);
 
-            return new OscString(data);
+            return new OscString(data,
+                stringOne._containsSpecialSymbols,
+                stringOne._containsPatternMatching
+                );
+
         }
 
 
@@ -580,7 +641,48 @@ namespace OscLib
 
             stringTwo.CopyBytesToArray(data, stringOne.Length);
 
-            return new OscString(data);
+            return new OscString(data,
+                stringTwo._containsSpecialSymbols,
+                stringTwo._containsPatternMatching
+                );
+
+        }
+
+
+        /// <summary>
+        /// Allows to concatenate an OSC String and a char.
+        /// </summary>
+        /// <param name="stringOne"> First string, OSC. </param>
+        /// <param name="charTwo"> Second char. </param>
+        /// <returns></returns>
+        public static OscString operator +(OscString stringOne, char charTwo)
+        {
+            byte[] data = new byte[stringOne.Length + 1];
+
+            stringOne.CopyBytesToArray(data, 0);
+
+            data[stringOne.Length] = Convert.ToByte(charTwo);
+
+            return new OscString(data, stringOne._containsSpecialSymbols, stringOne._containsPatternMatching);
+
+        }
+
+
+        /// <summary>
+        /// Allows to concatenate a сhar and an OSC String.
+        /// </summary>
+        /// <param name="charOne"> The first char. </param>
+        /// <param name="stringTwo"> The second string. </param>
+        public static OscString operator +(char charOne, OscString stringTwo)
+        {
+            byte[] data = new byte[stringTwo.Length + 1];
+
+            stringTwo.CopyBytesToArray(data, 1);
+
+            data[0] = Convert.ToByte(charOne);
+
+            return new OscString(data, stringTwo._containsSpecialSymbols, stringTwo._containsPatternMatching);
+
         }
 
 

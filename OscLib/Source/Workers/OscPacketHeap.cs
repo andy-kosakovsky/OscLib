@@ -127,12 +127,14 @@ namespace OscLib
 
         #endregion
 
+
         #region EVENTS
 
         /// <summary> Invoked when an exception happens inside the send task, hopefully preventing it from stopping </summary>
         public event OscTaskExceptionHandler SendTaskExceptionRaised;
 
         #endregion
+
 
         #region CONSTRUCTORS
 

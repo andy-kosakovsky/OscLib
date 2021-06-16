@@ -81,7 +81,7 @@ namespace OscLib
     /// </summary>
     /// <param name="source"> The source of the arguments - could be the OSC Method, the OSC Receiver, the OSC Message, etc. </param>
     /// <param name="messageArguments"> Arguments attached to the received OSC Message. </param>
-    public delegate void OscMethodHandler(object source, object[] messageArguments);
+    public delegate void OscMethodEventHandler(object source, object[] messageArguments);
 
     #endregion
 }

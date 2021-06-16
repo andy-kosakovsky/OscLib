@@ -6,28 +6,23 @@
     <members>
         <member name="T:OscLib.OscAddressElement">
             <summary>
-            A base class for representing elements of OSC Address Spaces
+            A base class for representing elements of OSC Address Spaces.
+            <remarks>
+            The idea is that this class and its derivatives would only be used in conjunction with the OscAddressSpace class. 
+            </remarks>
             </summary>
         </member>
         <member name="F:OscLib.OscAddressElement._name">
-            <summary>
-            The name of this element.
-            </summary>
+            <summary> The name of this element. </summary>
         </member>
-        <member name="F:OscLib.OscAddressElement._address">
-            <summary>
-            The address of this element within the encompassing OSC Address Space.
-            </summary>
+        <member name="F:OscLib.OscAddressElement._parent">
+            <summary> The parent element of this element within the encompassing OSC Address Space. </summary>
         </member>
         <member name="P:OscLib.OscAddressElement.Name">
-            <summary>
-            The name of this element. 
-            </summary>
+            <summary> The name of this element. </summary>
         </member>
-        <member name="P:OscLib.OscAddressElement.Address">
-            <summary>
-            The address of this element within the encompassing OSC Address Space.
-            </summary>
+        <member name="P:OscLib.OscAddressElement.Parent">
+            <summary> The parent element of this element within the encompassing OSC Address Space. </summary>
         </member>
         <member name="M:OscLib.OscAddressElement.#ctor(OscLib.OscString)">
             <summary>
@@ -39,6 +34,12 @@
         <member name="M:OscLib.OscAddressElement.ToString">
             <summary>
             Returns the name of this address element as string.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscAddressElement.GetAddress">
+            <summary>
+            Returns the address of this element within the encompassing Address Space.
             </summary>
             <returns></returns>
         </member>
@@ -87,17 +88,22 @@
             <summary>
             Removes an address element from this container - if it's inside this container.
             </summary>
-            <param name="element"></param>
+            <returns> True if an element was removed, false if nothing was found. </returns>
         </member>
         <member name="M:OscLib.OscContainer.RemoveElement(OscLib.OscString)">
             <summary>
             Removes an address element with the specified name from this container, if it's inside this container.
             </summary>
-            <param name="elementName"></param>
+            <returns> True if an element was removed, false if nothing was found. </returns>
+        </member>
+        <member name="M:OscLib.OscContainer.ContainsElement(OscLib.OscAddressElement)">
+            <summary>
+            Checks if this Container contains the specified address element.
+            </summary>
         </member>
         <member name="M:OscLib.OscContainer.ContainsElement(OscLib.OscString)">
             <summary>
-            Checks if container contains an address element with the provided name (or adhering to the provided pattern).
+            Checks if this Container contains an OSC Address Element with the provided name (or matching the provided pattern).
             </summary>
         </member>
         <member name="M:OscLib.OscContainer.GetElements(OscLib.OscString)">
@@ -120,9 +126,9 @@
             How many event handlers are connected to this OSC Method.
             </summary>
         </member>
-        <member name="E:OscLib.OscMethod.OscMethodInvoked">
+        <member name="E:OscLib.OscMethod.OscMethodInvokedEvent">
             <summary>
-            Invoked when a message correlating to this OSC Method is received by the containing Address Space.
+            Invoked when the Address Space receives a message and dispatches it to this OSC Method. 
             </summary>
         </member>
         <member name="M:OscLib.OscMethod.#ctor(OscLib.OscString)">
@@ -134,12 +140,12 @@
         </member>
         <member name="M:OscLib.OscMethod.Invoke(System.Object,System.Object[])">
             <summary>
-            Invokes the .
+            Dispatches the arguments from an OSC Message to this OSC Method, triggering it.
             </summary>
             <param name="source"> The source of the arguments. </param>
-            <param name="arguments"> An array of arguments to pass on. </param>
+            <param name="arguments"> An array of arguments to dispatch. </param>
         </member>
-        <member name="M:OscLib.OscMethod.Clear">
+        <member name="M:OscLib.OscMethod.ClearEventHandlers">
             <summary>
             Disconnects all event handlers.
             </summary>
@@ -288,6 +294,12 @@
             </summary>
             <param name="sourceString"> The source plain old string. </param>
         </member>
+        <member name="M:OscLib.OscString.#ctor(OscLib.OscString[])">
+            <summary>
+            Creats an OSC String from an array of OSC strings.
+            </summary>
+            <param name="strings"></param>
+        </member>
         <member name="M:OscLib.OscString.#ctor(System.Byte[],OscLib.Trit,OscLib.Trit)">
             <summary>
             Internal constructor for copying strings while preserving the information about them containing special symbols.
@@ -408,6 +420,21 @@
             <param name="stringOne"> First string, plain and simple. </param>
             <param name="stringTwo"> Second string, very OSC in its features. </param>
             <returns> An immense OSC String that is a combination of two strings. </returns>
+        </member>
+        <member name="M:OscLib.OscString.op_Addition(OscLib.OscString,System.Char)">
+            <summary>
+            Allows to concatenate an OSC String and a char.
+            </summary>
+            <param name="stringOne"> First string, OSC. </param>
+            <param name="charTwo"> Second char. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscString.op_Addition(System.Char,OscLib.OscString)">
+            <summary>
+            Allows to concatenate a сhar and an OSC String.
+            </summary>
+            <param name="charOne"> The first char. </param>
+            <param name="stringTwo"> The second string. </param>
         </member>
         <member name="M:OscLib.OscString.op_Inequality(OscLib.OscString,OscLib.OscString)">
             <summary>
@@ -1239,7 +1266,7 @@
             </summary>
             <returns> An OSC Timetag. </returns>
         </member>
-        <member name="T:OscLib.OscMethodHandler">
+        <member name="T:OscLib.OscMethodEventHandler">
             <summary>
             Used with OSC Methods to 
             </summary>
@@ -1341,6 +1368,12 @@
             Returns the nearest multiple of four larger or equal to the input.
             </summary>
         </member>
+        <member name="M:OscLib.OscUtil.IsNullOrEmpty(OscLib.OscString)">
+            <summary>
+            It won't allow me to do this inside OscString class :(
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:OscLib.OscUtil.DigitsCount(System.Int32)">
             <summary>
             Returns the number of digits in the provided number - as in, how long it is when written as decimal value. Ignores the minus sign.
@@ -1372,6 +1405,14 @@
             Converts a bool into a trit.
             </summary>
             <param name="input"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.TritUtil.Orish(OscLib.Trit,OscLib.Trit)">
+            <summary>
+            If both trits are "maybe", returns "maybe".
+            Will return "false" if at least one trit is "false" and the other is not "true".
+            Will return "true" if at least one trit is "true";
+            </summary>
             <returns></returns>
         </member>
         <member name="T:OscLib.OscConverter">
@@ -1596,8 +1637,10 @@
         </member>
         <member name="T:OscLib.OscAddressSpace">
             <summary>
-            Implements an instance of OSC Address Space, associating C# method delegates with OSC Methods. Processes messages and bundles coming from the attached OSC Receivers, 
-            pattern matching if needed. Can receive messages and bundles from multiple OSC Receivers.
+            Implements an instance of OSC Address Space. Provides convenience methods for creating and managing an OSC address tree, 
+            allowing to connect event handlers to OSC Methods, to be invoked when a message is dispatched to a particular OSC Method. 
+            Processes messages and bundles coming from the attached OSC Receivers, pattern matching if needed. Can receive messages 
+            and bundles from multiple OSC Receivers.
             </summary>
         </member>
         <member name="F:OscLib.OscAddressSpace.RootContainerName">
@@ -1608,6 +1651,9 @@
         </member>
         <member name="F:OscLib.OscAddressSpace._root">
             <summary> The root container, from which the rest of this Address Space stems. </summary>
+        </member>
+        <member name="F:OscLib.OscAddressSpace._maxDepth">
+            <summary> The depth of the deepest element within the Address Space. </summary>
         </member>
         <member name="F:OscLib.OscAddressSpace._addressSpaceAccess">
             <summary> Controls access to the elements of this Address Space when adding/removing addresses. </summary>
@@ -1621,14 +1667,20 @@
         <member name="P:OscLib.OscAddressSpace.Root">
             <summary> The root container, from which the rest of this Address Space stems. </summary>
         </member>
-        <member name="M:OscLib.OscAddressSpace.#ctor">
+        <member name="P:OscLib.OscAddressSpace.Name">
+            <summary> The name for this Address Space. </summary>
+        </member>
+        <member name="P:OscLib.OscAddressSpace.MaxDepth">
+            <summary> The depth of the deepest element within the Address Space. </summary>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.#ctor(System.String)">
             <summary>
             Creates a new OSC Address Space.
             </summary>
         </member>
         <member name="M:OscLib.OscAddressSpace.Connect(OscLib.OscReceiver)">
             <summary>
-            Connects this address space to an OSC Receiver.
+            Connects this Address Space to an OSC Receiver.
             </summary>
             <param name="receiver"> An OSC Receiver to receive messages/bundles from. </param>
             <exception cref="T:System.ArgumentNullException"> Thrown if the provided OSC Receiver is null. </exception>
@@ -1642,14 +1694,14 @@
         </member>
         <member name="M:OscLib.OscAddressSpace.ReceiveBundle(OscLib.OscBundle,System.Net.IPEndPoint)">
             <summary>
-            Processes an incoming bundle. Invoked when the connected OSC Receiver receives bundles.
+            Processes an incoming bundle. Also invoked when a connected OSC Receiver receives bundles.
             </summary>
             <param name="bundle"> OSC Bundle to process. </param>
             <param name="receivedFrom"> The IP end point from which the bundle was received. </param>
         </member>
         <member name="M:OscLib.OscAddressSpace.ReceiveMessage(OscLib.OscMessage,System.Net.IPEndPoint)">
             <summary>
-            Processes an incoming message. Invoked when the connected OSC Link receives a message.
+            Processes an incoming message. Also invoked when a connected OSC Link receives a message.
             </summary>
             <param name="message"> An OSC message to process. </param>
             <param name="receivedFrom"> The IP end point from which the message was received. </param>
@@ -1666,20 +1718,27 @@
             </summary>
             <param name="message"> An OSC message to process. </param>
         </member>
-        <member name="M:OscLib.OscAddressSpace.AddMethod(OscLib.OscString,OscLib.OscMethodHandler)">
+        <member name="M:OscLib.OscAddressSpace.AddHandlerToMethod(OscLib.OscString,OscLib.OscMethodEventHandler)">
             <summary>
-            Adds a handler method to this address space. Will do one of the two things: 1. if an OSC Method already exists at the specified 
-            address, the handler method will be connected to it; 2. otherwise, a new OSC Method will be created and added to the address
-            space, and the handler method will be connected to it. If any elements of the address don't exist in this address space, 
-            they will be created and added to this address space too.
+            Subscribes an event handler to a particular OSC Method. Will do one of the two things: 
+            <para>
+            1. If an OSC Method already exists at the specified address, the event handler will be subscribed to it; 
+            </para>
+            <para>
+            2. Otherwise, a new OSC Method will be created and added to this Address Space, and the event handler will 
+            be subscribed to it. If any elements of the address don't exist in this Address Space, they will be 
+            created and added too.
+            </para>
             </summary>
-            <param name="address"> The address to which the method should be added. Shouldn't contain any pattern-matching or reserved symbols except for separators. </param>
-            <param name="method"> The handler method that will be attached to the OSC Method, to be invoked when an appropriate OSC Message is dispatched to this address space. </param>
+            <param name="address"> The address to which the event handler should be added. Shouldn't contain any pattern-matching or reserved symbols except for separators. </param>
+            <param name="handler"> The handler method that will be attached to the OSC Method, to be invoked when an appropriate OSC Message is dispatched to this address space. </param>
             <returns> 
             The OSC Method to which the handler method was added, or null if there is already an OSC Container present at the address and 
             it was not possible to add the handler method.
             </returns>
             <exception cref="T:System.ArgumentException"> Thrown when the address pattern is invalid. </exception>
+            <exception cref="T:System.ArgumentNullException"> Thrown when the event handler is null. </exception>
+            <exception cref="T:System.InvalidOperationException"> Thrown when there is a non-container element in the address path. </exception>
         </member>
         <member name="M:OscLib.OscAddressSpace.AddContainer(OscLib.OscString)">
             <summary>
@@ -1716,23 +1775,55 @@
             <param name="pattern"></param>
             <returns></returns>
         </member>
-        <member name="M:OscLib.OscAddressSpace.RemoveElement(OscLib.OscString)">
+        <member name="M:OscLib.OscAddressSpace.MatchAndRemove(OscLib.OscString)">
             <summary>
-            Removes the specified address (be it a container or a method) from the address space.
-            <para>Warning: pattern matching not yet implemented, attempts will cause an exception.</para>
+            Removes all elements matching to the provided address pattern from this Address Space. 
             </summary>
             <param name="addressPattern"></param>
         </member>
-        <member name="M:OscLib.OscAddressSpace.SearchAndPerform(OscLib.OscString[],System.Boolean,System.Func{OscLib.OscAddressElement,System.Boolean})">
+        <member name="M:OscLib.OscAddressSpace.MatchAndPerform(OscLib.OscString[],System.Boolean,System.Func{OscLib.OscAddressElement,System.Boolean})">
             <summary>
-            Searches the Address Space and performs the provided action on the elements adhering to the provided pattern, taken as an array of element names.
+            Tries to match the provided pattern (taken as an array of element names) to addresses in this Address Space, performs the provided function on the matching elements.
             </summary>
-            <param name="elementNames"></param>
+            <param name="elementNames"> An array of OSC Address Element names that make up an address pattern. </param>
+            <param name="performOnlyOnce"> Whether the function will only be performed on the first eligible element. </param>
+            <param name="function"> The function to perform: 
+            <para> -- takes one parameter (the Address Element that matches the pattern); </para>
+            <para> -- returns a boolean (whether the function could be performed on the provided Address Elementwas successful). </para> </param>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.SearchAndPerform(OscLib.OscString,System.Boolean,System.Func{OscLib.OscAddressElement,System.Boolean})">
+            <summary>
+            Searches the Address Space for elements that match the provided name, performs the provided function on the matching elements.
+            </summary>
+            <param name="elementName"></param>
             <param name="performOnlyOnce"></param>
+            <param name="function"></param>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.AddElementAndPerform(OscLib.OscString[],System.Func{OscLib.OscAddressElement,OscLib.OscAddressElement})">
+            <summary>
+            Adds an element to the provided address (adding containers as needed if need be) and does stuff to it, all via the provided function.  
+            </summary>
+            <param name="elementNames"> An array of OSC Address Element names that make up an address pattern. The last name will be that of the target element. </param>
+            <param name="function"> This function will be performed when the method reaches the final container and assesses whether it contains the target element. 
+            One of the following two things will happen at this point:
+            <para> 
+            1. If that container does contain the element with the target name, the function will take it as an argument and will Do Stuff to it. 
+            </para>
+            <para> 
+            2. If that container doesn't contain the element, the function will create a new element, then Do Stuff to it, then add it to the container.
+            The function should be able to tell which of these two scenarios is occuring by the fact that it will be passed a null in the second one.
+            </para>
+            If the function wass unsuccessful in its performance, it should return null itself. </param>
+            <returns> The element it added, or null if it was unsuccessful. </returns>
+        </member>
+        <member name="M:OscLib.OscAddressSpace.ToString">
+            <summary>
+            Prints the name of this OSC Address Space and lists all connected Receivers.
+            </summary>
         </member>
         <member name="M:OscLib.OscAddressSpace.PrintAddressTree">
             <summary>
-            Prints the entire OSC Address Space as an address tree, 
+            Prints the entire OSC Address Space as an address tree. 
             </summary>
             <returns></returns>
         </member>

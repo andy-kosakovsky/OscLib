@@ -34,6 +34,27 @@ namespace OscLib
 
         }
 
+        /// <summary>
+        /// If both trits are "maybe", returns "maybe".
+        /// Will return "false" if at least one trit is "false" and the other is not "true".
+        /// Will return "true" if at least one trit is "true";
+        /// </summary>
+        /// <returns></returns>
+        internal static Trit Orish(Trit one, Trit two)
+        {
+            if ((one == Trit.True) || (two == Trit.True))
+            {
+                return Trit.True;
+            }
+
+            if ((one == Trit.False) || (two == Trit.False))
+            {
+                return Trit.False;
+            }
+
+            return Trit.Maybe;
+        }
+
     }
 
 }

@@ -171,6 +171,16 @@ namespace OscLib
 
 
         /// <summary>
+        /// It won't allow me to do this inside OscString class :(
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsNullOrEmpty(this OscString checkMe)
+        {
+            return OscString.IsNullOrEmpty(checkMe);
+        }
+
+
+        /// <summary>
         /// Returns the number of digits in the provided number - as in, how long it is when written as decimal value. Ignores the minus sign.
         /// </summary>
         /// <param name="number"></param>

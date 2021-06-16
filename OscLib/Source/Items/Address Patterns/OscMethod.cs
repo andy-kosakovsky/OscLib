@@ -16,21 +16,21 @@ namespace OscLib
         {
             get
             {
-                if (OscMethodInvoked == null)
+                if (OscMethodInvokedEvent == null)
                 {
                     return 0;
                 }
 
-                return OscMethodInvoked.GetInvocationList().Length;
+                return OscMethodInvokedEvent.GetInvocationList().Length;
             }
 
         }
 
 
         /// <summary>
-        /// Invoked when a message correlating to this OSC Method is received by the containing Address Space.
+        /// Invoked when the Address Space receives a message and dispatches it to this OSC Method. 
         /// </summary>
-        public event OscMethodHandler OscMethodInvoked;
+        public event OscMethodEventHandler OscMethodInvokedEvent;
 
 
         /// <summary>
@@ -50,18 +50,18 @@ namespace OscLib
         /// </summary>
         /// <param name="source"> The source of the arguments. </param>
         /// <param name="arguments"> An array of arguments to dispatch. </param>
-        public virtual void Dispatch(object source, object[] arguments)
+        public virtual void Invoke(object source, object[] arguments)
         {
-            OscMethodInvoked?.Invoke(source, arguments);
+            OscMethodInvokedEvent?.Invoke(source, arguments);
         }
 
 
         /// <summary>
         /// Disconnects all event handlers.
         /// </summary>
-        public virtual void Clear()
+        public virtual void ClearEventHandlers()
         {
-            OscMethodInvoked = null;
+            OscMethodInvokedEvent = null;
         }
 
 
@@ -74,7 +74,7 @@ namespace OscLib
 
             returnString.Append("OSC METHOD: ");
             returnString.Append(_name.ToString());
-            returnString.Append(" (event handlers connected: ");
+            returnString.Append(" (event handlers subscribed: ");
             returnString.Append(TotalHandlersConnected);
             returnString.Append(')');
 
@@ -92,9 +92,9 @@ namespace OscLib
             StringBuilder returnString = new StringBuilder(_name.ToString());
             returnString.Append(" attached methods:\n");
 
-            if (OscMethodInvoked != null)
+            if (OscMethodInvokedEvent != null)
             {
-                Delegate[] list = OscMethodInvoked.GetInvocationList();
+                Delegate[] list = OscMethodInvokedEvent.GetInvocationList();
 
                 for (int i = 0; i < list.Length; i++)
                 {

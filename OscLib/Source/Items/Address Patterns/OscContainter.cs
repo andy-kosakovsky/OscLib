@@ -72,7 +72,7 @@ namespace OscLib
         /// Creates a new OSC Container.
         /// </summary>
         /// <param name="name"> The name for this container. Note: no need to include a "/" symbol. </param>
-        internal OscContainer(OscString name) 
+        public OscContainer(OscString name) 
             :base(name)
         {
             _contentsNames = new Dictionary<OscString, int>();
@@ -89,29 +89,33 @@ namespace OscLib
         {
             if (_contentsNames.ContainsKey(element.Name))
             {
-                throw new ArgumentException("OSC Address ERROR: Can't add element " + element.ToString() + " to OSC Container " + this.ToString() + "; " + this.ToString() + " already contains an element with that name. ");
+                throw new ArgumentException("OSC Address ERROR: Can't add element " + element.ToString() + " to OSC Container " + _name.ToString() + "; " + _name.ToString() + " already contains an element with that name. ");
             }
 
             _contents.Add(element);
             RefreshNames();
 
-            element.ChangeAddress(_address + _name + "/");
+            element.ChangeParent(this);
         }
 
 
         /// <summary>
         /// Removes an address element from this container - if it's inside this container.
         /// </summary>
-        /// <param name="element"></param>
-        public void RemoveElement(OscAddressElement element)
+        /// <returns> True if an element was removed, false if nothing was found. </returns>
+        public bool RemoveElement(OscAddressElement element)
         {
             if (_contents.Contains(element))
             {
                 _contents.Remove(element);
                 RefreshNames();
 
-                element.ChangeAddress(OscString.NullString);
+                element.ChangeParent(null);
+
+                return true;
             }
+
+            return false;
 
         }
 
@@ -119,20 +123,35 @@ namespace OscLib
         /// <summary>
         /// Removes an address element with the specified name from this container, if it's inside this container.
         /// </summary>
-        /// <param name="elementName"></param>
-        public void RemoveElement(OscString elementName)
+        /// <returns> True if an element was removed, false if nothing was found. </returns>
+        public bool RemoveElement(OscString elementName)
         {
             if (_contentsNames.ContainsKey(elementName))
             {
+                _contents[_contentsNames[elementName]].ChangeParent(null);
                 _contents.RemoveAt(_contentsNames[elementName]);
+
                 RefreshNames();
-            }    
+
+                return true;
+            }
+
+            return false;
 
         }
 
 
         /// <summary>
-        /// Checks if container contains an address element with the provided name (or adhering to the provided pattern).
+        /// Checks if this Container contains the specified address element.
+        /// </summary>
+        public bool ContainsElement(OscAddressElement element)
+        {
+            return _contents.Contains(element);
+        }
+
+
+        /// <summary>
+        /// Checks if this Container contains an OSC Address Element with the provided name (or matching the provided pattern).
         /// </summary>
         public bool ContainsElement(OscString pattern)
         {           
@@ -162,7 +181,7 @@ namespace OscLib
         /// <summary>
         /// Returns an array of elements in this container that match the specified pattern.
         /// </summary>
-        public List<OscAddressElement> GetElements(OscString pattern)
+        public virtual List<OscAddressElement> GetElements(OscString pattern)
         {
             List<OscAddressElement> list = new List<OscAddressElement>(_contents.Count);
 
@@ -192,20 +211,6 @@ namespace OscLib
                 _contentsNames.Add(_contents[i].Name, i);
             }
 
-        }
-
-        /// <summary>
-        /// Changes the 
-        /// </summary>
-        /// <param name="newAddress"></param>
-        internal override void ChangeAddress(OscString newAddress)
-        {
-            _address = newAddress;
-
-            for (int i = 0; i < _contents.Count; i++)
-            {
-                _contents[i].ChangeAddress(_address + _name + "/");
-            }
         }
 
 

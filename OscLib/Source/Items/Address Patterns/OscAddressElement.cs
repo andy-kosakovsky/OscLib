@@ -12,25 +12,17 @@ namespace OscLib
     /// </summary>
     public abstract class OscAddressElement
     {
-        /// <summary>
-        /// The name of this element.
-        /// </summary>
+        /// <summary> The name of this element. </summary>
         protected readonly OscString _name;
 
-        /// <summary>
-        /// The address of this element within the encompassing OSC Address Space.
-        /// </summary>
-        protected OscString _address;
+        /// <summary> The parent element of this element within the encompassing OSC Address Space. </summary>
+        protected OscAddressElement _parent;
 
-        /// <summary>
-        /// The name of this element. 
-        /// </summary>
+        /// <summary> The name of this element. </summary>
         public OscString Name { get => _name; }
 
-        /// <summary>
-        /// The address of this element within the encompassing OSC Address Space.
-        /// </summary>
-        public OscString Address { get => _address; }
+        /// <summary> The parent element of this element within the encompassing OSC Address Space. </summary>
+        public OscAddressElement Parent { get => _parent; }
 
 
         /// <summary>
@@ -38,7 +30,7 @@ namespace OscLib
         /// </summary>
         /// <param name="name"> Name of this element. Can't contain reserved symbols or symbols involved in pattern-matching - no need to start it with a "/". </param>
         /// <exception cref="ArgumentException"> Thrown when name does contain reserved symbols. Pls no, thx. </exception>
-        internal OscAddressElement(OscString name)
+        public OscAddressElement(OscString name)
         {
             if (OscString.IsNullOrEmpty(name))
             {
@@ -51,7 +43,7 @@ namespace OscLib
             }
 
             _name = name;
-            _address = OscString.NullString;
+            _parent = null;
         }
 
 
@@ -65,9 +57,32 @@ namespace OscLib
         }
 
 
-        internal virtual void ChangeAddress(OscString newAddress)
+        internal void ChangeParent(OscAddressElement newParent)
         {
-            _address = newAddress;
+            _parent = newParent;
+        }
+
+
+        /// <summary>
+        /// Returns the address of this element within the encompassing Address Space.
+        /// </summary>
+        /// <returns></returns>
+        public OscString GetAddress()
+        {
+            List<OscString> nameList = new List<OscString>();
+
+            OscAddressElement currentElement = this;
+
+            while (currentElement != null)
+            {
+                nameList.Add('/' + currentElement.Name);
+                currentElement = currentElement.Parent;
+            }
+
+            nameList.Reverse();
+
+            return new OscString(nameList.ToArray());
+
         }
 
     }
