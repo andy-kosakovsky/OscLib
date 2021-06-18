@@ -14,18 +14,15 @@ namespace OscLib
     /// </summary>
     public class OscAddressSpace
     {
-        
         /// <summary> The default name of the root container. </summary>
         public const string RootContainerName = "root";
 
+        #region FIELDS
         /// <summary> The name for this Address Space. </summary>
         protected readonly string _name;
 
         /// <summary> The root container, from which the rest of this Address Space stems. </summary>
         protected OscContainer _root;
-
-        /// <summary> The depth of the deepest element within the Address Space. </summary>
-        protected int _maxDepth;
 
         /// <summary> Controls access to the elements of this Address Space when adding/removing addresses. </summary>
         protected Mutex _addressSpaceAccess;
@@ -36,14 +33,18 @@ namespace OscLib
         /// <summary> Controls access to the list of connected OSC Receivers. </summary>
         protected Mutex _receiversAccess;
 
+        #endregion // FIELDS
+
+
+        #region PROPERTIES
         /// <summary> The root container, from which the rest of this Address Space stems. </summary>
         public OscContainer Root { get => _root; }
 
         /// <summary> The name for this Address Space. </summary>
         public string Name { get => _name; }
 
-        /// <summary> The depth of the deepest element within the Address Space. </summary>
-        public int MaxDepth { get => _maxDepth; }
+        #endregion // PROPERTIES
+
 
         /// <summary>
         /// Creates a new OSC Address Space.
@@ -58,8 +59,8 @@ namespace OscLib
             _receiversAccess = new Mutex();
         }
 
-        #region CONNECTIONS
 
+        #region CONNECTIONS
         /// <summary>
         /// Connects this Address Space to an OSC Receiver.
         /// </summary>
@@ -128,7 +129,7 @@ namespace OscLib
 
         #region RECEIVING AND PROCESSING
         /// <summary>
-        /// Processes an incoming bundle. Also invoked when a connected OSC Receiver receives bundles.
+        /// Processes an incoming bundle. Also invoked when one of the connected OSC Receivers receives a bundle.
         /// </summary>
         /// <param name="bundle"> OSC Bundle to process. </param>
         /// <param name="receivedFrom"> The IP end point from which the bundle was received. </param>
@@ -161,7 +162,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Processes an incoming message. Also invoked when a connected OSC Link receives a message.
+        /// Processes an incoming message. Also invoked when one of the connected OSC Receivers receives a message.
         /// </summary>
         /// <param name="message"> An OSC message to process. </param>
         /// <param name="receivedFrom"> The IP end point from which the message was received. </param>
@@ -176,6 +177,7 @@ namespace OscLib
             {
                 _addressSpaceAccess.ReleaseMutex();
             }
+
         }
 
 
@@ -215,8 +217,10 @@ namespace OscLib
                 return false;
             }
 
-            MatchAndPerform(elementNames, false, InvokeMethod);             
+            MatchAndPerform(elementNames, false, InvokeMethod);  
+            
         }
+
         #endregion // RECEIVING AND PROCESSING
 
 
@@ -238,16 +242,15 @@ namespace OscLib
         /// The OSC Method to which the handler method was added, or null if there is already an OSC Container present at the address and 
         /// it was not possible to add the handler method.
         /// </returns>
-        /// <exception cref="ArgumentException"> Thrown when the address pattern is invalid. </exception>
-        /// <exception cref="ArgumentNullException"> Thrown when the event handler is null. </exception>
+        /// <exception cref="ArgumentNullException"> Thrown one of the parameters is null or empty. </exception>
         /// <exception cref="InvalidOperationException"> Thrown when there is a non-container element in the address path. </exception>
         public OscMethod AddHandlerToMethod(OscString address, OscMethodEventHandler handler)
         {
             OscMethod added = null;
 
-            if (OscString.IsNullOrEmpty(address))
+            if (address.IsNullOrEmpty())
             {
-                throw new ArgumentException("OSC Address Space ERROR: Cannot add method, address pattern is invalid.");
+                throw new ArgumentNullException(nameof(address));
             }
 
             if (handler == null)
@@ -289,6 +292,7 @@ namespace OscLib
             {
                 _addressSpaceAccess.WaitOne();
                 added = AddElementAndPerform(pattern, HandleTheHandler) as OscMethod;
+
             }
             finally
             {
@@ -300,6 +304,17 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Creates a new OSC Method and adds it to the specified address, or returns the OSC Method that already exists at that address.
+        /// </summary>
+        /// <param name="address"> The address to which the OSC Method should be added. Shouldn't contain any pattern-matching or reserved symbols except for separators. </param>
+        /// <returns> 
+        /// The OSC Method to which the handler method was added, or null if there is already an OSC Container present at the address and 
+        /// it was not possible to add the handler method.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"> Thrown one of the parameters is null or empty. </exception>
+        /// <exception cref="InvalidOperationException"> Thrown when there is a non-container element in the address path - that is, 
+        /// attempting to add elements to a non-container element. </exception>
         public OscMethod AddMethod(OscString address)
         {
             OscMethod added = null;
@@ -311,6 +326,7 @@ namespace OscLib
             
             OscString[] pattern = address.Split(OscProtocol.Separator);
 
+            // internal method
             OscAddressElement MethodPlease(OscAddressElement element)
             {
                 OscMethod method = null;
@@ -336,6 +352,7 @@ namespace OscLib
             {
                 _addressSpaceAccess.WaitOne();
                 added = AddElementAndPerform(pattern, MethodPlease) as OscMethod;
+
             }
             finally
             {
@@ -356,14 +373,16 @@ namespace OscLib
         /// The added container, or the existing container at the specified address (if one exists already), 
         /// or null if there is already an OSC Method at the specified address instead. 
         /// </returns>
-        /// <exception cref="ArgumentException"> Thrown when the address pattern is invalid. </exception>
+        /// <exception cref="ArgumentNullException"> Thrown one of the parameters is null or empty. </exception>
+        /// <exception cref="InvalidOperationException"> Thrown when there is a non-container element in the address path - that is, 
+        /// attempting to add elements to a non-container element. </exception>
         public OscContainer AddContainer(OscString address)
         {
             OscContainer added = null;
 
             if (address.IsNullOrEmpty())
             {
-                throw new ArgumentException("OSC Receiver ERROR: Can't add container, address pattern is invalid.");
+                throw new ArgumentException("OSC Address Space ERROR: Can't add container, address pattern is invalid.");
             }
 
             // get the address pattern and check it for any crap we don't need
@@ -395,6 +414,7 @@ namespace OscLib
             {
                 _addressSpaceAccess.WaitOne();
                 added = AddElementAndPerform(pattern, ShinyNewContainer) as OscContainer;
+
             }
             finally
             {
@@ -407,12 +427,12 @@ namespace OscLib
 
 
         /// <summary>
-        /// Looks for an element that corresponds to the provided address and retrieves it.
+        /// Looks for an element at the specified address and retrieves it.
         /// If the address is a pattern, the first element that's matched to it will be retrieved.
         /// </summary>
         /// <param name="address"> The full address of the element. </param>
-        /// <returns> An OSC Address Element corresponding to the provided address pattern, or null if nothing's been found. </returns>
-        public OscAddressElement GetElement(OscString address)
+        /// <returns> The OSC Address Element corresponding to the provided address pattern, or null if nothing's been found. </returns>
+        public OscAddressElement GetElementByAddress(OscString address)
         {
             OscAddressElement returnElement = null;
 
@@ -443,21 +463,38 @@ namespace OscLib
         /// <summary>
         /// Looks for an element with the specified name, retrieves the first one that matches.
         /// </summary>
-        /// <param name="name"> The address element's name. </param>
-        /// <param name="fullAddress"> Returns the full address of the matching element. </param>
-        /// <returns> The OSC Address Element with a matching name. </returns>
-        public OscAddressElement GetElementByName(OscString name, out OscString fullAddress)
+        /// <param name="name"> The element's name. </param>
+        /// <returns> The OSC Address Element with a matching name, or null if nothing's been found. </returns>
+        public OscAddressElement GetElementByName(OscString name)
         {
-            throw new NotImplementedException();
+            OscAddressElement returnElement = null;
+
+            bool Gotcha(OscAddressElement element)
+            {
+                returnElement = element;
+                return true;
+            }
+
+            try
+            {
+                _addressSpaceAccess.WaitOne();
+                SearchAndPerform(name, true, Gotcha);
+            }
+            finally
+            {
+                _addressSpaceAccess.ReleaseMutex();
+            }
+
+            return returnElement;
+
         }
 
 
         /// <summary>
-        /// Looks for elements that match the provided pattern, returns them as a list.
+        /// Looks for elements with addresses that match the provided pattern, returns them as a list.
         /// </summary>
-        /// <param name="pattern"></param>
-        /// <returns></returns>
-        public List<OscAddressElement> GetElements(OscString pattern)
+        /// <returns> A list of matching Address Elements. </returns>
+        public List<OscAddressElement> GetElementsByAddress(OscString pattern)
         {
             List<OscAddressElement> returnList = new List<OscAddressElement>();
 
@@ -485,36 +522,157 @@ namespace OscLib
 
 
         /// <summary>
-        /// Removes all elements matching to the provided address pattern from this Address Space. 
+        /// Looks for elements with names that match the provided pattern, returns them as a list. 
         /// </summary>
-        /// <param name="addressPattern"></param>
-        public void MatchAndRemove(OscString addressPattern)
+        /// <param name="namePattern"></param>
+        /// <returns> A list of found Address Elements. </returns>
+        public List<OscAddressElement> GetElementsByName(OscString namePattern)
         {
-            if (OscString.IsNullOrEmpty(addressPattern))
+            List<OscAddressElement> returnList = new List<OscAddressElement>();
+
+            bool Gotcha(OscAddressElement element)
             {
-                throw new ArgumentException("OSC Receiver ERROR: Can't remove address, address pattern is invalid.");
+                returnList.Add(element);
+                return true;
             }
 
-            OscString[] elementNames = addressPattern.Split(OscProtocol.Separator);
+            try
+            {
+                _addressSpaceAccess.WaitOne();
+                SearchAndPerform(namePattern, false, Gotcha);
+            }
+            finally
+            {
+                _addressSpaceAccess.ReleaseMutex();
+            }
+
+            return returnList;
+            
+        }
+
+
+        /// <summary>
+        /// Removes the specified element from the Address Space, provided it's there to begin with. 
+        /// </summary>
+        /// <param name="targetElement"> The element to remove. </param>
+        /// <returns> Whether the element was found and removed. </returns>
+        public bool RemoveElement(OscAddressElement targetElement)
+        {
+            bool greatSuccess = false;
+
+            if (targetElement == null)
+            {
+                throw new ArgumentNullException(nameof(targetElement));
+            }
+
+            OscString[] pattern = targetElement.GetAddress().Split(OscProtocol.Separator);
 
             bool Remove(OscAddressElement element)
             {
-                if (element.Parent is OscContainer parent)
+                if (element == targetElement)
                 {
-                    return parent.RemoveElement(element);
+                    greatSuccess = element.Parent.RemoveElement(element);
                 }
                 else
                 {
-                    return false;
+                    greatSuccess = false;
                 }
+
+                return greatSuccess;
 
             }
 
             try
             {
                 _addressSpaceAccess.WaitOne();
+                MatchAndPerform(pattern, true, Remove);
+            }
+            finally
+            {
+                _addressSpaceAccess.ReleaseMutex();
+            }
 
-                MatchAndPerform(elementNames, false, Remove);       
+            return greatSuccess;
+
+        }
+
+
+        /// <summary>
+        /// Searches for elements with names matching the provided name pattern, removes them from this Address Space.
+        /// </summary>
+        /// <returns> The total number of removed elements. </returns>
+        public int RemoveElementsByName(OscString namePattern)
+        {
+            int total = 0;
+
+            if (OscString.IsNullOrEmpty(namePattern))
+            {
+                throw new ArgumentNullException(nameof(namePattern));
+            }
+
+            bool Remove(OscAddressElement element)
+            {
+                if (element.Parent.RemoveElement(element))
+                {
+                    total++;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+                
+            }
+
+            try
+            {
+                _addressSpaceAccess.WaitOne();
+
+                SearchAndPerform(namePattern, false, Remove);
+            }
+            finally
+            {
+                _addressSpaceAccess.ReleaseMutex();
+            }
+
+            return total;
+
+        }
+
+
+        /// <summary>
+        /// Removes all elements with addresses matching the provided address pattern from this Address Space. 
+        /// </summary>
+        /// <returns> The total number of removed elements. </returns>
+        public int RemoveElementsByAddress(OscString addressPattern)
+        {
+            int total = 0;
+
+            if (OscString.IsNullOrEmpty(addressPattern))
+            {
+                throw new ArgumentNullException(nameof(addressPattern));
+            }
+
+            OscString[] elementNames = addressPattern.Split(OscProtocol.Separator);
+
+            bool Remove(OscAddressElement element)
+            {
+                if (element.Parent.RemoveElement(element))
+                {
+                    total++;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            try
+            {
+                _addressSpaceAccess.WaitOne();
+
+                MatchAndPerform(elementNames, false, Remove);
 
             }
             finally
@@ -522,7 +680,64 @@ namespace OscLib
                 _addressSpaceAccess.ReleaseMutex();
             }
 
+            return total;
+
         }
+
+
+        /// <summary>
+        /// Returns the depth of the deepest element of this Address Space.
+        /// </summary>
+        public int GetMaxDepth()
+        {
+            int maxDepth = 1;
+            int currentDepth = 1;
+
+            OscContainer saveParent = _root;
+
+            bool CheckDepth(OscAddressElement element)
+            {
+                if ((element is OscContainer container) && (container.Length > 0))
+                {
+                    currentDepth++;
+
+                    if (currentDepth > maxDepth)
+                    {
+                        maxDepth = currentDepth;
+                    }
+
+                    saveParent = container.Parent;
+
+                    return true;
+                }
+
+                // means we're out of the previous container
+                if (element.Parent != saveParent)
+                {
+                    currentDepth--;
+                    saveParent = element.Parent;
+                }
+
+                return true;
+
+            }
+
+            try
+            {
+                _addressSpaceAccess.WaitOne();
+
+                SearchAndPerform("*", false, CheckDepth);
+
+            }
+            finally
+            {
+                _addressSpaceAccess.ReleaseMutex();
+            }
+
+            return maxDepth;
+
+        }
+
         #endregion // ELEMENT MANAGEMENT
 
 
@@ -534,7 +749,7 @@ namespace OscLib
         /// <param name="performOnlyOnce"> Whether the function will only be performed on the first eligible element. </param>
         /// <param name="function"> The function to perform: 
         /// <para> -- takes one parameter (the Address Element that matches the pattern); </para>
-        /// <para> -- returns a boolean (whether the function could be performed on the provided Address Elementwas successful). </para> </param>
+        /// <para> -- returns a boolean (whether the function could besuccessfully performed on the provided Address Element). </para> </param>
         protected void MatchAndPerform(OscString[] elementNames, bool performOnlyOnce, Func<OscAddressElement, bool> function)
         {
             // the layer of the pattern that contains the important name
@@ -584,9 +799,10 @@ namespace OscLib
                     }
                     else
                     {
-                        for (int j = 0; j < stack[currentLayer].Length; j++)
+                        // run in reverse, in case elements are moved around or removed as a result of the performed function
+                        for (int j = stack[currentLayer].Length - 1; j >= 0; j--)
                         {
-                            // perform the Action(tm) if the element is a method and adheres to the pattern
+                            // perform the Function(tm) if the element adheres to the pattern
                             if (stack[currentLayer][j].Name.PatternMatch(elementNames[currentLayer]))
                             {
                                 if (function(stack[currentLayer][j]))
@@ -677,33 +893,93 @@ namespace OscLib
         /// <summary>
         /// Searches the Address Space for elements that match the provided name, performs the provided function on the matching elements.
         /// </summary>
-        /// <param name="elementName"></param>
-        /// <param name="performOnlyOnce"></param>
-        /// <param name="function"></param>
-        protected void SearchAndPerform(OscString elementName, bool performOnlyOnce, Func<OscAddressElement, bool> function)
+        /// <param name="namePattern"> The name pattern to match against element names. </param>
+        /// <param name="performOnlyOnce"> Whether the function will only be performed on the first eligible element. </param>
+        /// <param name="function"> The function to perform: 
+        /// <para> -- takes one parameter (the Address Element whose name matches the pattern); </para>
+        /// <para> -- returns a boolean (whether the function could besuccessfully performed on the provided Address Element). </para></param>
+        protected void SearchAndPerform(OscString namePattern, bool performOnlyOnce, Func<OscAddressElement, bool> function)
         {
-            
+            OscContainer currentContainer = _root;
+            int currentDepth = 1;
+            int currentIndex = currentContainer.Length - 1;
+
+            if (namePattern.IsNullOrEmpty() || namePattern.ContainsSpecialChars())
+            {
+                throw new ArgumentException("OSC Address Space ERROR: Cannot perform search, provided name pattern is invalid. ");
+            }
+
+            while (currentDepth > 0)
+            {
+                if (currentContainer == null)
+                {
+                    break;
+                }
+
+                // check if we're within the limits still, move up if not
+                if (currentIndex < 0)
+                {
+                    currentDepth--;
+
+                    if (currentContainer.Parent != null)
+                    {
+                        currentIndex = currentContainer.Parent.GetElementIndex(currentContainer) - 1;
+                    }
+
+                    currentContainer = currentContainer.Parent;
+
+                    continue;
+                }
+
+                // perform the function on the current element
+                OscAddressElement currentElement = currentContainer[currentIndex];
+                currentIndex--;
+
+                if (currentElement.Name.PatternMatch(namePattern))
+                {
+                    if (function(currentElement) && performOnlyOnce)
+                    {
+                        break;
+                    }
+
+                }
+
+                // check if current element still exists (in case it's got removed by the function); if it does check if it's a container; if it is enter it
+                if (currentContainer.ContainsElement(currentElement))
+                {
+                    if ((currentElement is OscContainer newContainer) && (newContainer.Length > 0))
+                    {
+                        currentDepth++;
+                        currentContainer = newContainer;
+                        currentIndex = currentContainer.Length - 1;
+                    }
+
+                }           
+
+            }
+
         }
 
 
         /// <summary>
-        /// Adds an element to the provided address (adding containers as needed if need be) and does stuff to it, all via the provided function.  
+        /// Adds an element to the provided address (adding containers as needed if need be) and does stuff to it, all via the provided function. 
         /// </summary>
         /// <param name="elementNames"> An array of OSC Address Element names that make up an address pattern. The last name will be that of the target element. </param>
         /// <param name="function"> This function will be performed when the method reaches the final container and assesses whether it contains the target element. 
-        /// One of the following two things will happen at this point:
+        /// One of the following two things will happen at this point (the function should be able to tell which of these two scenarios is occuring by the fact that it will be passed a null in the second one):
         /// <para> 
         /// 1. If that container does contain the element with the target name, the function will take it as an argument and will Do Stuff to it. 
         /// </para>
         /// <para> 
         /// 2. If that container doesn't contain the element, the function will create a new element, then Do Stuff to it, then add it to the container.
-        /// The function should be able to tell which of these two scenarios is occuring by the fact that it will be passed a null in the second one.
         /// </para>
-        /// If the function wass unsuccessful in its performance, it should return null itself. </param>
+        /// If the function wass unsuccessful in its performance, it should return a null itself. </param>
+        /// <exception cref="ArgumentException"> Thrown when one of element names contains special symbols. </exception>
+        /// <exception cref="InvalidOperationException"> Thrown when there is a non-container element in the address path - that is, attempting to add elements to a non-container element. </exception>
         /// <returns> The element it added, or null if it was unsuccessful. </returns>
         protected OscAddressElement AddElementAndPerform(OscString[] elementNames, Func<OscAddressElement, OscAddressElement> function)
         {
-            
+
             OscContainer currentContainer = _root;
 
             OscAddressElement added = null;
@@ -748,7 +1024,7 @@ namespace OscLib
                     }
                     else
                     {
-                        added = function(currentContainer[elementNames[i]]);
+                        added = function(currentContainer[elementNames[i]]);                     
                     }
 
                 }
@@ -760,7 +1036,6 @@ namespace OscLib
         }
 
         #endregion
-
 
 
         /// <summary>
@@ -799,7 +1074,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Prints the entire OSC Address Space as an address tree. 
+        /// Prints the entire OSC Address Space formatted as an address tree. 
         /// </summary>
         /// <returns></returns>
         public string PrintAddressTree()
@@ -818,18 +1093,22 @@ namespace OscLib
                 currentPath.Add(_root);
                 indices.Add(0);
 
-                returnString.Append("ROOT (");
-                returnString.Append(_root.Length);
-                returnString.Append(')');
                 returnString.Append('\n');
-
+                returnString.Append(_root.ToString());
+                returnString.Append('\n');
 
                 while (currentLayer >= 0)
                 {
                     // index of -1 for the current layer indicates that we're done with this particular layer and can safely go back
                     if (indices[currentLayer] >= currentPath[currentLayer].Length)
                     {
+                        // append the spaces to designate the current depth
+                        returnString.Append(OscUtil.GetRepeatingChar(' ', (currentLayer) * 4));
+                        returnString.Append("----End of ");
+                        returnString.Append(currentPath[currentLayer].Name);
                         returnString.Append('\n');
+                        returnString.Append('\n');
+
                         indices.RemoveAt(currentLayer);
                         currentPath.RemoveAt(currentLayer);
                         currentLayer--;
@@ -866,6 +1145,7 @@ namespace OscLib
             }
 
             return returnString.ToString();
+
         }
 
     }

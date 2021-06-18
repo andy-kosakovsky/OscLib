@@ -6,9 +6,6 @@ namespace OscLib
 {
     /// <summary>
     /// A base class for representing elements of OSC Address Spaces.
-    /// <remarks>
-    /// The idea is that this class and its derivatives would only be used in conjunction with the OscAddressSpace class. 
-    /// </remarks>
     /// </summary>
     public abstract class OscAddressElement
     {
@@ -16,21 +13,22 @@ namespace OscLib
         protected readonly OscString _name;
 
         /// <summary> The parent element of this element within the encompassing OSC Address Space. </summary>
-        protected OscAddressElement _parent;
+        protected OscContainer _parent;
 
         /// <summary> The name of this element. </summary>
         public OscString Name { get => _name; }
 
         /// <summary> The parent element of this element within the encompassing OSC Address Space. </summary>
-        public OscAddressElement Parent { get => _parent; }
+        public OscContainer Parent { get => _parent; }
 
 
         /// <summary>
         /// Creates a new address element.
         /// </summary>
         /// <param name="name"> Name of this element. Can't contain reserved symbols or symbols involved in pattern-matching - no need to start it with a "/". </param>
-        /// <exception cref="ArgumentException"> Thrown when name does contain reserved symbols. Pls no, thx. </exception>
-        public OscAddressElement(OscString name)
+        /// <exception cref="ArgumentNullException"> Thrown when the provided name is null or empty. </exception>
+        /// <exception cref="ArgumentException"> Thrown when the name does contain reserved symbols. Pls no, thx. </exception>
+        internal OscAddressElement(OscString name)
         {
             if (OscString.IsNullOrEmpty(name))
             {
@@ -57,7 +55,7 @@ namespace OscLib
         }
 
 
-        internal void ChangeParent(OscAddressElement newParent)
+        internal virtual void ChangeParent(OscContainer newParent)
         {
             _parent = newParent;
         }
@@ -78,6 +76,9 @@ namespace OscLib
                 nameList.Add('/' + currentElement.Name);
                 currentElement = currentElement.Parent;
             }
+
+            // remove last element - it'll just be the root container anyway
+            nameList.RemoveAt(nameList.Count - 1);
 
             nameList.Reverse();
 

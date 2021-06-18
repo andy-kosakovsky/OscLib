@@ -26,7 +26,6 @@ namespace OscLib
 
 
         #region ADDING BYTES OF WHOLE MESSAGES / BUNDLES
-
         /// <summary>
         /// Serializes the provided OSC Message into byte data, adds it to the provided byte array.
         /// </summary>
@@ -106,9 +105,7 @@ namespace OscLib
         #endregion // ADDING BYTES OF WHOLE MESSAGES / BUNDLES
 
 
-
         #region ADDING BYTE "CONTENTS"
-
         /// <summary>
         /// Orders the provided OSC Messages into a byte array of OSC Bundle "contents", adds it to the provided byte array starting from the provided pointer.
         /// </summary>
@@ -189,9 +186,7 @@ namespace OscLib
         #endregion // ADDING BYTE "CONTENTS"
 
 
-
         #region PACKET SERIALIZATION
-
         /// <summary>
         /// Converts the provided OSC Message into bytes and packs them into an OSC Packet. 
         /// </summary>
@@ -287,9 +282,7 @@ namespace OscLib
         #endregion // PACKET SERIALIZATION
 
 
-
         #region PACKET DESERIALIZATION
-
         /// <summary>
         /// Deserializes a single OSC message from the byte array, using an external pointer to navigate it (subject to there being an OSC Message at the pointer's initial position, of course).
         /// </summary>
@@ -348,7 +341,7 @@ namespace OscLib
             // if address pattern's length is unknown at this point, something's gone very wrong
             if (addressPatternLength < 0)
             {
-                throw new InvalidOperationException("OSC Deserializer ERROR: OSC Message address pattern couldn't be parsed. ");
+                throw new InvalidOperationException("OSC Converter ERROR: OSC Message address pattern couldn't be parsed. ");
             }
             else
             {
@@ -398,7 +391,7 @@ namespace OscLib
                         
                         if (extPointer > msgStart + length)
                         {
-                            throw new InvalidOperationException("OSC Deserializer ERROR: Pointer went beyond the end of message. ");
+                            throw new InvalidOperationException("OSC Converter ERROR: Pointer went beyond the end of message. ");
                         }
 
                     }
@@ -451,7 +444,7 @@ namespace OscLib
 
             if (data[bndStart] != OscProtocol.BundleMarker)
             {
-                throw new ArgumentException("OSC Deserializer ERROR: Cannot deserialize OSC bundle, provided byte array is invalid.");
+                throw new ArgumentException("OSC Converter ERROR: Cannot get OSC Bundle, provided byte array is invalid.");
             }
 
             // let's skip the "#bundle" bit
@@ -563,6 +556,139 @@ namespace OscLib
             return GetBundle(oscPacket.GetBytes());
         }
 
+
+        /// <summary>
+        /// Ex
+        /// </summary>
+        /// <param name="binaryData"> Byte array containing at least one bundle. </param>
+        /// <returns> An array of readable OSC bundles. </returns>
+        public OscBundle[] GetBundles(byte[] data)
+        {
+            if (data[0] != OscProtocol.BundleMarker)
+            {
+                throw new ArgumentException("OSC Deserializer ERROR: Cannot deserialize OSC bundle, provided byte array is invalid.");
+            }
+
+            // if bundle has less than one element in it, we can just return it now. This should show up as binaryData being less or equal in length 
+            // to the smallest possible bundle length - bundle designator + timestamp. 
+            if (data.Length <= OscBundle.BundleHeaderLength)
+            {
+                // get timestamp
+                OscTimetag timetag = OscDeserializer.GetTimetag(data, 8);
+
+                return new OscBundle[1] { new OscBundle(timetag) };
+
+            }
+
+            // get a quick tally of bundles currently present in the data
+            int bundlesTotal = 0;
+            int pointer = 0;
+
+            while (pointer < data.Length)
+            {
+                if (data[pointer] == OscProtocol.BundleMarker)
+                {
+                    bundlesTotal++;
+
+                    // nothing interesting will be contained in the next 16 bytes
+                    pointer += OscBundle.BundleHeaderLength;
+                }
+                else
+                {
+                    // this should catch the very first address separator in an address string - the others will be jumped over
+                    if (data[pointer] == OscProtocol.Separator)
+                    {
+                        // we got a message, so lets jump over it - there won't be any bundles within it
+                        // get length of the message - it should be contained in 4 bytes before the current position
+                        pointer += OscDeserializer.GetInt32(data, pointer - OscProtocol.Chunk32);
+                    }
+                    else
+                    {
+                        pointer += OscProtocol.Chunk32;
+                    }
+
+                }
+
+            }
+
+            // allocate a temporary array for keeping track of layers of bundled bundles
+            OscTimetag[] timetagStack = new OscTimetag[bundlesTotal];
+
+            // an array into which we'll be storing all the bundles
+            OscBundle[] bundleArray = new OscBundle[bundlesTotal];
+
+            // get past the "#bundle " bit in the beginning
+            pointer = 8;
+
+            int currentTimetag = 0;
+
+            // get the first timetag
+            timetagStack[currentTimetag] = OscDeserializer.GetTimetag(data, ref pointer);
+
+            int bundleIndex = 0;
+
+            // the recursive horror that will extract the bundles. hidden away inside this method to hopefully avoid the shame of it
+            void GetBundleRecursive(int length, ref int externalPointer, byte[] binaryData, OscBundle[] bndArray, ref int currentBundleIndex, OscTimetag[] timestampStack, ref int currentTimestampIndex)
+            {
+                int thisBundleIndex = currentBundleIndex;
+
+                int start = externalPointer - OscBundle.BundleHeaderLength;
+
+                // change later to remove the list and use something more memory-friendly
+                List<OscMessage> messageList = new List<OscMessage>(8);
+
+                while (externalPointer < start + length)
+                {
+                    // get a length of an element
+                    int elementLength = OscDeserializer.GetInt32(binaryData, ref externalPointer);
+
+                    // check if it's a bundle or a message
+                    if (binaryData[externalPointer] == OscProtocol.Separator)
+                    {
+                        messageList.Add(GetMessage(binaryData, ref externalPointer, elementLength));
+                    }
+                    else if (binaryData[externalPointer] == OscProtocol.BundleMarker)
+                    {
+                        // shift external pointer forward
+                        externalPointer += OscBundle.MarkerStringLength;
+
+                        // get timestamp
+                        OscTimetag timestamp = OscDeserializer.GetTimetag(binaryData, ref externalPointer);
+
+                        // check if the bundle's timestamp is later than the enveloping bundle's timestamp
+                        if (timestampStack[currentTimestampIndex].Ticks <= timestamp.Ticks)
+                        {
+                            currentTimestampIndex++;
+                            currentBundleIndex++;
+
+                            timestampStack[currentTimestampIndex] = timestamp;
+
+                            GetBundleRecursive(elementLength, ref externalPointer, binaryData, bndArray, ref currentBundleIndex, timestampStack, ref currentTimestampIndex);
+
+                            // go back one timestamp
+                            currentTimestampIndex--;
+                        }
+                        else
+                        {
+                            // discard the bundle
+                            externalPointer += elementLength;
+                        }
+
+                    }
+
+                }
+
+                bndArray[thisBundleIndex] = new OscBundle(timestampStack[currentTimestampIndex], messageList.ToArray());
+
+            }
+
+            // start the recursive horror
+            GetBundleRecursive(data.Length, ref pointer, data, bundleArray, ref bundleIndex, timetagStack, ref currentTimetag);
+
+            return bundleArray;
+
+        }
+
         #endregion
 
 
@@ -601,6 +727,7 @@ namespace OscLib
             return length;
         }
 
+
         /// <summary>
         /// Calculates the byte length of the provided OSC Bundle according to this OSC Protocol implementation's specifics.
         /// </summary>
@@ -634,7 +761,6 @@ namespace OscLib
 
 
         #region ABSTRACT/VIRTUAL METHODS
-
         // the idea is to have the specific behaviour of these methods be defined in the derived classes - depending on how the target implements OSC Protocol
 
         /// <summary>
@@ -690,15 +816,10 @@ namespace OscLib
         /// <returns></returns>
         protected abstract object BytesToArg(byte[] array, ref int extPointer, byte typeTag);
 
-
         #endregion // ABSTRACT METHODS
 
 
-
         #region STATIC METHODS
-
-        #region ADDING BUNDLE HEADERS
-
         /// <summary>
         /// Adds a bundle header to the target byte array, starting from the specified index. Tags it with the "execute immediately" timetag.
         /// </summary>
@@ -728,8 +849,6 @@ namespace OscLib
             OscBundle.CopyMarkerStringTo(target, index);
             OscSerializer.AddBytes(timetag, target, index + OscProtocol.Chunk64);
         }
-
-        #endregion // ADDING BUNDLE HEADERS
 
         #endregion // STATIC METHODS
 

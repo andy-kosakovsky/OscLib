@@ -38,7 +38,7 @@ namespace OscLib
         /// </summary>
         /// <param name="name"> The name of the OSC Method. Shouldn't contain reserved symbols, not even the "/" in the beginning. </param>
         /// <exception cref="ArgumentNullException"> Thrown when the provided delegate is null. </exception>
-        public OscMethod(OscString name)
+        internal OscMethod(OscString name)
             :base(name)
         {
   

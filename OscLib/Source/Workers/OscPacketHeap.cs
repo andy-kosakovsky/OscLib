@@ -26,10 +26,10 @@ namespace OscLib
         /// <summary> The total amount of priority levels in this Packet Heap. </summary>
         protected int _heapTotalLayers;
 
-        /// <summary> The time between heap checks, in milliseconds - that is, how . Shoudln't be less than 1. </summary>
+        /// <summary> The time between heap checks, in milliseconds. Shoudln't be less than 1. </summary>
         protected int _cycleLengthMs;
 
-        /// <summary> Should this Sender bundle the packets before sending, or just send them as separate messages as they come. </summary>
+        /// <summary> Should this Packet Heap bundle the packets before sending, or just send them as separate messages as they come. </summary>
         protected bool _bundlePacketsBeforeSending;
 
         /// <summary> Whether this Sender is currently active. </summary>
@@ -39,7 +39,7 @@ namespace OscLib
         protected List<Packet>[] _heap;
 
         /// <summary> Used to facilitate orderly access to the packet heap. </summary>
-        protected Mutex _heapAccessMutex;
+        protected Mutex _heapAccess;
 
         /// <summary> Holds the binary data pertaining to the current heap check cycle. </summary>
         protected byte[] _cycleBinaryDataHolder;
@@ -110,13 +110,13 @@ namespace OscLib
                     try
                     {
                         // just to be safe, let's wait until cycle bundle data holder is not in use
-                        _heapAccessMutex.WaitOne();
+                        _heapAccess.WaitOne();
                         _packetBundleMaxSize = newLength;
                         _cycleBinaryDataHolder = new byte[_packetBundleMaxSize];
                     }
                     finally
                     {
-                        _heapAccessMutex.ReleaseMutex();
+                        _heapAccess.ReleaseMutex();
                     }
 
                 }
@@ -147,7 +147,7 @@ namespace OscLib
         /// <param name="bundlePacketsBefureSending"> Should this Sender bundle the packets before sending, or just send them as separate messages as they come. </param>
         public OscPacketHeap(int packetBundleMaxSize = 508, int cycleLengthMs = 1, int packetHeapTotalLayers = 1, bool bundlePacketsBefureSending = true)
         {
-            _heapAccessMutex = new Mutex();
+            _heapAccess = new Mutex();
             _packetBundleMaxSize = packetBundleMaxSize;
             _cycleBinaryDataHolder = new byte[_packetBundleMaxSize];
 
@@ -198,9 +198,9 @@ namespace OscLib
                 _heap[i] = new List<Packet>();
             }
 
-            _isActive = true;
-
             _heapTask = Task.Run(HeapProcessingCycle);
+
+            _isActive = true;
 
         }
 
@@ -291,12 +291,12 @@ namespace OscLib
             // finally, add data to heap
             try
             {
-                _heapAccessMutex.WaitOne();
+                _heapAccess.WaitOne();
                 _heap[priority].Insert(0, packet);
             }
             finally
             {
-                _heapAccessMutex.ReleaseMutex();
+                _heapAccess.ReleaseMutex();
             }
 
         }
@@ -334,7 +334,7 @@ namespace OscLib
             // finally, add data to heap
             try
             {
-                _heapAccessMutex.WaitOne();
+                _heapAccess.WaitOne();
                 _heap[priority].Add(packet);
             }
             catch (Exception e)
@@ -343,7 +343,7 @@ namespace OscLib
             }
             finally
             {
-                _heapAccessMutex.ReleaseMutex();
+                _heapAccess.ReleaseMutex();
             }
 
         }
@@ -380,7 +380,7 @@ namespace OscLib
                     {
                         try
                         {
-                            _heapAccessMutex.WaitOne();
+                            _heapAccess.WaitOne();
 
                             for (int i = 0; i <= highestPriority; i++)
                             {
@@ -401,7 +401,7 @@ namespace OscLib
                         }
                         finally
                         {
-                            _heapAccessMutex.ReleaseMutex();
+                            _heapAccess.ReleaseMutex();
 
                             await Task.Delay(_cycleLengthMs);
                         }
@@ -566,7 +566,7 @@ namespace OscLib
 
                 try
                 {
-                    _heapAccessMutex.WaitOne();
+                    _heapAccess.WaitOne();
 
                     for (int i = 0; i < _heapTotalLayers; i++)
                     {
@@ -580,7 +580,7 @@ namespace OscLib
                 }
                 finally
                 {
-                    _heapAccessMutex.ReleaseMutex();
+                    _heapAccess.ReleaseMutex();
                 }
 
             }

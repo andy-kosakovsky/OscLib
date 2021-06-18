@@ -9,10 +9,10 @@ namespace OscLib
     /// </summary>
     public readonly struct OscTimetag
     {   
-        /// <summary> This timetag represented as a NTP-compliant fixed-point 64 bit timestamp.
+        /// <summary> This timetag represented as a NTP-compliant fixed-point 64 bit timestamp. </summary>
         public readonly ulong NtpTimestamp;
 
-        /// <summary> This timetag represented as ticks - compatible with DateTime and TimeSpan classes, based on Coordinated Universal Time (UTC).
+        /// <summary> This timetag represented as ticks - compatible with DateTime and TimeSpan classes, based on Coordinated Universal Time (UTC). </summary>
         public readonly long Ticks;     
 
         /// <summary>

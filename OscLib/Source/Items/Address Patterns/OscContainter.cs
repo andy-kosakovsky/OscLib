@@ -72,7 +72,7 @@ namespace OscLib
         /// Creates a new OSC Container.
         /// </summary>
         /// <param name="name"> The name for this container. Note: no need to include a "/" symbol. </param>
-        public OscContainer(OscString name) 
+        internal OscContainer(OscString name) 
             :base(name)
         {
             _contentsNames = new Dictionary<OscString, int>();
@@ -96,6 +96,7 @@ namespace OscLib
             RefreshNames();
 
             element.ChangeParent(this);
+
         }
 
 
@@ -129,6 +130,7 @@ namespace OscLib
             if (_contentsNames.ContainsKey(elementName))
             {
                 _contents[_contentsNames[elementName]].ChangeParent(null);
+
                 _contents.RemoveAt(_contentsNames[elementName]);
 
                 RefreshNames();
@@ -137,6 +139,32 @@ namespace OscLib
             }
 
             return false;
+
+        }
+
+
+        /// <summary>
+        /// Removes all address elements whose names adhere to the provided pattern from this container.
+        /// </summary>
+        /// <returns> The total number of removed elements. </returns>
+        public int RemoveElements(OscString pattern)
+        {
+            int removed = 0;
+
+            for (int i = _contents.Count - 1; i >= 0; i--)
+            {
+                if (_contents[i].Name.PatternMatch(pattern))
+                {
+                    _contents[i].ChangeParent(null);
+
+                    _contents.RemoveAt(i);
+                    removed++;
+                }
+
+            }
+
+            RefreshNames();
+            return removed;
 
         }
 
@@ -195,6 +223,64 @@ namespace OscLib
             }
 
             return list;
+
+        }
+
+        /// <summary>
+        /// Returns an element with the specified name.
+        /// </summary>
+        /// <remarks> Pattern-matching won't work with this method - it will likely return a null. </remarks>
+        /// <param name="name"> The name of the element. </param>
+        /// <returns> The element with the specified name, or null if nothing was found. </returns>
+        public virtual OscAddressElement GetElement(OscString name)
+        {
+            if (_contentsNames.ContainsKey(name))
+            {
+                return _contents[_contentsNames[name]];
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+
+
+        /// <summary>
+        /// Returns the index of an element with the specified name.
+        /// </summary>
+        /// <remarks> Pattern-matching won't work with this method - it will likely return a negative. </remarks>
+        /// <param name="name"> The name of the element. </param>
+        /// <returns> The index of the element with the specified name in this container, or -1 if nothing was found. </returns>
+        public virtual int GetElementIndex(OscString name)
+        {
+            if (_contentsNames.ContainsKey(name))
+            {
+                return _contentsNames[name];
+            }
+            else
+            {
+                return -1;
+            }
+
+        }
+
+
+        /// <summary>
+        /// Returns the index of the specified element, if it's contained in this container.
+        /// </summary>
+        /// <remarks> This method will specificly look for the provided element - other elements with the same name don't count. </remarks>
+        /// <returns> The index of the element in this container, or -1 if nothing was found. </returns>
+        public virtual int GetElementIndex(OscAddressElement element)
+        {
+            if (_contents.Contains(element))
+            {
+                return _contentsNames[element.Name];
+            }
+            else
+            {
+                return -1;
+            }
 
         }
 
