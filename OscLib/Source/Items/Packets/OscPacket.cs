@@ -5,27 +5,27 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Represents a packet of OSC data that was serialized into bytes.
+    /// Represents a packet of OSC data serialized into bytes.
     /// </summary>
     /// <remarks>
     /// The basic purpose of this struct is to clearly designate a byte array as containing OSC binary data. 
-    /// Nothing more, nothing less - if a byte array is wrapped by this struct, it should be safe to use with anything OSC-related.
-    /// IOscPacket interface can be used to create custom packets should extra functionality be needed.
+    /// Nothing more, nothing less - if a byte array is inside this struct, it should be safe to use with anything OSC-related.
+    /// IOscPacket interface can be used to create custom packets, should extra functionality be needed.
     /// </remarks>
     public readonly struct OscPacket : IOscPacket
     {
         private readonly byte[] _binaryData;
 
-        /// <summary> Length of the data. </summary>
+        /// <summary> The number of bytes contained in this Packet. </summary>
         public int Length { get => _binaryData.Length; }
 
         /// <summary>
-        /// Provides indexer access to the data inside this packet.
+        /// Provides indexer access to binary data inside this packet.
         /// </summary>
         /// <remarks> This should help avoid accidents with overwriting bytes in the supposedly "read-only" byte array. The whole array can still 
         /// be retrieved via the appropriate method, just in case it's needed. </remarks>
         /// <param name="index"> Byte index. </param>
-        /// <returns> One byte of data, or 0 if it's out of bounds. </returns>
+        /// <returns> One byte of data present at the specified index, or 0 if the index is out of bounds. </returns>
         public byte this[int index]
         {
             get
@@ -48,19 +48,23 @@ namespace OscLib
         /// Creates a new OSC Packet out of the provided byte array containing OSC data (hopefully).
         /// </summary>
         /// <param name="data"> Should contain valid OSC binary data. </param>
-        /// <remarks> This constructor does VERY minimal validation - it only checks the first byte and whether the total length is a multiple of 4. Use at your own risk. </remarks>
         public OscPacket(byte[] data)
         {
-            if ((data[0] != OscProtocol.BundleMarker) && (data[0] != OscProtocol.Separator))
+            if (!data.IsValidOscData())
             {
-                throw new ArgumentException("OSC Packet ERROR: Cannot create new OSC Packet, provided binary data doesn't seem to be valid.");
+                throw new ArgumentException("OSC Packet ERROR: Cannot create new OscPacket, provided binary data is not valid OSC data. ");
             }
 
-            if (data.Length % 4 != 0)
-            {
-                throw new ArgumentException("OSC Packet ERROR: Cannot create new OSC Packet, provided byte array's length is not a multiple of 4.");
-            }
+            _binaryData = data;
 
+        }
+
+
+        /// <summary>
+        /// Same as the other constructor, but doesn't validate anything, assuming it's been done already.
+        /// </summary>
+        internal OscPacket(byte[] data, bool isValid)
+        {
             _binaryData = data;
         }
 
@@ -71,19 +75,23 @@ namespace OscLib
         /// <param name="dataSource"> Should contain valid OSC binary data for the relevant length. </param>
         /// <param name="index"> The index from which to relevant part of the byte array begins. </param>
         /// <param name="length"> The length of the relevant part of the byte array. </param>
-        /// <remarks> This constructor does VERY minimal validation - it only checks the first byte and whether the total length is a multiple of 4. Use at your own risk. </remarks>
         public OscPacket(byte[] dataSource, int index, int length)
         {
-            if ((dataSource[index] != OscProtocol.BundleMarker) && (dataSource[0] != OscProtocol.Separator))
+            if (!dataSource.IsValidOscData(index, length))
             {
-                throw new ArgumentException("OSC Packet ERROR: Cannot create new OSC Packet, provided binary data doesn't seem to be valid.");
+                throw new ArgumentException("OSC Packet ERROR: Cannot create new OscPacket, provided binary data isn't valid OSC data. ");
             }
 
-            if (length % 4 != 0)
-            {
-                throw new ArgumentException("OSC Packet ERROR: Cannot create new OSC Packet, provided data's length is not a multiple of 4.");
-            }
+            _binaryData = new byte[length];
+            Array.Copy(dataSource, index, _binaryData, 0, length);
+        }
 
+
+        /// <summary>
+        /// Same as the other constructor, but doesn't validate anything, assuming it's been done already.
+        /// </summary>
+        internal OscPacket(byte[] dataSource, int index, int length, bool isValid)
+        {
             _binaryData = new byte[length];
             Array.Copy(dataSource, index, _binaryData, 0, length);
         }

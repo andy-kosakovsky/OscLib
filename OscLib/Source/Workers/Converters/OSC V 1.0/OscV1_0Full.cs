@@ -5,10 +5,12 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// An implementation of a "full" version of OSC Protocol - supporting all additional data types designated in the spec.
+    /// An "full" implementation of OSC Protocol version 1.0 - supporting all additional data types designated in the spec.
     /// </summary>
-    public class OscConvertFull : OscConverter
+    public class OscV1_0Full : OscConverter
     {
+        //TODO: ADD ARRAYS TO OSC V 1.0
+
         // standard types
         private const byte _int32 = (byte)'i';
         private const byte _float32 = (byte)'f';
@@ -36,7 +38,7 @@ namespace OscLib
         private const byte _arrayOpen = (byte)'[';
         private const byte _arrayClose = (byte)']';
         
-        public OscConvertFull()
+        public OscV1_0Full()
         {
             // set the settings
             _settingEmptyTypeTagStrings = true;

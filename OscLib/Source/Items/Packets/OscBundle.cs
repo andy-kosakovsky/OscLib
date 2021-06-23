@@ -3,7 +3,7 @@
 namespace OscLib
 {
     /// <summary>
-    /// Represents a deserialized OSC packet bundle. May contain both messages and bundles.
+    /// Represents a deserialized OSC Bundle. May contain both OSC Messages and Bundles.
     /// </summary>
     public readonly struct OscBundle
     {
@@ -20,14 +20,16 @@ namespace OscLib
         // these are used to return empty arrays of messages and bundles
         private static readonly OscMessage[] _messagesEmpty = new OscMessage[0];
         private static readonly OscBundle[] _bundlesEmpty = new OscBundle[0];
+
         #endregion // CONSTS AND STATIC STUFF
+
 
         private readonly OscTimetag _timetag;
 
         private readonly OscMessage[] _messages;
         private readonly OscBundle[] _bundles;
 
-        /// <summary> Timestamp attached to this bundle. </summary>
+        /// <summary> The OSC timetag attached to this bundle. </summary>
         public OscTimetag Timetag { get => _timetag; }
 
         /// <summary> Messages inside this bundle. </summary>
@@ -43,6 +45,7 @@ namespace OscLib
                 {
                     return _messagesEmpty;
                 }
+
             }
 
         }
@@ -69,9 +72,9 @@ namespace OscLib
         /// <summary>
         /// Creates an OSC Bundle out of an array of messages and an array of bundles.
         /// </summary>
-        /// <param name="timetag"> An OSC Timetag of this bundle. </param>
-        /// <param name="bundles"> An array of OSC Bundles to be packed into this bundle. </param>
-        /// <param name="messages"> An array of OSC Messages to be packed into this bundle. </param>
+        /// <param name="timetag"> The OSC Timetag for this Bundle. </param>
+        /// <param name="bundles"> The array of OSC Bundles to be packed into this bundle. </param>
+        /// <param name="messages"> The array of OSC Messages to be packed into this bundle. </param>
         public OscBundle(OscTimetag timetag, OscBundle[] bundles, OscMessage[] messages)
         {
             _timetag = timetag;
@@ -82,9 +85,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates an OSC bundle out of an array of OSC messages.
+        /// Creates an OSC Bundle out of an array of OSC Messages.
         /// </summary>
-        /// <param name="timetag"> An OSC Timetag of this bundle. </param>
+        /// <param name="timetag"> The OSC Timetag for this Bundle. </param>
         /// <param name="bundles"> An array of OSC messages to be packed into this bundle. </param>
         public OscBundle(OscTimetag timetag, OscBundle[] bundles)
         {
@@ -96,10 +99,10 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates an OSC bundle out of an array of OSC messages.
+        /// Creates an OSC Bundle out of an array of OSC Messages.
         /// </summary>
-        /// <param name="timetag"> An OSC Timetag of this bundle. </param>
-        /// <param name="messages"> An array of OSC messages to be packed into this bundle. </param>
+        /// <param name="timetag"> The OSC Timetag for this Bundle. </param>
+        /// <param name="messages"> An array of OSC Messages to be packed into this Bundle. </param>
         public OscBundle(OscTimetag timetag, OscMessage[] messages)
         {
             _timetag = timetag;
@@ -112,7 +115,7 @@ namespace OscLib
         /// <summary>
         /// Creates an empty OSC Bundle. Now why would you do that.
         /// </summary>
-        /// <param name="timetag"> A OSC Timetag of this sad empty bundle. </param>
+        /// <param name="timetag"> The OSC Timetag for this sad, empty Bundle. </param>
         public OscBundle(OscTimetag timetag)
         {
             _timetag = timetag;
@@ -124,7 +127,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Copies the bundle marker string ("#bundle ") to array, starting at the specified index.
+        /// Copies the bundle marker string ("#bundle ") to the target array, starting at the specified index.
         /// </summary>
         /// <param name="array"> Target array. </param>
         /// <param name="index"> Target index. </param>
@@ -135,9 +138,8 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns this bundle as a neatly formatted string, for debug purposes mostly.
+        /// Prints out the contents of this OSC Bundle as a neatly-formatted string.
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return ToShiftedString(0);
@@ -145,10 +147,9 @@ namespace OscLib
 
   
         /// <summary>
-        /// A debug method that returns the contents of this bundle as a neatly formatted string. Does the same thing as the standard ToSpring() but adds some spaces after every new line.
+        /// A debug method that returns the contents of this bundle as a neatly formatted string. Adds the specified number of spaces after every new line.
         /// </summary>
-        /// <param name="shiftAmount">How many spaces to add aftear each new line</param>
-        /// <returns></returns>
+        /// <param name="shiftAmount"> How many spaces to add after each new line. </param>
         private string ToShiftedString(int shiftAmount = 6)
         {
             string spaces = OscUtil.GetRepeatingChar(' ', shiftAmount);

@@ -5,11 +5,19 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// An implementation of a basic, bare-bones version of OSC Protocol - only supporting Int32, Float32, Osc-String and Osc-Blob as arguments. Everything else will be converted into one of these if
-    /// possible, or discarded outright.
+    /// An implementation of a basic, bare-bones version of OSC Protocol, version 1.0 - only supporting Int32, Float32, Osc-String and Osc-Blob as arguments.
+    /// <remarks>
+    /// When sending out packets, arguments will be converted into one of the four supported data types:
+    /// <para> Any integer (both ints and uints) will be converted to int32, clamping its value accordingly; </para>
+    /// <para> Any floating-point value will be converted to float32; </para>
+    /// <para> Any OSC Protocol-designated types (OscColor, etc) will be converted into binary blobs; </para>
+    /// <para> Anything else will be converted to ASCII strings. </para>
+    /// </remarks>
     /// </summary>
-    public class OscConvertMini : OscConverter
+    public class OscV1_0Mini : OscConverter
     {
+        //TODO: finish all type conversions in the bare-bones Protocol v. 1.0
+
         private const byte _int32 = (byte)'i';
         private const byte _float32 = (byte)'f';
         private const byte _string = (byte)'s';
@@ -18,7 +26,7 @@ namespace OscLib
         // used to handle nulls
         private const string _nullString = "NULL";
 
-        public OscConvertMini()
+        public OscV1_0Mini()
         {
             // set it to add empty address strings by default
             _settingEmptyTypeTagStrings = true;

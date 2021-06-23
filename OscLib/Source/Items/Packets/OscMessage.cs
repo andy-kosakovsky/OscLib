@@ -4,7 +4,7 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Represents a single OSC message.
+    /// Represents a single deserialized OSC Message.
     /// </summary>
     public readonly struct OscMessage 
     {
@@ -14,10 +14,10 @@ namespace OscLib
         private readonly OscString _addressPattern;
         private readonly object[] _arguments;
 
-        /// <summary> OSC address pattern of this message. </summary>
+        /// <summary> The address pattern of this Message. </summary>
         public OscString AddressPattern { get => _addressPattern; }
 
-        /// <summary> The number of arguments inside this OSC Message. </summary>
+        /// <summary> The number of arguments inside this Message. </summary>
         public int ArgumentsCount
         {
             get
@@ -35,8 +35,9 @@ namespace OscLib
 
         }
 
+
         /// <summary>
-        /// Indexer access to arguments contained in this OSC Message.
+        /// Indexer access to arguments contained in this Message.
         /// </summary>
         /// <param name="index"> Argument index. </param>
         /// <returns> The argument at the specified index, or null if index is out of bounds. </returns>
@@ -58,9 +59,8 @@ namespace OscLib
         }
         
 
-
         /// <summary>
-        /// Creates a new OSC message out of an address pattern and an array of arguments.
+        /// Creates a new OSC Message out of an address pattern and an array of arguments.
         /// </summary>
         /// <param name="addressPattern"> Address pattern attached to this message. </param>
         /// <param name="arguments"> An array of arguments attached to this message. Can be null if no arguments are needed. </param>
@@ -85,8 +85,10 @@ namespace OscLib
 
 
         /// <summary>
-        /// Retrieves the array of arguments attached to this message.
+        /// Retrieves the array of arguments attached to this Message.
         /// </summary>
+        /// <remarks> Despite being read-only, one can still change individual values inside this array. This can be both good and bad - and definitely something to be wary of.
+        /// If this behaviour is not explicitly needed, it's probably safer to use the indexer access instead. </remarks>
         /// <returns> An array of arguments, or an empty array if there are none. </returns>
         public object[] GetArguments()
         {
@@ -103,9 +105,8 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns this message as a neatly formatted string, for debug purposes mostly.
+        /// Prints out the contents of this Message as a neatly-formatted string.
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder();

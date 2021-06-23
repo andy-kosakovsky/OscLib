@@ -138,6 +138,58 @@ namespace OscLib
 
         }
 
+
+        /// <summary>
+        /// Performs very basic validation on a binary data array, trying to ensure that it actually contains OSC data (or at least something close enough to it).
+        /// </summary>
+        /// <param name="data"> The array to check. </param>
+        /// <returns> "True" if the array seems to contain valid binary data (or at the very least adheres to the basic tenets of the OSC Protocol), "False" otherwise. </returns>
+        public static bool IsValidOscData(this byte[] data)
+        {
+            if ((data[0] != BundleMarker) && (data[0] != Separator))
+            {
+                return false;
+            }
+
+            if (data.Length % 4 != 0)
+            {
+                return false;
+            }
+
+            return true;
+
+        }
+
+
+        /// <summary>
+        /// Performs very basic validation on a binary data array, trying to ensure that the specified part of it actually contains OSC data (or at least something close enough to it).
+        /// </summary>
+        /// <param name="data"> The array to check. </param>
+        /// <param name="index"> The index to check from. </param>
+        /// <param name="length"> The total number of bytes to check. </param>
+        /// <returns> "True" if the array seems to contain valid binary data (or at the very least adheres to the basic tenets of the OSC Protocol), "False" otherwise. </returns>
+        public static bool IsValidOscData(this byte[] data, int index, int length)
+        {
+            if ((data[index] != BundleMarker) && (data[index] != Separator))
+            {
+                return false;
+            }
+
+            if (length % 4 != 0)
+            {
+                return false;
+            }
+
+            // duh
+            if (index + length > (data.Length))
+            {
+                return false;
+            }
+
+            return true;
+
+        }
+
     }
 
 }

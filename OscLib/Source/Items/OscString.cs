@@ -561,7 +561,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Allows to compare OSC Strings to each other.
+        /// Compares OSC Strings to each other. *Doesn't* pattern-match. 
         /// </summary>
         /// <param name="stringOne"> First string. </param>
         /// <param name="stringTwo"> Second string. </param>
@@ -579,6 +579,29 @@ namespace OscLib
             }
 
             return true;
+
+        }
+
+
+        /// <summary>
+        /// Compares OSC Strings to each other. *Doesn't* pattern-match. 
+        /// </summary>
+        /// <param name="stringOne"> First string. </param>
+        /// <param name="stringTwo"> Second string. </param>
+        /// <returns> Whether the strings are unequal. </returns>
+        public static bool operator !=(OscString stringOne, OscString stringTwo)
+        {
+            if (stringOne.Length != stringTwo.Length)
+                return true;
+
+
+            for (int i = 0; i < stringOne.Length; i++)
+            {
+                if (stringOne[i] != stringTwo[i])
+                    return true;
+            }
+
+            return false;
 
         }
 
@@ -682,29 +705,6 @@ namespace OscLib
             data[0] = Convert.ToByte(charOne);
 
             return new OscString(data, stringTwo._containsSpecialSymbols, stringTwo._containsPatternMatching);
-
-        }
-
-
-        /// <summary>
-        /// Allows to compare OSC Strings to each other. 
-        /// </summary>
-        /// <param name="stringOne"> First string. </param>
-        /// <param name="stringTwo"> Second string. </param>
-        /// <returns> Whether the strings are unequal. </returns>
-        public static bool operator !=(OscString stringOne, OscString stringTwo)
-        {
-            if (stringOne.Length != stringTwo.Length)
-                return true;
-
-
-            for (int i = 0; i < stringOne.Length; i++)
-            {
-                if (stringOne[i] != stringTwo[i])
-                    return true;
-            }
-
-            return false;
 
         }
 

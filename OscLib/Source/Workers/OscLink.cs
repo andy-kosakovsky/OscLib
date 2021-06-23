@@ -21,6 +21,7 @@ namespace OscLib
         Wide
     }
 
+
     /// <summary>
     /// Used to send and receive OSC Packets over UDP. Can operate in two modes: targeted to one specific endpoint, or wide-open free-for-all.
     /// <para> To Do: Add TCP support. </para>
@@ -149,8 +150,11 @@ namespace OscLib
 
 
         #region EVENTS
-        /// <summary> Invoked when this OSC Link receives any packet of binary OSC data. </summary>
+        /// <summary> Invoked when this OSC Link receives a packet of OSC binary data. </summary>
         public event PacketHandler<OscPacket> PacketReceived;
+
+        /// <summary> Invoked when this OSC Link receives packet that contains bad/invalid/non-OSC data. </summary>
+        public BadDataHandler BadDataReceived;
 
         /// <summary> Invoked when this OSC Link sends out an OSC packet. </summary>
         public event PacketHandler<OscPacket> PacketSent;
@@ -448,12 +452,10 @@ namespace OscLib
             
         }
 
-
         #endregion
 
 
         #region TASKS
-
         private async Task ReceiveTask()
         {
             
@@ -498,8 +500,17 @@ namespace OscLib
         /// <param name="receivedFrom"> The end point from which the data was received. </param>
         protected virtual void OnPacketReceived(byte[] data, IPEndPoint receivedFrom)
         {
-            PacketReceived?.Invoke(new OscPacket(data), receivedFrom);     
+            if (data.IsValidOscData())
+            {
+                PacketReceived?.Invoke(new OscPacket(data, true), receivedFrom);
+            }
+            else
+            {
+                BadDataReceived?.Invoke(data, receivedFrom);
+            }
+
         }
+
 
         /// <summary>
         /// Calls events when this OSC Link sends out OSC packets.

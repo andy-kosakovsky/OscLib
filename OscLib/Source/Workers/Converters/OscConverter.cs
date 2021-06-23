@@ -5,6 +5,28 @@ using System.Text;
 
 namespace OscLib
 {
+    /// <summary>
+    /// Thrown when encountering an unsupported OSC Type Tag.
+    /// </summary>
+    public class OscTypeTagNotSupportedException : Exception
+    {
+        public OscTypeTagNotSupportedException()
+            :base()
+        {
+        }
+
+        public OscTypeTagNotSupportedException(string message)
+            :base(message)
+        {
+        }
+
+        public OscTypeTagNotSupportedException(string message, Exception inner)
+            :base(message, inner)
+        {
+        }
+
+    }
+
 
     /// <summary>
     /// Implements a set methods allowing for converting messages and bundles into OSC byte data and back.  
@@ -16,8 +38,7 @@ namespace OscLib
     /// apart from the bare standard int32, float32, OSC-string and OSC-blob. All this can be accounted for in method overloads in the derived classes. 
     /// </remarks>
     public abstract class OscConverter
-    {
-
+    {       
         /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
         protected bool _settingEmptyTypeTagStrings;
 
@@ -295,7 +316,7 @@ namespace OscLib
         public OscMessage GetMessage(byte[] data, ref int extPointer, int length)
         {
             // should start with an '/'
-            if (data[extPointer] != OscProtocol.Separator)
+            if (!data.IsValidOscData(extPointer, length))
             {
                 throw new ArgumentException("OSC Deserializer ERROR: No OSC Message found at pointer position, expecting a '/' symbol. Pointer at: " + extPointer);
             }
@@ -548,8 +569,8 @@ namespace OscLib
         /// <summary>
         /// Creats an OSC Bundle out of the provided OSC binary packet.
         /// </summary>
-        /// <typeparam name="Packet"> The packet struct fed into this method should implement the IOscPacket interface. Obviously, it should contain readable OSC data as well. </typeparam>
-        /// <param name="oscPacket"></param>
+        /// <typeparam name="Packet"> The packet struct fed into this method should implement the IOscPacket interface.  </typeparam>
+        /// <param name="oscPacket"> The OSC Packet containing an OSC Bundle. </param>
         /// <returns></returns>
         public OscBundle GetBundle<Packet>(Packet oscPacket) where Packet : IOscPacket
         {
@@ -558,10 +579,10 @@ namespace OscLib
 
 
         /// <summary>
-        /// Ex
+        /// Converts OSC 
         /// </summary>
-        /// <param name="binaryData"> Byte array containing at least one bundle. </param>
-        /// <returns> An array of readable OSC bundles. </returns>
+        /// <param name="data"> A byte array containing at least one OSC Bundle. </param>
+        /// <returns> An array of OSC Bundles. </returns>
         public OscBundle[] GetBundles(byte[] data)
         {
             if (data[0] != OscProtocol.BundleMarker)
@@ -757,7 +778,6 @@ namespace OscLib
         }
 
         #endregion // GETTING ELEMENT LENGTH
-
 
 
         #region ABSTRACT/VIRTUAL METHODS

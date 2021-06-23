@@ -10,6 +10,7 @@ namespace OscLib
     {
         private static Stopwatch _sessionTimer;
         private static long _sessionStart;
+
         private static readonly long _ticksPerSecond;
 
         private static readonly OscTimetag _immediately;
@@ -17,10 +18,10 @@ namespace OscLib
 
         private static readonly long _ntpEpochStart;
 
-        /// <summary> Provides the number of ticks elapsed since the first call for this class. </summary>
+        /// <summary> Provides the number of ticks elapsed since "session start" - the time of the first call to this class, by default. </summary>
         public static long SessionTick { get => _sessionTimer.Elapsed.Ticks; }
 
-        /// <summary> Provides the current "global" UTC tick, as far as the system is aware. </summary>
+        /// <summary> Provides the current tick. By default, it encodes the current UTC time, as far as the system is aware. </summary>
         public static long GlobalTick { get => _sessionTimer.Elapsed.Ticks + _sessionStart; }
 
         /// <summary> Provides the OSC-compliant "DO IT. DO IT NOW." timetag. </summary>
@@ -37,27 +38,85 @@ namespace OscLib
 
         static OscTime()
         {
+            _sessionTimer = new Stopwatch();
+            
             _ntpEpochStart = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc).Ticks;
             _ticksPerSecond = TimeSpan.TicksPerSecond;
             _immediately = new OscTimetag((ulong)1);
             _immediatelyBytes = OscSerializer.GetBytes(_immediately);
 
-            _sessionTimer = new Stopwatch();
-
-            _sessionStart = DateTime.UtcNow.Ticks;
-            _sessionTimer.Start();              
+            ResetTime();
+            
         }
 
+
         /// <summary>
-        /// Returns an OSC Timetag that occurs after the provided number of seconds has passed, counting from the current time.
+        /// Sets custom session start time. Can't be set before the start of the current NTP epoch (the midnight of 01/01/1900).
         /// </summary>
-        /// <param name="seconds"></param>
-        /// <returns></returns>
+        /// <param name="newStart"> The DateTime struct containing the new session start time. </param>
+        public static void SetSessionStart(DateTime newStart)
+        {
+            long newTicks = newStart.Ticks;
+
+            if (newTicks > _ntpEpochStart)
+            {
+                _sessionStart = newTicks;
+            }
+            else
+            {
+                _sessionStart = _ntpEpochStart;
+            }
+
+        }
+
+
+        /// <summary>
+        /// Resets all time-related settings to their defaults - after calling this method, the GlobalTick property will encode the current UTC time once again. 
+        /// </summary>
+        public static void ResetTime()
+        {
+            _sessionStart = DateTime.UtcNow.Ticks;
+
+            RestartSessionTimer();
+        }
+
+
+        /// <summary>
+        /// Restarts the session timer. 
+        /// </summary>
+        public static void RestartSessionTimer()
+        {
+            if (_sessionTimer.IsRunning)
+            {
+                _sessionTimer.Restart();
+            }
+            else
+            {
+                _sessionTimer.Start();
+            }
+
+        }
+
+         
+        /// <summary>
+        /// Returns an OSC Timetag that occurs after the provided number of seconds has passed, counting from the current GlobalTick.
+        /// </summary>
         public static OscTimetag AfterSeconds(float seconds)
         {
             long waitTicks = (long)(seconds * _ticksPerSecond);
 
             return new OscTimetag(GlobalTick + waitTicks);
+        }
+
+
+        /// <summary>
+        /// Returns an OSC Timetag that occurs after the provided number of seconds has passed, counting from the specified OSC Timetag.
+        /// </summary>
+        public static OscTimetag AfterSeconds(this OscTimetag me, float seconds)
+        {
+            long waitTicks = (long)(seconds * _ticksPerSecond);
+
+            return new OscTimetag(me.Ticks + waitTicks);
         }
 
     }

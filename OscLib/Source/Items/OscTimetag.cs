@@ -105,6 +105,81 @@ namespace OscLib
             return GetDateTime().ToString("dd/MM/yyyy HH:mm:ss:fff");
         }
 
+
+        /// <summary>
+        /// Compares this OSC Timetag to an object. Returns "true" if: 
+        /// <para> - The object is another Timetag and they match; </para>
+        /// <para> - The object is a 64-bit signed integer value that is equal to this Timetag's number of ticks; </para>
+        /// <para> - The object is a 64-bit unsigned integer value that is equal to this Timetag's NTP timestamp value. </para>
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            if (obj is OscTimetag otherTimetag)
+            {
+                return otherTimetag == this;
+            }
+            else if (obj is long ticks)
+            {
+                return ticks == this.Ticks;
+            }
+            else if (obj is ulong ntp)
+            {
+                return ntp == this.NtpTimestamp;
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+
+        /// <summary>
+        /// Compares two OSC Timetags.
+        /// </summary>
+        public static bool operator ==(OscTimetag timetagOne, OscTimetag timetagTwo)
+        {
+            return timetagOne.NtpTimestamp == timetagTwo.NtpTimestamp;
+        }
+
+
+        /// <summary>
+        /// Compares two OSC Timetags.
+        /// </summary>
+        public static bool operator !=(OscTimetag timetagOne, OscTimetag timetagTwo)
+        {
+            return timetagOne.NtpTimestamp != timetagTwo.NtpTimestamp;
+        }
+
+
+        /// <summary>
+        /// Checks whether the Timetag on the left refers to an earier moment in time than the one on the right.
+        /// </summary>
+        public static bool operator <(OscTimetag timetagOne, OscTimetag timetagTwo)
+        {
+            return timetagOne.Ticks < timetagTwo.Ticks;
+        }
+
+
+        /// <summary>
+        /// Checks whether the Timetag on the left refers to a later moment in time than the one on the right.
+        /// </summary>
+        public static bool operator > (OscTimetag timetagOne, OscTimetag timetagTwo)
+        {
+            return timetagOne.Ticks > timetagTwo.Ticks;
+        }
+
+
+        /// <summary>
+        /// Returns the hash code of this Timestamp.
+        /// </summary>
+        public override int GetHashCode()
+        {
+            return this.NtpTimestamp.GetHashCode();
+        }
+
     }
 
 }

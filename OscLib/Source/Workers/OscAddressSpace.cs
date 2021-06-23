@@ -5,15 +5,16 @@ using System.Net;
 using System.Threading;
 
 namespace OscLib
-{ 
+{
     /// <summary>
-    /// Implements an instance of OSC Address Space. Provides convenience methods for creating and managing an OSC address tree, 
-    /// allowing to connect event handlers to OSC Methods, to be invoked when a message is dispatched to a particular OSC Method. 
-    /// Processes messages and bundles coming from the attached OSC Receivers, pattern matching if needed. Can receive messages 
-    /// and bundles from multiple OSC Receivers.
+    /// Represents a tree of OSC Addresses - that is, an OSC Address Space. Can receive Messages and Bundles from multiple OSC Receivers, 
+    /// pattern matching if needed. Provides convenience methods for creating and managing an address tree, allowing to connect event  
+    /// handlers to OSC Methods - to be invoked when a message is dispatched to a particular OSC Method. 
     /// </summary>
     public class OscAddressSpace
     {
+        //TODO: add support for Protocol v. 1.1's "any address" pattern-matching thingy
+
         /// <summary> The default name of the root container. </summary>
         public const string RootContainerName = "root";
 
@@ -666,6 +667,7 @@ namespace OscLib
                 {
                     return false;
                 }
+
             }
 
             try

@@ -26,14 +26,6 @@ namespace OscLib
         /// <summary> The total amount of priority levels in this Packet Heap. </summary>
         protected int _heapTotalLayers;
 
-        /// <summary> The time between heap checks, in milliseconds. Shoudln't be less than 1. </summary>
-        protected int _cycleLengthMs;
-
-        /// <summary> Should this Packet Heap bundle the packets before sending, or just send them as separate messages as they come. </summary>
-        protected bool _bundlePacketsBeforeSending;
-
-        /// <summary> Whether this Sender is currently active. </summary>
-        protected bool _isActive;
 
         /// <summary> The packet heap, holding all the packets before they are processed and sent (or not). Implements several priority levels. </summary>
         protected List<Packet>[] _heap;
@@ -41,14 +33,25 @@ namespace OscLib
         /// <summary> Used to facilitate orderly access to the packet heap. </summary>
         protected Mutex _heapAccess;
 
-        /// <summary> Holds the binary data pertaining to the current heap check cycle. </summary>
-        protected byte[] _cycleBinaryDataHolder;
+        /// <summary> Periodically checks the contents of the packet heap and manages it, sending the packets out when necessary. </summary>
+        protected Task _heapTask;
+
+        /// <summary> The time between heap checks, in milliseconds. Shoudln't be less than 1. </summary>
+        protected int _cycleWaitMs;
+
+
+        /// <summary> Used to cache packet binary data  </summary>
+        protected byte[] _cycleDataHolder;
 
         /// <summary> Maximum amount of data sent per packet, in bytes. As per UDP spec, sending more than 508 bytes per packet is not advisable. </summary> 
         protected int _packetBundleMaxSize;
 
-        /// <summary> The Task that performs the packet heap checks and manages it, sending the packets out when necessary. </summary>
-        protected Task _heapTask;
+        /// <summary> Should this Packet Heap bundle the packets before sending, or just send them as separate messages as they come. </summary>
+        protected bool _bundlePacketsBeforeSending;
+
+        /// <summary> Whether this Sender is currently active. </summary>
+        protected bool _isActive;
+
 
         // delegates
         /// <summary> Checks whether the packet should be sent in the current cycle. </summary> 
@@ -79,14 +82,14 @@ namespace OscLib
         /// <summary> The length of the heap check cycle of this Sender - that is, the time between heap checks, in milliseconds. Minimum 1 ms. </summary>
         public int CycleLengthMs 
         { 
-            get => _cycleLengthMs;  
+            get => _cycleWaitMs;  
             
             set
             {
                 if (value > 1)
-                    _cycleLengthMs = value;
+                    _cycleWaitMs = value;
                 else
-                    _cycleLengthMs = 1;
+                    _cycleWaitMs = 1;
             }
         
         }
@@ -112,7 +115,7 @@ namespace OscLib
                         // just to be safe, let's wait until cycle bundle data holder is not in use
                         _heapAccess.WaitOne();
                         _packetBundleMaxSize = newLength;
-                        _cycleBinaryDataHolder = new byte[_packetBundleMaxSize];
+                        _cycleDataHolder = new byte[_packetBundleMaxSize];
                     }
                     finally
                     {
@@ -129,9 +132,8 @@ namespace OscLib
 
 
         #region EVENTS
-
-        /// <summary> Invoked when an exception happens inside the send task, hopefully preventing it from stopping </summary>
-        public event OscTaskExceptionHandler SendTaskExceptionRaised;
+        /// <summary> Invoked when an exception happens inside the heap-processing task, hopefully preventing it from stopping </summary>
+        public event OscTaskExceptionHandler HeapTaskExceptionRaised;
 
         #endregion
 
@@ -149,7 +151,7 @@ namespace OscLib
         {
             _heapAccess = new Mutex();
             _packetBundleMaxSize = packetBundleMaxSize;
-            _cycleBinaryDataHolder = new byte[_packetBundleMaxSize];
+            _cycleDataHolder = new byte[_packetBundleMaxSize];
 
             // get default methods to act as delegates
             _shouldSendPacket = DefaultShouldSendPacket;
@@ -159,7 +161,7 @@ namespace OscLib
             // set options
             _heapTotalLayers = packetHeapTotalLayers.Clamp(1, int.MaxValue);
 
-            _cycleLengthMs = cycleLengthMs;
+            _cycleWaitMs = cycleLengthMs;
             _bundlePacketsBeforeSending = bundlePacketsBefureSending;
 
         }
@@ -390,7 +392,7 @@ namespace OscLib
                                 }
                                 catch (Exception e)
                                 {
-                                    SendTaskExceptionRaised?.Invoke(e);
+                                    HeapTaskExceptionRaised?.Invoke(e);
                                     
                                     // wipe the packet heap level, just in case
                                     _heap[i].Clear();
@@ -403,19 +405,19 @@ namespace OscLib
                         {
                             _heapAccess.ReleaseMutex();
 
-                            await Task.Delay(_cycleLengthMs);
+                            await Task.Delay(_cycleWaitMs);
                         }
 
                     }
                     else
                     {
-                        await Task.Delay(_cycleLengthMs);
+                        await Task.Delay(_cycleWaitMs);
                     }
 
                 }
                 else
                 {
-                    await Task.Delay(_cycleLengthMs);               
+                    await Task.Delay(_cycleWaitMs);               
                 }
 
             }
@@ -466,10 +468,10 @@ namespace OscLib
                                 totalPackets--;
 
                                 // add bytes of message's length to bundle and shift byte counter by a magical 4 (for bytes in int32)
-                                OscSerializer.AddBytes(packetLength, _cycleBinaryDataHolder, ref byteCounter);
+                                OscSerializer.AddBytes(packetLength, _cycleDataHolder, ref byteCounter);
                                 
                                 // add message data to the data holder
-                                packetData.CopyTo(_cycleBinaryDataHolder, byteCounter);
+                                packetData.CopyTo(_cycleDataHolder, byteCounter);
                                 byteCounter += packetLength;
 
                                 packetHeapLevel.RemoveAt(i);
@@ -494,9 +496,9 @@ namespace OscLib
                     if (byteCounter > OscBundle.BundleHeaderLength)
                     {
                         // add bundle header
-                        OscConverter.AddBundleHeader(_cycleBinaryDataHolder, 0, _timetagSource.Invoke());
+                        OscConverter.AddBundleHeader(_cycleDataHolder, 0, _timetagSource.Invoke());
                         
-                        OscPacket newBundle = new OscPacket(_cycleBinaryDataHolder);
+                        OscPacket newBundle = new OscPacket(_cycleDataHolder);
 
                         _link.SendToTarget(newBundle, byteCounter);
                                           
