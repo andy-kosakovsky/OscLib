@@ -3,5 +3,5 @@ An attempt to create a full implementation of Open Sound Control protocol in C#/
 
 Follows the [Open Sound Control 1.0 Specification](http://cnmat.org/OpenSoundControl/OSC-spec.html), for the most part.
 
-Very much **WORK IN PROGRESS** - not suitable for anything nearing actual use just yet, and will most likely get broken and rearranged in randomest ways. Also in dire need of proper documentation.
+Very much **WORK IN PROGRESS** - not suitable for anything nearing actual use just yet, and will most likely get broken and rearranged in randomest ways. Also in dire need of proper documentation. For the time being, please refer to **howto.md** for the basics.
 
