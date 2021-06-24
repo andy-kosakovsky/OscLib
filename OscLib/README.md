@@ -14,9 +14,9 @@ new, bespoke components as and when required by the task at hand.
 ### Packets, Messages, Bundles
 Let's start from the most important bit - the OSC packets themselves. Depending on the context, this library will represent an OSC packet as one of no less than three types of structs: 
 
-*OscPacket (naturally)
-*OscMessage
-*OscBundle
+* OscPacket (naturally)
+* OscMessage
+* OscBundle
 
 **OscPacket** represents an OSC packet in its purest form - as an OSC Protocol-valid sequence of bytes, contained inside a byte array. No more, no less.
 
