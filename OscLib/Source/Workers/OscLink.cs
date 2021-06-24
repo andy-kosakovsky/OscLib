@@ -357,9 +357,9 @@ namespace OscLib
                 throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + "'s mode of operation needs to be set to ToTarget (current mode: " + _mode.ToString() + ").");
             }
 
-            _udpClient.Send(oscPacket.GetBytes(), oscPacket.Length);
+            _udpClient.Send(oscPacket.GetContents(), oscPacket.Size);
 
-            OnPacketSent(oscPacket.GetBytes(), TargetEndPoint);
+            OnPacketSent(oscPacket.GetContents(), TargetEndPoint);
             
         }
 
@@ -384,9 +384,9 @@ namespace OscLib
                 throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + "'s mode of operation needs to be set to ToTarget (current mode: " + _mode.ToString() + ").");
             }
 
-            _udpClient.Send(oscPacket.GetBytes(), length);
+            _udpClient.Send(oscPacket.GetContents(), length);
 
-            OnPacketSent(oscPacket.GetBytes(), TargetEndPoint);
+            OnPacketSent(oscPacket.GetContents(), TargetEndPoint);
             
         }
 
@@ -407,9 +407,9 @@ namespace OscLib
                 throw new InvalidOperationException("OSC Link Error: Can't send message to end point, OSC Link " + _name + "'s mode of operation needs to be set to ToAll (current mode: " + _mode.ToString() + ").");
             }
 
-            _udpClient.Send(oscPacket.GetBytes(), oscPacket.Length, endPoint);
+            _udpClient.Send(oscPacket.GetContents(), oscPacket.Size, endPoint);
 
-            OnPacketSent(oscPacket.GetBytes(), endPoint);         
+            OnPacketSent(oscPacket.GetContents(), endPoint);         
 
         }
 
@@ -435,9 +435,9 @@ namespace OscLib
                 throw new InvalidOperationException("OSC Link Error: Can't send message to end point, OSC Link " + _name + "'s mode of operation needs to be set to ToAll (current mode: " + _mode.ToString() + ").");
             }
 
-            _udpClient.Send(oscPacket.GetBytes(), length, endPoint);
+            _udpClient.Send(oscPacket.GetContents(), length, endPoint);
 
-            OnPacketSent(oscPacket.GetBytes(), TargetEndPoint);
+            OnPacketSent(oscPacket.GetContents(), TargetEndPoint);
             
         }
 

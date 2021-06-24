@@ -61,7 +61,7 @@ namespace OscLib
             int msgStart = extPointer;
 
        
-            message.AddressPattern.CopyBytesToArray(array, msgStart);
+            message.AddressPattern.CopyContentsToArray(array, msgStart);
 
             extPointer += addrLength;
 
@@ -196,10 +196,10 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                OscSerializer.AddBytes(packets[i].Length, array, ref extPointer);
+                OscSerializer.AddBytes(packets[i].Size, array, ref extPointer);
 
-                packets[i].CopyBytesToArray(array, extPointer);
-                extPointer += packets[i].Length;
+                packets[i].CopyContentsToArray(array, extPointer);
+                extPointer += packets[i].Size;
             }
 
         }
@@ -264,7 +264,7 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                length += packets[i].Length + OscProtocol.Chunk32;
+                length += packets[i].Size + OscProtocol.Chunk32;
             }
 
             byte[] data = new byte[length];
@@ -285,7 +285,7 @@ namespace OscLib
 
             for (int i = 0; i < packets.Length; i++)
             {
-                length += packets[i].Length + OscProtocol.Chunk32;
+                length += packets[i].Size + OscProtocol.Chunk32;
             }
 
             byte[] data = new byte[length];
@@ -448,7 +448,7 @@ namespace OscLib
         /// <remarks> The method is generic to avoid the struct-as-interface boxing/unboxing shenanigans. </remarks>
         public OscMessage GetMessage<Packet>(Packet oscPacket) where Packet : IOscPacket
         {
-            return GetMessage(oscPacket.GetBytes());
+            return GetMessage(oscPacket.GetContents());
         }
 
 
@@ -574,7 +574,7 @@ namespace OscLib
         /// <returns></returns>
         public OscBundle GetBundle<Packet>(Packet oscPacket) where Packet : IOscPacket
         {
-            return GetBundle(oscPacket.GetBytes());
+            return GetBundle(oscPacket.GetContents());
         }
 
 

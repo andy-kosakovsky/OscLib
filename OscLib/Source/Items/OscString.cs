@@ -31,7 +31,7 @@ namespace OscLib
         private Trit _containsSpecialSymbols;
 
         /// <summary> Returns the total number of characters in this string. </summary>
-        public int Length { get => _chars.Length; }
+        public int Size { get => _chars.Length; }
    
         /// <summary>
         /// Indexer access to the characters of this string, recorded as ASCII codes.
@@ -126,7 +126,7 @@ namespace OscLib
 
             for (int i = 0; i < strings.Length; i++)
             {
-                length += strings[i].Length;
+                length += strings[i].Size;
 
                 // check trits while we're at it
                 if ((strings[i]._containsPatternMatching == Trit.False) && (_containsPatternMatching != Trit.True))
@@ -155,8 +155,8 @@ namespace OscLib
 
             for (int i = 0; i < strings.Length; i++)
             {
-                strings[i].CopyBytesToArray(data, pointer);
-                pointer += strings[i].Length;
+                strings[i].CopyContentsToArray(data, pointer);
+                pointer += strings[i].Size;
             }
 
             _chars = data;
@@ -185,7 +185,7 @@ namespace OscLib
         /// Retrieves the byte array containing all characters of this string.
         /// </summary>
         /// <remarks> Despite being read-only, it's still possible to modify individual elements of the array. If this behaviour is not preferable, using indexer accessor might be safer. </remarks>
-        public byte[] GetBytes()
+        public byte[] GetContents()
         {
             return _chars;
         }
@@ -194,7 +194,7 @@ namespace OscLib
         /// <summary>
         /// Returns a copy of the byte array containing all characters of this string.
         /// </summary>
-        public byte[] GetCopyOfBytes()
+        public byte[] GetCopyOfContents()
         {
             byte[] copy = new byte[OscLength];
             _chars.CopyTo(copy, 0);
@@ -205,7 +205,7 @@ namespace OscLib
         /// <summary>
         /// Copies all characters into the specified one-dimentional byte array, starting from the index provided.
         /// </summary>
-        public void CopyBytesToArray(byte[] array, int index)
+        public void CopyContentsToArray(byte[] array, int index)
         {
             _chars.CopyTo(array, index);
         }
@@ -219,7 +219,7 @@ namespace OscLib
         /// </summary>
         public OscString Copy()
         {
-            return new OscString(GetCopyOfBytes(), _containsSpecialSymbols, _containsPatternMatching);
+            return new OscString(GetCopyOfContents(), _containsSpecialSymbols, _containsPatternMatching);
         }
 
 
@@ -291,10 +291,10 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown when "start" is beyond the string's length, or when "length" is too large. </exception>
         public OscString GetSubstring(int start, int length)
         {
-            if ((start >= Length) || (start < 0))
+            if ((start >= Size) || (start < 0))
                 throw new ArgumentException("OSC String ERROR: Cannot get a substring, it starts beyond the length of the string.");
 
-            if (start + length > Length)
+            if (start + length > Size)
                 throw new ArgumentException("Osc String ERROR: Cannot get a substring, it's too long");
 
             return new OscString(_chars, start, length);
@@ -449,10 +449,10 @@ namespace OscLib
         public static bool operator ==(OscString stringOne, OscString stringTwo)
         {
 
-            if (stringOne.Length != stringTwo.Length)
+            if (stringOne.Size != stringTwo.Size)
                 return false;
 
-            for (int i = 0; i < stringOne.Length; i++)
+            for (int i = 0; i < stringOne.Size; i++)
             {
                 if (stringOne[i] != stringTwo[i])
                     return false;
@@ -471,11 +471,11 @@ namespace OscLib
         /// <returns> Whether the strings are unequal. </returns>
         public static bool operator !=(OscString stringOne, OscString stringTwo)
         {
-            if (stringOne.Length != stringTwo.Length)
+            if (stringOne.Size != stringTwo.Size)
                 return true;
 
 
-            for (int i = 0; i < stringOne.Length; i++)
+            for (int i = 0; i < stringOne.Size; i++)
             {
                 if (stringOne[i] != stringTwo[i])
                     return true;
@@ -494,11 +494,11 @@ namespace OscLib
         /// <returns> Both OSC Strings united together forever. </returns>
         public static OscString operator +(OscString stringOne, OscString stringTwo)
         {
-            byte[] data = new byte[stringOne.Length + stringTwo.Length];
+            byte[] data = new byte[stringOne.Size + stringTwo.Size];
 
-            stringOne.CopyBytesToArray(data, 0);
+            stringOne.CopyContentsToArray(data, 0);
 
-            stringTwo.CopyBytesToArray(data, stringOne.Length);
+            stringTwo.CopyContentsToArray(data, stringOne.Size);
 
             return new OscString(data,
                 TritUtil.Orish(stringOne._containsSpecialSymbols, stringTwo._containsSpecialSymbols),
@@ -516,11 +516,11 @@ namespace OscLib
         /// <returns> An unholy union of a string and a string, contained inside an OSC String. </returns>
         public static OscString operator +(OscString stringOne, string stringTwo)
         {
-            byte[] data = new byte[stringOne.Length + stringTwo.Length];
+            byte[] data = new byte[stringOne.Size + stringTwo.Length];
 
-            stringOne.CopyBytesToArray(data, 0);
+            stringOne.CopyContentsToArray(data, 0);
 
-            OscSerializer.AddBytes(stringTwo, data, stringOne.Length);
+            OscSerializer.AddBytes(stringTwo, data, stringOne.Size);
 
             return new OscString(data,
                 stringOne._containsSpecialSymbols,
@@ -538,11 +538,11 @@ namespace OscLib
         /// <returns> An immense OSC String that is a combination of two strings. </returns>
         public static OscString operator +(string stringOne, OscString stringTwo)
         {
-            byte[] data = new byte[stringOne.Length + stringTwo.Length];
+            byte[] data = new byte[stringOne.Length + stringTwo.Size];
 
             OscSerializer.AddBytes(stringOne, data, 0);
 
-            stringTwo.CopyBytesToArray(data, stringOne.Length);
+            stringTwo.CopyContentsToArray(data, stringOne.Length);
 
             return new OscString(data,
                 stringTwo._containsSpecialSymbols,
@@ -560,11 +560,11 @@ namespace OscLib
         /// <returns></returns>
         public static OscString operator +(OscString stringOne, char charTwo)
         {
-            byte[] data = new byte[stringOne.Length + 1];
+            byte[] data = new byte[stringOne.Size + 1];
 
-            stringOne.CopyBytesToArray(data, 0);
+            stringOne.CopyContentsToArray(data, 0);
 
-            data[stringOne.Length] = Convert.ToByte(charTwo);
+            data[stringOne.Size] = Convert.ToByte(charTwo);
 
             return new OscString(data, stringOne._containsSpecialSymbols, stringOne._containsPatternMatching);
 
@@ -578,9 +578,9 @@ namespace OscLib
         /// <param name="stringTwo"> The second string. </param>
         public static OscString operator +(char charOne, OscString stringTwo)
         {
-            byte[] data = new byte[stringTwo.Length + 1];
+            byte[] data = new byte[stringTwo.Size + 1];
 
-            stringTwo.CopyBytesToArray(data, 1);
+            stringTwo.CopyContentsToArray(data, 1);
 
             data[0] = Convert.ToByte(charOne);
 
@@ -617,12 +617,12 @@ namespace OscLib
         /// <param name="checkMe"> The string to check. </param>
         public static bool IsNullOrEmpty(OscString checkMe)
         {
-            if (checkMe.Length < 1)
+            if (checkMe.Size < 1)
             {
                 return true;
             }
 
-            for (int i = 0; i < checkMe.Length; i++)
+            for (int i = 0; i < checkMe.Size; i++)
             {
                 if (checkMe[i] != '\0')
                 {

@@ -227,7 +227,7 @@ namespace OscLib
         /// <param name="index"> The index to check (0 by default). </param>
         public static PacketContents CheckOscContents<TPacket>(this TPacket packet, int index = 0) where TPacket : IOscPacket
         {
-            return CheckOscContents(packet.GetBytes(), index);
+            return CheckOscContents(packet.GetContents(), index);
         }
 
         #endregion // PACKET CONTENTS CHECKS
@@ -251,7 +251,7 @@ namespace OscLib
 
             // first, let's cover some common situations
             // if pattern consists of only one "*" symbol then it'll match to anything
-            if ((pattern.Length == 1) && (pattern[0] == MatchAnySequence))
+            if ((pattern.Size == 1) && (pattern[0] == MatchAnySequence))
             {
                 return true;
             }
@@ -261,10 +261,10 @@ namespace OscLib
             // revert locations
             int patRevert = -1, strRevert = -1;
 
-            while (strIndex < me.Length)
+            while (strIndex < me.Size)
             {
                 // overflow protection
-                if (patIndex >= pattern.Length)
+                if (patIndex >= pattern.Size)
                 {
                     if (patRevert < 0)
                     {
@@ -283,7 +283,7 @@ namespace OscLib
                     strRevert = strIndex;
 
                     // in case "*" is the last char in the pattern
-                    if (patIndex >= pattern.Length)
+                    if (patIndex >= pattern.Size)
                     {
                         return true;
                     }
@@ -340,7 +340,7 @@ namespace OscLib
                     patIndex = patRevert;
 
                     // if the place where the string will be reverted reaches beyond the length of the string, that means string doesn't fit the pattern
-                    if (strRevert >= me.Length)
+                    if (strRevert >= me.Size)
                     {
                         return false;
                     }
@@ -354,12 +354,12 @@ namespace OscLib
 
             }
 
-            while ((patIndex < pattern.Length) && (pattern[patIndex] == MatchAnySequence))
+            while ((patIndex < pattern.Size) && (pattern[patIndex] == MatchAnySequence))
             {
                 patIndex++;
             }
 
-            return (patIndex == pattern.Length);
+            return (patIndex == pattern.Size);
 
         }
 
@@ -374,7 +374,7 @@ namespace OscLib
             bool reverse = false;
             bool found = false;
 
-            while (pointer < pattern.Length)
+            while (pointer < pattern.Size)
             {
                 if (pattern[pointer] == MatchCharArrayClose)
                 {
@@ -400,7 +400,7 @@ namespace OscLib
                     else if (pattern[pointer] == OscProtocol.MatchRange)
                     {
                         // if we're not at the start, and if we're not by the end of the char array, so we can safely check back and forth
-                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != MatchCharArrayClose)))
+                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Size) && (pattern[pointer + 1] != MatchCharArrayClose)))
                         {
                             if (OscUtil.IsNumberBetween(checkChar, pattern[pointer - 1], pattern[pointer + 1]))
                             {
@@ -451,7 +451,7 @@ namespace OscLib
             patPointer++;
 
 
-            while (patPointer < pattern.Length)
+            while (patPointer < pattern.Size)
             {
                 if ((pattern[patPointer] == OscProtocol.Comma) || (pattern[patPointer] == OscProtocol.MatchStringArrayClose))
                 {
@@ -480,7 +480,7 @@ namespace OscLib
                 {
                     if ((!found) && (substringFits))
                     {
-                        if (strPointer < me.Length)
+                        if (strPointer < me.Size)
                         {
                             if (!CharIsEqual(me[strPointer], pattern[patPointer]))
                             {

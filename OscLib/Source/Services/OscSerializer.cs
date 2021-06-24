@@ -273,7 +273,7 @@ namespace OscLib
             // just to simplify conversion lol
             OscString oscString = new OscString(arg);
 
-            return oscString.GetBytes();
+            return oscString.GetContents();
         }
 
 
@@ -289,7 +289,7 @@ namespace OscLib
             // this shouldn't actually create more than one byte array
             OscString oscString = arg;
 
-            oscString.CopyBytesToArray(array, extPointer);
+            oscString.CopyContentsToArray(array, extPointer);
 
             // shift the external pointer
             extPointer += oscString.OscLength;
@@ -307,7 +307,7 @@ namespace OscLib
             // this shouldn't actually create more than one byte array
             OscString oscString = arg;
 
-            oscString.CopyBytesToArray(array, pointer);
+            oscString.CopyContentsToArray(array, pointer);
         }
 
 
@@ -333,7 +333,7 @@ namespace OscLib
         /// <returns> A byte array containing a sequence of ASCII codes. </returns>
         public static byte[] GetBytes(OscString arg)
         {
-            return arg.GetCopyOfBytes();
+            return arg.GetCopyOfContents();
         }
 
 
@@ -347,7 +347,7 @@ namespace OscLib
         /// <param name="extPointer"> Points at the destination index for the byte sequence. </param>
         public static void AddBytes(OscString arg, byte[] array, ref int extPointer)
         {
-            arg.CopyBytesToArray(array, extPointer);
+            arg.CopyContentsToArray(array, extPointer);
 
             extPointer += arg.OscLength;
         }
@@ -362,7 +362,7 @@ namespace OscLib
         /// <param name="pointer"> Points at the destination index for the byte sequence. </param>
         public static void AddBytes(OscString arg, byte[] array, int pointer)
         {
-            arg.CopyBytesToArray(array, pointer);
+            arg.CopyContentsToArray(array, pointer);
         }
 
 

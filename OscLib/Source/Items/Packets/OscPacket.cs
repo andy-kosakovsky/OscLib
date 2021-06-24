@@ -14,10 +14,10 @@ namespace OscLib
     /// </remarks>
     public readonly struct OscPacket : IOscPacket
     {
-        private readonly byte[] _binaryData;
+        private readonly byte[] _contents;
 
         /// <summary> The number of bytes contained in this Packet. </summary>
-        public int Length { get => _binaryData.Length; }
+        public int Size { get => _contents.Length; }
 
         /// <summary>
         /// Provides indexer access to binary data inside this packet.
@@ -30,13 +30,13 @@ namespace OscLib
         {
             get
             {
-                if ((index < 0) || (index >= _binaryData.Length))
+                if ((index < 0) || (index >= _contents.Length))
                 {
                     return 0;
                 }    
                 else
                 {
-                    return _binaryData[index];
+                    return _contents[index];
                 }
 
             }
@@ -55,7 +55,7 @@ namespace OscLib
                 throw new ArgumentException("OSC Packet ERROR: Cannot create new OscPacket, provided binary data is not valid OSC data. ");
             }
 
-            _binaryData = data;
+            _contents = data;
 
         }
 
@@ -65,7 +65,7 @@ namespace OscLib
         /// </summary>
         internal OscPacket(byte[] data, bool isValid)
         {
-            _binaryData = data;
+            _contents = data;
         }
 
 
@@ -82,8 +82,8 @@ namespace OscLib
                 throw new ArgumentException("OSC Packet ERROR: Cannot create new OscPacket, provided binary data isn't valid OSC data. ");
             }
 
-            _binaryData = new byte[length];
-            Array.Copy(dataSource, index, _binaryData, 0, length);
+            _contents = new byte[length];
+            Array.Copy(dataSource, index, _contents, 0, length);
         }
 
 
@@ -92,8 +92,8 @@ namespace OscLib
         /// </summary>
         internal OscPacket(byte[] dataSource, int index, int length, bool isValid)
         {
-            _binaryData = new byte[length];
-            Array.Copy(dataSource, index, _binaryData, 0, length);
+            _contents = new byte[length];
+            Array.Copy(dataSource, index, _contents, 0, length);
         }
 
 
@@ -102,19 +102,19 @@ namespace OscLib
         /// </summary>
         /// <remarks> Despite being read-only, one can still change individual values inside this array. This can be both good and bad - and definitely something to be wary of.
         /// If this behaviour is not explicitly needed, it's probably safer to use the indexer access instead. </remarks>
-        public byte[] GetBytes()
+        public byte[] GetContents()
         {
-            return _binaryData;
+            return _contents;
         }
 
 
         /// <summary>
         /// Returns a copy of the byte array containing OSC data.
         /// </summary>
-        public byte[] GetCopyOfBytes()
+        public byte[] GetCopyOfContents()
         {
-            byte[] copy = new byte[_binaryData.Length];
-            _binaryData.CopyTo(copy, 0);
+            byte[] copy = new byte[_contents.Length];
+            _contents.CopyTo(copy, 0);
 
             return copy;
         }
@@ -125,9 +125,9 @@ namespace OscLib
         /// </summary>
         /// <param name="target"> The target array to copy to. </param>
         /// <param name="index"> The index to which to copy. </param>
-        public void CopyBytesToArray(byte[] target, int index)
+        public void CopyContentsToArray(byte[] target, int index)
         {
-            _binaryData.CopyTo(target, index);
+            _contents.CopyTo(target, index);
         }
 
 
@@ -140,11 +140,11 @@ namespace OscLib
             StringBuilder returnString = new StringBuilder();
 
             returnString.Append("PACKET (BINARY); Length: ");
-            returnString.Append(_binaryData.Length);
+            returnString.Append(_contents.Length);
             returnString.Append("; Contents: ");
             returnString.Append('\n');
 
-            returnString.Append(OscUtil.ByteArrayToStrings(_binaryData, 16));
+            returnString.Append(OscUtil.ByteArrayToStrings(_contents, 16));
 
             return returnString.ToString();
 

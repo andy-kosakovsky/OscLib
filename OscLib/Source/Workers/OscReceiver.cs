@@ -149,7 +149,7 @@ namespace OscLib
                 else
                 {
                     // extract all bundles within bundles into a flat array
-                    OscBundle[] arrivals = _converter.GetBundles(packet.GetBytes());
+                    OscBundle[] arrivals = _converter.GetBundles(packet.GetContents());
 
                     try
                     {
