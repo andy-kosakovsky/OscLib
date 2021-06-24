@@ -299,7 +299,6 @@ namespace OscLib
 
         }
 
-
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder();

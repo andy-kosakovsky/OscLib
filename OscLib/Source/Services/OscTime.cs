@@ -4,8 +4,13 @@ using System.Diagnostics;
 namespace OscLib
 {
     /// <summary>
-    /// Manages timekeeping and timetags. Provides a global session tick, based on the .Net DateTime and StopWatch ticks.
+    /// Manages timekeeping and timetags. 
+    /// Provides the GlobalTick, based on the .Net DateTime and Stopwatch ticks - the main source of timing data for the rest of this library's components.  
     /// </summary>
+    /// <remarks>
+    /// By default, uses the current UTC time as provided by the system. Can be reconfigured to start the count from any point in time after the
+    /// beginning of the current NTP epoch (the lowest possible value for an OSC timetag, seeing as they are NTP-based).
+    /// </remarks>
     public static class OscTime
     {
         private static Stopwatch _sessionTimer;

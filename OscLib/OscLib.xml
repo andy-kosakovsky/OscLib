@@ -766,7 +766,7 @@
         <member name="M:OscLib.OscDeserializer.GetInt32(System.Byte[],System.Int32@)">
             <summary>
             Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 32-bit integer. 
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -783,7 +783,7 @@
         <member name="M:OscLib.OscDeserializer.GetInt64(System.Byte[],System.Int32@)">
             <summary>
             Converts eight bytes of OSC binary data - beginning at the specified index in the provided array - into a 64-bit integer. 
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -800,7 +800,7 @@
         <member name="M:OscLib.OscDeserializer.GetTimetag(System.Byte[],System.Int32@)">
             <summary>
             Converts eight bytes of OSC binary data - beginning at the specified index in the provided array - into an OSC Timetag.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -817,7 +817,7 @@
         <member name="M:OscLib.OscDeserializer.GetFloat32(System.Byte[],System.Int32@)">
             <summary>
             Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 32-bit (single-presicion) floating-point number.  
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -834,7 +834,7 @@
         <member name="M:OscLib.OscDeserializer.GetFloat64(System.Byte[],System.Int32@)">
             <summary>
             Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 64-bit (double-presicion) floating-point number.  
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -851,7 +851,7 @@
         <member name="M:OscLib.OscDeserializer.GetBlob(System.Byte[],System.Int32@)">
             <summary>
             Retreives a binary blob of OSC data from a larger set, as per OSC specification. Returns it as a separate byte array.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <remarks> This method is chiefly intended for retreiving "blob" arguments from OSC Messages. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -859,7 +859,7 @@
         </member>
         <member name="M:OscLib.OscDeserializer.GetString(System.Byte[],System.Int32)">
             <summary>
-            Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification. 
+            Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string. 
             </summary>
             <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -867,8 +867,8 @@
         </member>
         <member name="M:OscLib.OscDeserializer.GetString(System.Byte[],System.Int32@)">
             <summary>
-            Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification. 
-            The pointer is a reference, its value is increased according to the size of added data.
+            Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string. 
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -876,7 +876,7 @@
         </member>
         <member name="M:OscLib.OscDeserializer.GetOscString(System.Byte[],System.Int32)">
             <summary>
-            Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification.
+            Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string.
             Returns it as an OscString struct.
             </summary>
             <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
@@ -885,9 +885,9 @@
         </member>
         <member name="M:OscLib.OscDeserializer.GetOscString(System.Byte[],System.Int32@)">
             <summary>
-            Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification.
+            Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string.
             Returns it as an OscString struct.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
             <param name="data"> Byte array containing OSC binary data. </param>
@@ -903,7 +903,7 @@
         <member name="M:OscLib.OscDeserializer.GetOscMidi(System.Byte[],System.Int32@)">
             <summary>
             Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a MIDI message, represented by the OscMidi struct.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <param name="data"> Byte array containing OSC binary data. </param>
             <param name="pointer"> Points at the index of the first relevant byte. </param>
@@ -918,14 +918,14 @@
         <member name="M:OscLib.OscDeserializer.GetOscColor(System.Byte[],System.Int32@)">
             <summary>
             Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into an 32-bit RGBA color, represented by the OscColor struct.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of deserialized data.
             </summary>
             <param name="data"> Byte array containing OSC binary data. </param>
             <param name="pointer"> Points at the index of the first relevant byte. </param>
         </member>
         <member name="T:OscLib.OscProtocol">
             <summary>
-            Contains common constants, values and symbols as defined by the Open Sound Control Protocol specification.
+            Contains common constants, values and symbols, as well as pattern-matching and data-validation functionality as defined by the Open Sound Control Protocol specification.
             </summary>
         </member>
         <member name="F:OscLib.OscProtocol.Chunk32">
@@ -1006,6 +1006,15 @@
             <param name="length"> The total number of bytes to check. </param>
             <returns> "True" if the array seems to contain valid binary data (or at the very least adheres to the basic tenets of the OSC Protocol), "False" otherwise. </returns>
         </member>
+        <member name="M:OscLib.OscProtocol.PatternMatch(OscLib.OscString,OscLib.OscString)">
+            <summary>
+            Compares a string to the specified pattern, returns whether they match or not.
+            </summary>
+            <remarks> If the string in question is a pattern itself, this method will return "false" unless the patterns are identical. </remarks>
+            <param name="pattern"> The pattern to which the string is compared. </param>
+            <returns> "True" if string matches the pattern, "false" if not (duh). </returns>
+            <exception cref="T:System.ArgumentException"> Thrown when either the curly brackets or the square brackets in the pattern aren't closed. </exception>
+        </member>
         <member name="T:OscLib.OscSerializer">
             <summary>
             Contains methods for serializing various data types into OSC Protocol-compliant binary data.
@@ -1021,7 +1030,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(System.Int32,System.Byte[],System.Int32@)">
             <summary>
             Converts the specified 32-bit integer value into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The value to convert. </param>
             <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -1045,7 +1054,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(System.Int64,System.Byte[],System.Int32@)">
             <summary>
             Converts the specified 64-bit integer into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The value to convert. </param>
             <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -1069,7 +1078,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(System.Single,System.Byte[],System.Int32@)">
             <summary>
             Converts the specified 32-bit float value into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The value to convert. </param>
             <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -1093,7 +1102,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(System.Double,System.Byte[],System.Int32@)">
             <summary>
             Converts the specified 64-bit floating-point value into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The value to convert. </param>
             <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -1117,7 +1126,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(System.String,System.Byte[],System.Int32@)">
             <summary>
             Converts the specified string into a sequence of ASCII codes and adds it to an existing byte array.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The string to convert. </param>
             <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -1148,7 +1157,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscString,System.Byte[],System.Int32@)">
             <summary>
             "Converts" an OscString into ASCII codes and adds them to an existing byte array.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <remarks> This method is just here for consistency. Literally the same thing can be achieved by calling the CopyBytesToArray method of the OscString. </remarks>
             <param name="arg"> The string to convert. </param>
@@ -1181,7 +1190,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(System.Byte[],System.Byte[],System.Int32@)">
             <summary>
             Copies the contents of the specified array into the provided byte array, formatting it as an OSC binary blob.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The byte array to format. </param>
             <param name="array"> The byte array (presumably containing OSC binary data) to which the blob will be added. </param>
@@ -1212,7 +1221,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscTimetag,System.Byte[],System.Int32@)">
             <summary>
             Converts the specified OSC Timetag - which is a 64-bit unsigned integer - into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The value to convert. </param>
             <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -1236,7 +1245,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscColor,System.Byte[],System.Int32@)">
             <summary>
             Converts the specified 32-bit, RGBA color - represented by an OscColor struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The OscColor struct to convert. </param>
             <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -1260,7 +1269,7 @@
         <member name="M:OscLib.OscSerializer.AddBytes(OscLib.OscMidi,System.Byte[],System.Int32@)">
             <summary>
             Converts the specified MIDI message - represented by an OscMidi struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.
-            The pointer is a reference, its value is increased according to the size of added data.
+            The pointer is passed by reference, its value is increased according to the size of added data.
             </summary>
             <param name="arg"> The OscColor struct to convert. </param>
             <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -1276,8 +1285,13 @@
         </member>
         <member name="T:OscLib.OscTime">
             <summary>
-            Manages timekeeping and timetags. Provides a global session tick, based on the .Net DateTime and StopWatch ticks.
+            Manages timekeeping and timetags. 
+            Provides the GlobalTick, based on the .Net DateTime and Stopwatch ticks - the main source of timing data for the rest of this library's components.  
             </summary>
+            <remarks>
+            By default, uses the current UTC time as provided by the system. Can be reconfigured to start the count from any point in time after the
+            beginning of the current NTP epoch (the lowest possible value for an OSC timetag, seeing as they are NTP-based).
+            </remarks>
         </member>
         <member name="P:OscLib.OscTime.SessionTick">
             <summary> Provides the number of ticks elapsed since "session start" - the time of the first call to this class, by default. </summary>
@@ -1358,22 +1372,6 @@
             </summary>
             <param name="exception"></param>
         </member>
-        <member name="T:OscLib.OscPacketHeapCheck`1">
-            <summary>
-            Used with OSC Sender's packet heap to pass methods that check OSC Packets for various conditions before doing stuff with them.
-            </summary>
-            <remarks>
-            The delegate is generic to accomodate for possible "custom" OSC Packets.
-            </remarks>
-            <typeparam name="Packet"> Should implement the IOscPcketBinary interface. </typeparam>
-            <param name="packet"> Packet to be checked. </param>
-        </member>
-        <member name="T:OscLib.OscTimetagSource">
-            <summary>
-            Used to pass methods that serve as a source for timetags.
-            </summary>
-            <returns> An OSC Timetag. </returns>
-        </member>
         <member name="T:OscLib.OscMethodEventHandler">
             <summary>
             Used with OSC Methods to 
@@ -1383,7 +1381,7 @@
         </member>
         <member name="T:OscLib.OscEndian">
             <summary>
-            Contains methods for swapping the endianness of data.
+            Contains functionality for swapping the endianness of data.
             </summary>
         </member>
         <member name="M:OscLib.OscEndian.Swap(System.Byte[])">
@@ -1436,6 +1434,35 @@
             Swaps the endianness of the specified 64-bit floating-point value.
             </summary>
             <returns> A 64-bit floating-point value - encoding the same value as the original but with its bytes the other way around. </returns>
+        </member>
+        <member name="T:OscLib.LinkMode">
+            <summary>
+            Describes the current mode of operation of an OSC Link.
+            </summary>
+            
+        </member>
+        <member name="F:OscLib.LinkMode.Closed">
+            <summary> OSC Link is closed. </summary>
+        </member>
+        <member name="F:OscLib.LinkMode.ToTarget">
+            <summary> OSC Link is open and connected to a specific end point. It will only receive and send packets from and to that end point. </summary>
+        </member>
+        <member name="F:OscLib.LinkMode.ToAll">
+            <summary> OSC Link is open to communicate with any end point. </summary>
+        </member>
+        <member name="T:OscLib.PacketContents">
+            <summary>
+            Used to specify whether an OSC binary data packet contains a single OSC Message or a bundle. 
+            </summary>
+        </member>
+        <member name="F:OscLib.PacketContents.Message">
+            <summary> The packet contains a single OSC Message. </summary>
+        </member>
+        <member name="F:OscLib.PacketContents.Bundle">
+            <summary> The packet contains an OSC Bundle. </summary>
+        </member>
+        <member name="F:OscLib.PacketContents.BadData">
+            <summary> The packet doesn't seem to contain OSC data. </summary>
         </member>
         <member name="T:OscLib.OscUtil">
             <summary>
@@ -1986,21 +2013,6 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="T:OscLib.LinkMode">
-            <summary>
-            Describes the current mode of operation of an OSC Link.
-            </summary>
-            
-        </member>
-        <member name="F:OscLib.LinkMode.Closed">
-            <summary> OSC Link is closed. </summary>
-        </member>
-        <member name="F:OscLib.LinkMode.Targeted">
-            <summary> OSC Link is open and connected to a specific end point. It will only receive and send packets from and to that end point. </summary>
-        </member>
-        <member name="F:OscLib.LinkMode.Wide">
-            <summary> OSC Link is open to communicate with any end point. </summary>
-        </member>
         <member name="T:OscLib.OscLink">
             <summary>
             Used to send and receive OSC Packets over UDP. Can operate in two modes: targeted to one specific endpoint, or wide-open free-for-all.
@@ -2076,11 +2088,14 @@
         <member name="E:OscLib.OscLink.PacketReceived">
             <summary> Invoked when this OSC Link receives a packet of OSC binary data. </summary>
         </member>
-        <member name="F:OscLib.OscLink.BadDataReceived">
-            <summary> Invoked when this OSC Link receives packet that contains bad/invalid/non-OSC data. </summary>
+        <member name="E:OscLib.OscLink.BadDataReceived">
+            <summary> Invoked when this OSC Link receives a binary packet that contains bad/invalid/non-OSC data. </summary>
         </member>
         <member name="E:OscLib.OscLink.PacketSent">
-            <summary> Invoked when this OSC Link sends out an OSC packet. </summary>
+            <summary> Invoked when this OSC Link sends out an OSC Packet. </summary>
+        </member>
+        <member name="E:OscLib.OscLink.BadDataSent">
+            <summary> Invoked in an unlikely event of trying to send an OSC Packet that somehow contains bad/invalid/non-OSC data. </summary>
         </member>
         <member name="E:OscLib.OscLink.ReceiveTaskExceptionRaised">
             <summary> Invoked when there is an exception inside the receive task. Allows to catch exceptions without crashing the task, if desired. </summary>
@@ -2115,13 +2130,13 @@
             <exception cref="T:System.ArgumentOutOfRangeException"> The port number is out of range. </exception>
             <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket. </exception>
         </member>
-        <member name="M:OscLib.OscLink.OpenWide">
+        <member name="M:OscLib.OscLink.OpenToAll">
             <summary>
             Opens the OSC Link to send and receive to and from any end point. The OSC Link will use any random available port.
             </summary>
             <exception cref="T:System.Net.Sockets.SocketException"> Couldn't open a socket. </exception>
         </member>
-        <member name="M:OscLib.OscLink.OpenWide(System.Int32)">
+        <member name="M:OscLib.OscLink.OpenToAll(System.Int32)">
             <summary>
             Opens the OSC Link to send and receive to and from any end point. The OSC Link will use the specified port.
             </summary>
@@ -2136,9 +2151,9 @@
         </member>
         <member name="M:OscLib.OscLink.SendToTarget``1(``0)">
             <summary>
-            Sends an OSC packet to the target end point of this OSC Link.
+            Sends an OSC Packet to the target end point of this OSC Link.
             </summary>
-            <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+            <typeparam name="TPacket"> The packet should implement the IOscPacket interface. </typeparam>
             <param name="oscPacket"> OSC Packet to be sent. </param>
             <exception cref="T:System.InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
             <exception cref="T:System.ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
@@ -2152,7 +2167,7 @@
             This helps to avoid copying data to a new array in order to truncate it, which in turn avoids creating unnecessary GC pressure.
             Obviously, this method is *to be used with caution* - there are all sorts of bugs and weird edge cases that might crop up, and it's much safer to use isolated, non-cache arrays in general. 
             </remarks>
-            <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+            <typeparam name="TPacket"> The packet should implement the IOscPacket interface. </typeparam>
             <param name="oscPacket"> OSC Packet to be sent. </param>
             <param name="length"> The length of useful data within the packet (in bytes) starting from the beginning of the packet. Everything outside this length will be discarded. </param>
             <exception cref="T:System.InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
@@ -2160,9 +2175,9 @@
         </member>
         <member name="M:OscLib.OscLink.SendToEndPoint``1(``0,System.Net.IPEndPoint)">
             <summary>
-            Sends an OSC packet to the specified end point.
+            Sends an OSC Packet to the specified end point.
             </summary>
-            <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+            <typeparam name="TPacket"> The packet should implement the IOscPacket interface. </typeparam>
             <param name="oscPacket"> OSC binary data packet to be sent. </param>
             <param name="endPoint"> The end point to which the packet will be sent. </param>
             <exception cref="T:System.InvalidOperationException"> Thrown if OSC Link is not in wide mode. </exception>
@@ -2177,12 +2192,17 @@
             This helps to avoid copying data to a new array in order to truncate it, which in turn avoids creating unnecessary GC pressure.
             Obviously, this method is *to be used with caution* - there are all sorts of bugs and weird edge cases that might crop up, and it's much safer to use isolated, non-cache arrays in general. 
             </remarks>
-            <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+            <typeparam name="TPacket"> The packet should implement the IOscPacket interface. </typeparam>
             <param name="oscPacket"> OSC Packet to be sent. </param>
             <param name="length"> The length of useful data within the packet (in bytes) starting from the beginning of the packet. Everything outside this length will be discarded. </param>
             <param name="endPoint"> The end point to which the packet will be sent. </param>
             <exception cref="T:System.InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
             <exception cref="T:System.ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
+        </member>
+        <member name="M:OscLib.OscLink.ReceiveTask">
+            <summary>
+            The task responsible for receiving binary data from the internal UDP client and packing it into OSC Packets.
+            </summary>
         </member>
         <member name="M:OscLib.OscLink.OnPacketReceived(System.Byte[],System.Net.IPEndPoint)">
             <summary>
@@ -2198,10 +2218,10 @@
             <param name="data"> Byte array containing the OSC data being sent out. </param>
             <param name="sentTo"> The end point to which the data is being sent. </param>
         </member>
-        <member name="M:OscLib.OscLink.GetLocalEndPoint">
+        <member name="M:OscLib.OscLink.GetLoopbackEndPoint">
             <summary> Returns an end point at a local address on a random open port. </summary> 
         </member>
-        <member name="M:OscLib.OscLink.GetLocalEndPointWithPort(System.Int32)">
+        <member name="M:OscLib.OscLink.GetLoopbackEndPointWithPort(System.Int32)">
             <summary> Returns an end point at a local address with the requested port number (subject to availability). </summary> 
         </member>
         <member name="M:OscLib.OscLink.ToString">
@@ -2219,7 +2239,7 @@
             
             OSC Link needs to be in targeted mode when operating, otherwise nothing will get sent.
             </summary>
-            <typeparam name="Packet"> The particular type of the OSC Packet used with this Sender. Should implement the IOscPacket interface. </typeparam>
+            <typeparam name="TPacket"> The particular type of the OSC Packet used with this Sender. Should implement the IOscPacket interface. </typeparam>
         </member>
         <member name="F:OscLib.OscPacketHeap`1._link">
             <summary> OSC Link in use with this Sender. </summary>
@@ -2250,15 +2270,6 @@
         </member>
         <member name="F:OscLib.OscPacketHeap`1._isActive">
             <summary> Whether this Sender is currently active. </summary>
-        </member>
-        <member name="F:OscLib.OscPacketHeap`1._shouldSendPacket">
-            <summary> Checks whether the packet should be sent in the current cycle. </summary> 
-        </member>
-        <member name="F:OscLib.OscPacketHeap`1._shouldRemovePacket">
-            <summary> Checks whether the packet should be removed in the current cycle. </summary> 
-        </member>
-        <member name="F:OscLib.OscPacketHeap`1._timetagSource">
-            <summary> Provides timetags for the bundles this sender sends out. </summary>
         </member>
         <member name="P:OscLib.OscPacketHeap`1.IsActive">
             <summary> Whether this Sender is currently active. </summary>
@@ -2303,18 +2314,6 @@
             Deactivates the Sender and disconnects it from the OSC Link.
             </summary>
         </member>
-        <member name="M:OscLib.OscPacketHeap`1.SetMethodShouldSentPacket(OscLib.OscPacketHeapCheck{`0})">
-            <summary>
-            Provides the method delegate for checking if a packet in the heap is eligible to be sent.
-            </summary>
-            <param name="shouldSendPacketMethod"> The method to be used for checking packets. </param>
-        </member>
-        <member name="M:OscLib.OscPacketHeap`1.SetMethodShouldRemovePacket(OscLib.OscPacketHeapCheck{`0})">
-            <summary>
-            Provides the method delegate for checking if a packet needs to be removed from the heap.
-            </summary>
-            <param name="shouldRemovePacketMethod"> The method to be used for removing packets. </param>
-        </member>
         <member name="M:OscLib.OscPacketHeap`1.SendPacket(`0)">
             <summary>
             Gets the binary data from the OSC packet and immediately sends it through the OSC Link.
@@ -2357,9 +2356,9 @@
         </member>
         <member name="T:OscLib.OscReceiver">
             <summary>
-             Processes OSC binary packets received by the connected OSC Link, converts them into Bundles and Messages using the provided Converter. 
-             <para> Can be configured to delay the the invocation of incoming bundles according to their timetags. </para>
+             Processes binary data-containing OSC Packets received by the connected OSC Link, converts them into Bundles and Messages using the provided Converter. 
             </summary>
+            <remarks> Can be configured to delay the invocation of incoming bundles according to their timetags. </remarks>
         </member>
         <member name="F:OscLib.OscReceiver._name">
             <summary> The name of this OscReceiver. </summary>
@@ -2405,24 +2404,24 @@
         </member>
         <member name="M:OscLib.OscReceiver.#ctor(System.String,System.Boolean,System.Int32)">
             <summary>
-            Creates a new OSC Receiver, specifies initial settings for it.
+            Creates a new OSC Receiver, specifies its initial settings.
             </summary>
             <param name="name"> The name of this Receiver. </param>
             <param name="ignoreTimetags"> Whether to ignore the incoming OSC Bundles' timetags and invoke them as they come, or not. </param>
-            <param name="cycleLengthMs"> The length between checks on stored OSC Bundles. </param>
+            <param name="cycleLengthMs"> The length of time between checks on stored OSC Bundles, in milliseconds. </param>
         </member>
         <member name="M:OscLib.OscReceiver.ReceivePacket``1(``0,System.Net.IPEndPoint)">
             <summary>
             Receives an OSC Packet and converts it into either a Message or a Bundle, using the connected Converter. 
             Depending on configuration and on the received Bundle's time tag, either invokes it straight away or holds it for the specified period of time.
             </summary>
-            <typeparam name="Packet"></typeparam>
+            <typeparam name="TPacket"></typeparam>
             <param name="packet"></param>
             <param name="endPoint"></param>
         </member>
         <member name="M:OscLib.OscReceiver.HeapProcessingCycle">
             <summary>
-            The bundle heap processing task. Checks each
+            The bundle heap processing task. Checks each bundle on the heap, starting from the last one and working backwards. Invokes a bundle if its timetag is earlier than the current GlobalTick. 
             </summary>
             <returns></returns>
         </member>

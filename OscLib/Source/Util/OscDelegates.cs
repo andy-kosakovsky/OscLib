@@ -52,28 +52,6 @@ namespace OscLib
     #endregion
 
 
-    #region PACKET HEAP
-
-    /// <summary>
-    /// Used with OSC Sender's packet heap to pass methods that check OSC Packets for various conditions before doing stuff with them.
-    /// </summary>
-    /// <remarks>
-    /// The delegate is generic to accomodate for possible "custom" OSC Packets.
-    /// </remarks>
-    /// <typeparam name="Packet"> Should implement the IOscPcketBinary interface. </typeparam>
-    /// <param name="packet"> Packet to be checked. </param>
-    public delegate bool OscPacketHeapCheck<Packet>(Packet packet) where Packet : IOscPacket;
-
-
-    /// <summary>
-    /// Used to pass methods that serve as a source for timetags.
-    /// </summary>
-    /// <returns> An OSC Timetag. </returns>
-    public delegate OscTimetag OscTimetagSource();
-
-    #endregion
-
-
     #region OSC ADDRESS SPACE
 
     /// <summary>

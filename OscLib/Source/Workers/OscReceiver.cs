@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace OscLib
 {
     /// <summary>
-    ///  Processes OSC binary packets received by the connected OSC Link, converts them into Bundles and Messages using the provided Converter. 
-    ///  <para> Can be configured to delay the the invocation of incoming bundles according to their timetags. </para>
+    ///  Processes binary data-containing OSC Packets received by the connected OSC Link, converts them into Bundles and Messages using the provided Converter. 
     /// </summary>
+    /// <remarks> Can be configured to delay the invocation of incoming bundles according to their timetags. </remarks>
     public class OscReceiver
     {
         // TODO: add bundle delay thing here.
@@ -65,12 +65,12 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates a new OSC Receiver, specifies initial settings for it.
+        /// Creates a new OSC Receiver, specifies its initial settings.
         /// </summary>
         /// <param name="name"> The name of this Receiver. </param>
         /// <param name="ignoreTimetags"> Whether to ignore the incoming OSC Bundles' timetags and invoke them as they come, or not. </param>
-        /// <param name="cycleLengthMs"> The length between checks on stored OSC Bundles. </param>
-        public OscReceiver(string name, bool ignoreTimetags = false, int cycleLengthMs = 20)
+        /// <param name="cycleLengthMs"> The length of time between checks on stored OSC Bundles, in milliseconds. </param>
+        public OscReceiver(string name, bool ignoreTimetags = false, int cycleLengthMs = 5)
         {
             _name = name;
             _ignoreTimetags = ignoreTimetags;
@@ -133,20 +133,22 @@ namespace OscLib
         /// Receives an OSC Packet and converts it into either a Message or a Bundle, using the connected Converter. 
         /// Depending on configuration and on the received Bundle's time tag, either invokes it straight away or holds it for the specified period of time.
         /// </summary>
-        /// <typeparam name="Packet"></typeparam>
+        /// <typeparam name="TPacket"></typeparam>
         /// <param name="packet"></param>
         /// <param name="endPoint"></param>
-        public virtual void ReceivePacket<Packet>(Packet packet, IPEndPoint endPoint) where Packet : IOscPacket
+        public virtual void ReceivePacket<TPacket>(TPacket packet, IPEndPoint endPoint) where TPacket : IOscPacket
         {
        
-            if (packet[0] == OscProtocol.BundleMarker)
+            if (packet.CheckOscContents() == PacketContents.Bundle)
             {
                 if (_ignoreTimetags)
                 {
+                    // invoke straight away
                     BundleReceived?.Invoke(_converter.GetBundle(packet), endPoint);
                 }
                 else
                 {
+                    // extract all bundles within bundles into a flat array
                     OscBundle[] arrivals = _converter.GetBundles(packet.GetBytes());
 
                     try
@@ -155,16 +157,17 @@ namespace OscLib
 
                         for (int i = 0; i < arrivals.Length; i++)
                         {
-                            
+                            // if timetag is earlier than the current time, invoke right away
                             if (arrivals[i].Timetag.Ticks < OscTime.GlobalTick)
                             {
                                 BundleReceived?.Invoke(arrivals[i], endPoint);
                             }
                             else
-                            {
-                                // insert the new arrival right after the first bundle with a larger timetag - automatically sorting the list  
+                            {                              
                                 KeyValuePair<OscBundle, IPEndPoint> arrival = new KeyValuePair<OscBundle, IPEndPoint>(arrivals[i], endPoint);
 
+                                // insert the new arrival right after the first bundle with a larger timetag. 
+                                // this will automaticall sort the heap - the later the invocation time, the closer to the beginning the bundle will be kept.
                                 if (_heap.Count > 0)
                                 {
                                     for (int j = _heap.Count - 1; j >= 0; j--)
@@ -210,7 +213,7 @@ namespace OscLib
                 }
 
             }
-            else if (packet[0] == OscProtocol.Separator)
+            else if (packet.CheckOscContents() == PacketContents.Message)
             {
                 MessageReceived?.Invoke(_converter.GetMessage(packet), endPoint);
             }         
@@ -219,7 +222,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// The bundle heap processing task. Checks each
+        /// The bundle heap processing task. Checks each bundle on the heap, starting from the last one and working backwards. Invokes a bundle if its timetag is earlier than the current GlobalTick. 
         /// </summary>
         /// <returns></returns>
         protected async Task HeapProcessingCycle()

@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace OscLib
 {
     /// <summary>
-    /// Contains methods for swapping the endianness of data.
+    /// Contains functionality for swapping the endianness of data.
     /// </summary>
     public static class OscEndian
     {

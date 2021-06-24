@@ -16,8 +16,8 @@ namespace OscLib
     /// 
     /// OSC Link needs to be in targeted mode when operating, otherwise nothing will get sent.
     /// </summary>
-    /// <typeparam name="Packet"> The particular type of the OSC Packet used with this Sender. Should implement the IOscPacket interface. </typeparam>
-    public class OscPacketHeap<Packet> where Packet : IOscPacket
+    /// <typeparam name="TPacket"> The particular type of the OSC Packet used with this Sender. Should implement the IOscPacket interface. </typeparam>
+    public class OscPacketHeap<TPacket> where TPacket : IOscPacket
     {
         #region FIELDS
         /// <summary> OSC Link in use with this Sender. </summary>
@@ -28,7 +28,7 @@ namespace OscLib
 
 
         /// <summary> The packet heap, holding all the packets before they are processed and sent (or not). Implements several priority levels. </summary>
-        protected List<Packet>[] _heap;
+        protected List<TPacket>[] _heap;
 
         /// <summary> Used to facilitate orderly access to the packet heap. </summary>
         protected Mutex _heapAccess;
@@ -51,17 +51,6 @@ namespace OscLib
 
         /// <summary> Whether this Sender is currently active. </summary>
         protected bool _isActive;
-
-
-        // delegates
-        /// <summary> Checks whether the packet should be sent in the current cycle. </summary> 
-        protected OscPacketHeapCheck<Packet> _shouldSendPacket;
-
-        /// <summary> Checks whether the packet should be removed in the current cycle. </summary> 
-        protected OscPacketHeapCheck<Packet> _shouldRemovePacket;
-
-        /// <summary> Provides timetags for the bundles this sender sends out. </summary>
-        protected OscTimetagSource _timetagSource;
 
         #endregion
 
@@ -153,11 +142,6 @@ namespace OscLib
             _packetBundleMaxSize = packetBundleMaxSize;
             _cycleDataHolder = new byte[_packetBundleMaxSize];
 
-            // get default methods to act as delegates
-            _shouldSendPacket = DefaultShouldSendPacket;
-            _shouldRemovePacket = DefaultShouldRemovePacket;
-            _timetagSource = DefaultTimetagSource;
-
             // set options
             _heapTotalLayers = packetHeapTotalLayers.Clamp(1, int.MaxValue);
 
@@ -193,11 +177,11 @@ namespace OscLib
             _link = oscLink;
 
             // initialize data heap with requested number of priority levels
-            _heap = new List<Packet>[_heapTotalLayers];
+            _heap = new List<TPacket>[_heapTotalLayers];
 
             for (int i = 0; i < _heapTotalLayers; i++)
             {
-                _heap[i] = new List<Packet>();
+                _heap[i] = new List<TPacket>();
             }
 
             _heapTask = Task.Run(HeapProcessingCycle);
@@ -223,31 +207,6 @@ namespace OscLib
 
         }
 
-
-        /// <summary>
-        /// Provides the method delegate for checking if a packet in the heap is eligible to be sent.
-        /// </summary>
-        /// <param name="shouldSendPacketMethod"> The method to be used for checking packets. </param>
-        public void SetMethodShouldSentPacket(OscPacketHeapCheck<Packet> shouldSendPacketMethod)
-        {
-            _shouldSendPacket = shouldSendPacketMethod;
-        }
-
-
-        /// <summary>
-        /// Provides the method delegate for checking if a packet needs to be removed from the heap.
-        /// </summary>
-        /// <param name="shouldRemovePacketMethod"> The method to be used for removing packets. </param>
-        public void SetMethodShouldRemovePacket(OscPacketHeapCheck<Packet> shouldRemovePacketMethod)
-        {
-            _shouldRemovePacket = shouldRemovePacketMethod;
-        }
-
-        public void SetMethodTimetagSource(OscTimetagSource timetagSourceMethod)
-        {
-            _timetagSource = timetagSourceMethod;
-        }
-
         #endregion // SYSTEM32
 
 
@@ -257,9 +216,9 @@ namespace OscLib
         /// Gets the binary data from the OSC packet and immediately sends it through the OSC Link.
         /// </summary>
         /// <param name="packet"> A reference to the OSC binary data packet to be sent. </param>
-        public void SendPacket(Packet packet)
+        public void SendPacket(TPacket packet)
         {
-            if (_link.Mode == LinkMode.Targeted)
+            if (_link.Mode == LinkMode.ToTarget)
             {
                 _link.SendToTarget(packet);
             }
@@ -276,7 +235,7 @@ namespace OscLib
         /// <param name="priorityLevel"> The priority level of the packet, with 0 being the highest priority. </param>
         /// <exception cref="InvalidOperationException"> Thrown when attempting to add data while the sender is not active. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> Thrown when the size of the binary data packet is too large to be sent. </exception>
-        public void AddPacketToHeapHead(Packet packet, int priorityLevel = 0)
+        public void AddPacketToHeapHead(TPacket packet, int priorityLevel = 0)
         {
             if (!_isActive)
             {
@@ -313,7 +272,7 @@ namespace OscLib
         /// <param name="priorityLevel"> The priority level of the packet, with 0 being the highest priority. </param>
         /// <exception cref="InvalidOperationException"> Thrown when attempting to add data while the sender is not active. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> Thrown when the size of the binary data packet is too large to be sent. </exception>
-        public void AddPacketToHeapTail(Packet packet, int priorityLevel = 0)
+        public void AddPacketToHeapTail(TPacket packet, int priorityLevel = 0)
         {
 
             if (!_isActive)
@@ -355,13 +314,13 @@ namespace OscLib
 
 
         #region TASKS AND INTERNALS
-        private async Task HeapProcessingCycle()
+        protected virtual async Task HeapProcessingCycle()
         {
 
             while (_isActive)
             { 
 
-                if (_link.Mode == LinkMode.Targeted)
+                if (_link.Mode == LinkMode.ToTarget)
                 {
                     // check if we got data to send
                     bool dataFound = false;
@@ -428,10 +387,10 @@ namespace OscLib
         /// Processes one level of data heap and sends either bundles or messages according to the setting.
         /// </summary>
         /// <param name="priorityLevel"></param>
-        private void ProcessHeapLevel(int priorityLevel)
+        protected virtual void ProcessHeapLevel(int priorityLevel)
         {
             // get reference to the current priority level for convenience
-            List<Packet> packetHeapLevel = _heap[priorityLevel];
+            List<TPacket> packetHeapLevel = _heap[priorityLevel];
 
             // total messages in the current data heap level that still needs to be looked at (not neceserally processed this time)
             int totalPackets = packetHeapLevel.Count;
@@ -449,13 +408,13 @@ namespace OscLib
 
                     for (int i = totalPackets - 1; i >= 0; i--)
                     {
-                        if (_shouldRemovePacket(packetHeapLevel[i])) // let's check with the provided remover method delegate whether the message needs deleting and delete if true
+                        if (ShouldRemovePacket(packetHeapLevel[i])) // let's check with the provided remover method delegate whether the message needs deleting and delete if true
                         {
                             packetHeapLevel.RemoveAt(i);
 
                             totalPackets--;
                         } 
-                        else if (_shouldSendPacket(packetHeapLevel[i])) // otherwise, let's check if the data is eligible for sending
+                        else if (ShouldSendPacket(packetHeapLevel[i])) // otherwise, let's check if the data is eligible for sending
                         {
                             // cache stuff
                             packetData = packetHeapLevel[i].GetBytes();
@@ -496,7 +455,7 @@ namespace OscLib
                     if (byteCounter > OscBundle.BundleHeaderLength)
                     {
                         // add bundle header
-                        OscConverter.AddBundleHeader(_cycleDataHolder, 0, _timetagSource.Invoke());
+                        OscConverter.AddBundleHeader(_cycleDataHolder, 0, GetTimetag());
                         
                         OscPacket newBundle = new OscPacket(_cycleDataHolder);
 
@@ -510,16 +469,16 @@ namespace OscLib
                     // just send the packet or remove it, or pass it if it's not yet time
                     totalPackets--;
 
-                    if (_shouldSendPacket(packetHeapLevel[totalPackets]))
+                    if (ShouldSendPacket(packetHeapLevel[totalPackets]))
                     {
-                        Packet message = packetHeapLevel[totalPackets];
+                        TPacket message = packetHeapLevel[totalPackets];
 
                         _link.SendToTarget(message);
 
                         packetHeapLevel.RemoveAt(totalPackets);
 
                     }
-                    else if (_shouldRemovePacket(packetHeapLevel[totalPackets]))
+                    else if (ShouldRemovePacket(packetHeapLevel[totalPackets]))
                     {
                         packetHeapLevel.RemoveAt(totalPackets);
                     }
@@ -530,20 +489,20 @@ namespace OscLib
      
         }
 
-        // this is the default methods to feed into delegates
-        protected virtual bool DefaultShouldSendPacket(Packet packet)
+
+        protected virtual bool ShouldSendPacket(TPacket packet)
         {
             return true;
         }
 
 
-        protected virtual bool DefaultShouldRemovePacket(Packet packet)
+        protected virtual bool ShouldRemovePacket(TPacket packet)
         {
             return false;
         }
 
 
-        protected virtual OscTimetag DefaultTimetagSource()
+        protected virtual OscTimetag GetTimetag()
         {
             return OscTime.Immediately;
         }

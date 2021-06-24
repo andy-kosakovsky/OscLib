@@ -62,12 +62,8 @@ namespace OscLib
         /// </summary>
         /// <param name="bytes"> The source byte array. </param>
         public OscString(byte[] bytes)
+            :this(bytes, 0, bytes.Length)
         {
-            _chars = bytes;
-            OscLength = _chars.Length.NextX4();
-
-            _containsPatternMatching = Trit.Maybe;
-            _containsSpecialSymbols = Trit.Maybe;
         }
 
 
@@ -80,7 +76,20 @@ namespace OscLib
         public OscString(byte[] bytes, int start, int length)
         {
             _chars = new byte[length];
+            
             Array.Copy(bytes, start, _chars, 0, length);
+
+            // making sure we don't have any pesky non-ASCII bytes in there
+            // calling Array.Copy and then cycling through the target array actually somehow wins 3-5% in performance
+            // compared to just copying byte by byte and simultaneously clamping them, according to my tests. ¯\_(ツ)_/¯  
+            for (int i = 0; i < _chars.Length; i++)
+            {
+                if (_chars[i] > 127)
+                {
+                    // aka the question mark.
+                    _chars[i] = OscProtocol.MatchAnyChar;
+                }
+            }
 
             OscLength = _chars.Length.NextX4();
 
@@ -292,135 +301,6 @@ namespace OscLib
         }
 
         #endregion // STRING MANIPULATION
-
-
-        /// <summary>
-        /// Compares this string to a pattern, returns whether they match or not.
-        /// </summary>
-        /// <param name="pattern"> The pattern to which the string is compared. </param>
-        /// <returns> True if string matches the pattern, false if not (duh). </returns>
-        /// <exception cref="ArgumentException"> Thrown when either the curly brackets or the square brackets aren't closed in the pattern. </exception>
-        public bool PatternMatch(OscString pattern)
-        {
-            // check if this string is eligible for pattern-matching (eg. it's not a pattern itself)
-            if (ContainsPatternMatching())
-            {
-                throw new ArgumentException("OSC String ERROR: Can't pattern-match two patterns");
-            }
-            
-            // first, let's cover some common situations
-            // if pattern consists of only one "*" symbol then it'll match to anything
-            if ((pattern._chars.Length == 1) && (pattern[0] == OscProtocol.MatchAnySequence))
-            {               
-                return true;
-            }
-
-            int patIndex = 0, strIndex = 0;
-
-            // revert locations
-            int patRevert = -1, strRevert = -1;
-
-            while (strIndex < this.Length)
-            {
-                // overflow protection
-                if (patIndex >= pattern.Length)
-                {
-                    if (patRevert < 0)
-                    {                     
-                        return false;
-                    }
-
-                    patIndex = patRevert;
-                }
-
-
-                // check for '*'
-                if (pattern[patIndex] == OscProtocol.MatchAnySequence)
-                {
-                    
-                    patRevert = ++patIndex;
-                    strRevert = strIndex;
-
-                    // in case "*" is the last char in the pattern
-                    if (patIndex >= pattern.Length)
-                    {
-                        return true;
-                    }
-
-                }
-                // check for []
-                else if (pattern[patIndex] == OscProtocol.MatchCharArrayOpen)
-                {                  
-                    if (!CharMatchesSquareBrackets(this[strIndex], ref patIndex, ref pattern))
-                    {
-                        // if we don't have something to return to
-                        if (patRevert < 0)
-                        {
-
-                            return false;
-                        }
-
-                        strIndex = ++strRevert;
-                        patIndex = patRevert;
-
-                    }
-                    else
-                    {
-                        strIndex++;
-                    }
-                }
-                // check for {}
-                else if (pattern[patIndex] == OscProtocol.MatchStringArrayOpen)
-                {                 
-                    if (!StringMatchesCurlyBrackets(ref pattern, ref strIndex, ref patIndex))
-                    {
-                        // if we don't have something to return to
-                        if (patRevert < 0)
-                        {
-                            return false;
-                        }
-
-                        strIndex = ++strRevert;
-                        patIndex = patRevert;
-
-                    }
-
-                }
-                // check if unequal
-                else if (!CharIsEqual(this[strIndex], pattern[patIndex]))
-                {
-                    // if we don't have something to return to
-                    if (patRevert < 0)
-                    {
-                        return false;
-                    }
-
-                    strIndex = ++strRevert;
-                    patIndex = patRevert;
-
-                    // if the place where the string will be reverted reaches beyond the length of the string, that means string doesn't fit the pattern
-                    if (strRevert >= Length)
-                    {
-                        return false;
-                    }
-
-                }
-                else
-                {
-                    strIndex++;
-                    patIndex++;
-                }
-
-            }
-
-            while ((patIndex < pattern.Length) && (pattern[patIndex] == OscProtocol.MatchAnySequence))
-            {
-                patIndex++;
-            }
-
-            return (patIndex == pattern.Length);
-
-        }
 
 
         #region SPECIAL CHAR CONTENT
@@ -753,168 +633,6 @@ namespace OscLib
             return true;
 
         }
-
-
-        #region PATTERN-MATCHING EXTRAS
-        private bool CharMatchesSquareBrackets(byte checkChar, ref int pointer, ref OscString pattern)
-        {
-            // find the end
-            int bracketEnd = -1;
-
-            int bracketStart = pointer;
-
-            bool reverse = false;
-            bool found = false;
-
-            while (pointer < pattern.Length)
-            {
-                if (pattern[pointer] == OscProtocol.MatchCharArrayClose)
-                {
-                    bracketEnd = pointer;
-                    // make sure the pointer is going past the bracket
-                    pointer++;
-                    break;
-
-                }
-
-                if (!found)
-                {
-
-                    if (pattern[pointer] == OscProtocol.MatchNot)
-                    {
-                        // if it's at the beginning, make sure that it's noted, and keep a space for it in the return array 
-                        if (bracketStart == (pointer - 1))
-                        {
-                            reverse = true;
-                        }
-
-                    }
-                    else if (pattern[pointer] == OscProtocol.MatchRange)
-                    {
-                        // if we're not at the start, and if we're not by the end of the char array, so we can safely check back and forth
-                        if ((pointer > bracketStart + 1) && (((pointer + 1) < pattern.Length) && (pattern[pointer + 1] != OscProtocol.MatchCharArrayClose)))
-                        {
-                            if (OscUtil.IsNumberBetween(checkChar, pattern[pointer - 1], pattern[pointer + 1]))
-                            {
-                                found = true;
-                            }
-
-                        }
-
-                    }
-                    else
-                    {
-                        // if it's any other, non-special symbol, let's just compare it for now
-                        if (CharIsEqual(checkChar, pattern[pointer]))
-                        {
-                            found = true;
-                        }
-
-                    }
-
-                }
-
-                pointer++;
-
-            }
-
-            // if we didn't find the bracket end, something is wrong with the string
-            if (bracketEnd < 0)
-                throw new ArgumentException("Pattern Match ERROR: pattern syntax error, square bracket opened at " + bracketStart + " is not closed");
-
-            // if we got this far, that means the char we're checking for doesn't occur inside the brackets - we can return the value of "reverse"
-
-            return reverse ^ found;
-
-        }
-
-
-        private bool StringMatchesCurlyBrackets(ref OscString pattern, ref int strPointer, ref int patPointer)
-        {
-            // TODO: this will do for now, can be redone into something more efficient later. also, add support for special symbols within the string
-
-            // get start and end of curly brackets, and the total of strings
-            int curlyStart = patPointer, curlyEnd = -1;
-            bool found = false, substringFits = true;
-
-            int inputStringStart = strPointer;
-
-            // shift patpointer forwards once
-            patPointer++;
-
-
-            while (patPointer < pattern.Length)
-            {
-                if ((pattern[patPointer] == OscProtocol.Comma) || (pattern[patPointer] == OscProtocol.MatchStringArrayClose))
-                {
-                    if (substringFits)
-                    {
-                        found = true;
-                    }
-                    else
-                    {
-                        strPointer = inputStringStart;
-                    }
-
-                    substringFits = true;
-
-                    if (pattern[patPointer] == OscProtocol.MatchStringArrayClose)
-                    {
-                        curlyEnd = patPointer;
-                        patPointer++;
-                        break;
-                    }
-
-                    patPointer++;
-
-                }
-                else
-                {
-                    if ((!found) && (substringFits))
-                    {
-                        if (strPointer < this.Length)
-                        {
-                            if (!CharIsEqual(this[strPointer], pattern[patPointer]))
-                            {
-                                substringFits = false;
-                            }
-                        }
-                        else
-                        {
-                            substringFits = false;
-                        }
-
-                        strPointer++;
-                    }
-
-                    patPointer++;
-
-                }
-
-            }
-
-            if (curlyEnd < 0)
-                throw new ArgumentException("Pattern Match ERROR: pattern syntax error, curly bracket opened at " + curlyStart + " is not closed");
-
-            return found;
-
-        }
-
-
-        private bool CharIsEqual(byte strChar, byte patChar)
-        {
-            if (patChar == OscProtocol.MatchAnyChar)
-            {
-                return true;
-            }
-            else
-            {
-                return strChar == patChar;
-            }
-
-        }
-
-        #endregion // PATTERN-MATCHING EXTRAS
 
     }
 

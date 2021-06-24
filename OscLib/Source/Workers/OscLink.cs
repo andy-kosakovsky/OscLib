@@ -8,21 +8,6 @@ using System.Threading.Tasks;
 namespace OscLib
 {
     /// <summary>
-    /// Describes the current mode of operation of an OSC Link.
-    /// </summary>
-    /// 
-    public enum LinkMode
-    {
-        /// <summary> OSC Link is closed. </summary>
-        Closed,
-        /// <summary> OSC Link is open and connected to a specific end point. It will only receive and send packets from and to that end point. </summary>
-        Targeted,
-        /// <summary> OSC Link is open to communicate with any end point. </summary>
-        Wide
-    }
-
-
-    /// <summary>
     /// Used to send and receive OSC Packets over UDP. Can operate in two modes: targeted to one specific endpoint, or wide-open free-for-all.
     /// <para> To Do: Add TCP support. </para>
     /// </summary>
@@ -81,7 +66,7 @@ namespace OscLib
         public string Name { get => _name;  }
  
         /// <summary> Returns whether this OSC Link is currently open. </summary>
-        public bool IsOpen { get => (_mode != LinkMode.Closed); }
+        public bool IsOpen { get => _mode != LinkMode.Closed; }
 
         /// <summary> Returns the end point at which this OSC Link is located. </summary>
         public IPEndPoint MyEndPoint 
@@ -101,12 +86,13 @@ namespace OscLib
 
         }
 
+
         /// <summary> Returns target EndPoint when OSC Link is in target mode, otherwise returns null. </summary>
         public IPEndPoint TargetEndPoint
         {
             get
             {
-                if (_mode == LinkMode.Targeted)
+                if (_mode == LinkMode.ToTarget)
                 {
                     return _targetEndPoint;
                 }
@@ -118,6 +104,7 @@ namespace OscLib
             }
 
         }
+
 
         /// <summary> Current mode of operation. </summary>
         public LinkMode Mode { get => _mode; }
@@ -153,12 +140,15 @@ namespace OscLib
         /// <summary> Invoked when this OSC Link receives a packet of OSC binary data. </summary>
         public event PacketHandler<OscPacket> PacketReceived;
 
-        /// <summary> Invoked when this OSC Link receives packet that contains bad/invalid/non-OSC data. </summary>
-        public BadDataHandler BadDataReceived;
+        /// <summary> Invoked when this OSC Link receives a binary packet that contains bad/invalid/non-OSC data. </summary>
+        public event BadDataHandler BadDataReceived;
 
-        /// <summary> Invoked when this OSC Link sends out an OSC packet. </summary>
+        /// <summary> Invoked when this OSC Link sends out an OSC Packet. </summary>
         public event PacketHandler<OscPacket> PacketSent;
-     
+
+        /// <summary> Invoked in an unlikely event of trying to send an OSC Packet that somehow contains bad/invalid/non-OSC data. </summary>
+        public event BadDataHandler BadDataSent;
+        
         /// <summary> Invoked when there is an exception inside the receive task. Allows to catch exceptions without crashing the task, if desired. </summary>
         public event OscTaskExceptionHandler ReceiveTaskExceptionRaised;
 
@@ -234,7 +224,7 @@ namespace OscLib
 
             Open();
 
-            _mode = LinkMode.Targeted;
+            _mode = LinkMode.ToTarget;
 
         }
 
@@ -269,7 +259,7 @@ namespace OscLib
 
             Open();
 
-            _mode = LinkMode.Targeted;
+            _mode = LinkMode.ToTarget;
 
         }
 
@@ -278,7 +268,7 @@ namespace OscLib
         /// Opens the OSC Link to send and receive to and from any end point. The OSC Link will use any random available port.
         /// </summary>
         /// <exception cref="SocketException"> Couldn't open a socket. </exception>
-        public void OpenWide()
+        public void OpenToAll()
         {
             if (_mode != LinkMode.Closed)
             {
@@ -290,11 +280,11 @@ namespace OscLib
             _targetEndPoint = null;
 
             _udpClient = new UdpClient();
-            _udpClient.Client.Bind(GetLocalEndPoint());   
+            _udpClient.Client.Bind(GetLoopbackEndPoint());   
 
             Open();
 
-            _mode = LinkMode.Wide;
+            _mode = LinkMode.ToAll;
 
         }
 
@@ -305,7 +295,7 @@ namespace OscLib
         /// <param name="port"> Port number for the OSC link. </param>
         /// <exception cref="ArgumentOutOfRangeException"> The port number is out of range. </exception>
         /// <exception cref="SocketException"> Couldn't open a socket with the provided port number. </exception>
-        public void OpenWide(int port)
+        public void OpenToAll(int port)
         {
             if (_mode != LinkMode.Closed)
             {
@@ -318,11 +308,11 @@ namespace OscLib
 
 
             _udpClient = new UdpClient();
-            _udpClient.Client.Bind(GetLocalEndPointWithPort(port));
+            _udpClient.Client.Bind(GetLoopbackEndPointWithPort(port));
 
             Open();
 
-            _mode = LinkMode.Wide;
+            _mode = LinkMode.ToAll;
          
         }
 
@@ -354,21 +344,20 @@ namespace OscLib
 
 
         /// <summary>
-        /// Sends an OSC packet to the target end point of this OSC Link.
+        /// Sends an OSC Packet to the target end point of this OSC Link.
         /// </summary>
-        /// <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+        /// <typeparam name="TPacket"> The packet should implement the IOscPacket interface. </typeparam>
         /// <param name="oscPacket"> OSC Packet to be sent. </param>
         /// <exception cref="InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
         /// <exception cref="ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
-        public void SendToTarget<Packet>(Packet oscPacket) where Packet : IOscPacket
+        public void SendToTarget<TPacket>(TPacket oscPacket) where TPacket : IOscPacket
         {
-            if (_mode != LinkMode.Targeted)
+            if (_mode != LinkMode.ToTarget)
             {
-                throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + " needs to be in TARGET MODE (current mode: " + _mode.ToString() + ").");
+                throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + "'s mode of operation needs to be set to ToTarget (current mode: " + _mode.ToString() + ").");
             }
 
             _udpClient.Send(oscPacket.GetBytes(), oscPacket.Length);
-
 
             OnPacketSent(oscPacket.GetBytes(), TargetEndPoint);
             
@@ -383,16 +372,16 @@ namespace OscLib
         /// This helps to avoid copying data to a new array in order to truncate it, which in turn avoids creating unnecessary GC pressure.
         /// Obviously, this method is *to be used with caution* - there are all sorts of bugs and weird edge cases that might crop up, and it's much safer to use isolated, non-cache arrays in general. 
         /// </remarks>
-        /// <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+        /// <typeparam name="TPacket"> The packet should implement the IOscPacket interface. </typeparam>
         /// <param name="oscPacket"> OSC Packet to be sent. </param>
         /// <param name="length"> The length of useful data within the packet (in bytes) starting from the beginning of the packet. Everything outside this length will be discarded. </param>
         /// <exception cref="InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
         /// <exception cref="ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
-        public void SendToTarget<Packet>(Packet oscPacket, int length) where Packet : IOscPacket
+        public void SendToTarget<TPacket>(TPacket oscPacket, int length) where TPacket : IOscPacket
         {
-            if (_mode != LinkMode.Targeted)
+            if (_mode != LinkMode.ToTarget)
             {
-                throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + " needs to be in TARGET MODE (current mode: " + _mode.ToString() + ").");
+                throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + "'s mode of operation needs to be set to ToTarget (current mode: " + _mode.ToString() + ").");
             }
 
             _udpClient.Send(oscPacket.GetBytes(), length);
@@ -403,19 +392,19 @@ namespace OscLib
 
 
         /// <summary>
-        /// Sends an OSC packet to the specified end point.
+        /// Sends an OSC Packet to the specified end point.
         /// </summary>
-        /// <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+        /// <typeparam name="TPacket"> The packet should implement the IOscPacket interface. </typeparam>
         /// <param name="oscPacket"> OSC binary data packet to be sent. </param>
         /// <param name="endPoint"> The end point to which the packet will be sent. </param>
         /// <exception cref="InvalidOperationException"> Thrown if OSC Link is not in wide mode. </exception>
         /// <exception cref="ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
-        public void SendToEndPoint<Packet>(Packet oscPacket, IPEndPoint endPoint) where Packet : IOscPacket
+        public void SendToEndPoint<TPacket>(TPacket oscPacket, IPEndPoint endPoint) where TPacket : IOscPacket
         {
 
-            if (_mode != LinkMode.Wide)
+            if (_mode != LinkMode.ToAll)
             {
-                throw new InvalidOperationException("OSC Link Error: OSC Link " + _name + " needs to be in WIDE MODE (current mode: " + _mode.ToString() + ").");
+                throw new InvalidOperationException("OSC Link Error: Can't send message to end point, OSC Link " + _name + "'s mode of operation needs to be set to ToAll (current mode: " + _mode.ToString() + ").");
             }
 
             _udpClient.Send(oscPacket.GetBytes(), oscPacket.Length, endPoint);
@@ -433,17 +422,17 @@ namespace OscLib
         /// This helps to avoid copying data to a new array in order to truncate it, which in turn avoids creating unnecessary GC pressure.
         /// Obviously, this method is *to be used with caution* - there are all sorts of bugs and weird edge cases that might crop up, and it's much safer to use isolated, non-cache arrays in general. 
         /// </remarks>
-        /// <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
+        /// <typeparam name="TPacket"> The packet should implement the IOscPacket interface. </typeparam>
         /// <param name="oscPacket"> OSC Packet to be sent. </param>
         /// <param name="length"> The length of useful data within the packet (in bytes) starting from the beginning of the packet. Everything outside this length will be discarded. </param>
         /// <param name="endPoint"> The end point to which the packet will be sent. </param>
         /// <exception cref="InvalidOperationException"> Thrown if OSC link is not in target mode. </exception>
         /// <exception cref="ArgumentNullException"> Thrown if trying to send null instead of binary data. </exception>
-        public void SendToEndPoint<Packet>(Packet oscPacket, int length, IPEndPoint endPoint) where Packet : IOscPacket
+        public void SendToEndPoint<TPacket>(TPacket oscPacket, int length, IPEndPoint endPoint) where TPacket : IOscPacket
         {
-            if (_mode != LinkMode.Targeted)
+            if (_mode != LinkMode.ToTarget)
             {
-                throw new InvalidOperationException("OSC Link Error: Can't send message to target, OSC Link " + _name + " needs to be in TARGET MODE (current mode: " + _mode.ToString() + ").");
+                throw new InvalidOperationException("OSC Link Error: Can't send message to end point, OSC Link " + _name + "'s mode of operation needs to be set to ToAll (current mode: " + _mode.ToString() + ").");
             }
 
             _udpClient.Send(oscPacket.GetBytes(), length, endPoint);
@@ -456,9 +445,11 @@ namespace OscLib
 
 
         #region TASKS
-        private async Task ReceiveTask()
-        {
-            
+        /// <summary>
+        /// The task responsible for receiving binary data from the internal UDP client and packing it into OSC Packets.
+        /// </summary>
+        protected virtual async Task ReceiveTask()
+        {       
             while (!_receiveTaskToken.IsCancellationRequested)
             {
                 if (_mode != LinkMode.Closed)
@@ -470,7 +461,7 @@ namespace OscLib
                             _receiveDataBuffer = _udpClient.Receive(ref _receiveReturnAddress);
 
                             OnPacketReceived(_receiveDataBuffer, _receiveReturnAddress);
-                            
+
                         }
                         catch (Exception e)
                         {
@@ -479,11 +470,15 @@ namespace OscLib
 
                     }
                     else
+                    {
                         await Task.Delay(_receiveCycleTime);
+                    }
 
                 }
                 else
+                {
                     await Task.Delay(_receiveCycleTime);
+                }
                          
             }
         
@@ -521,7 +516,15 @@ namespace OscLib
         {
             if (_callEventsOnSend)
             {
-                PacketSent?.Invoke(new OscPacket(data), sentTo);
+                if (data.IsValidOscData())
+                {
+                    PacketSent?.Invoke(new OscPacket(data, true), sentTo);
+                }
+                else
+                {
+                    BadDataSent?.Invoke(data, sentTo);
+                }
+
             }
 
         }
@@ -532,14 +535,14 @@ namespace OscLib
         #region STATIC METHODS
 
         /// <summary> Returns an end point at a local address on a random open port. </summary> 
-        public static IPEndPoint GetLocalEndPoint()
+        public static IPEndPoint GetLoopbackEndPoint()
         {
             return new IPEndPoint(LoopbackIP, 0);
         }
 
 
         /// <summary> Returns an end point at a local address with the requested port number (subject to availability). </summary> 
-        public static IPEndPoint GetLocalEndPointWithPort(int port)
+        public static IPEndPoint GetLoopbackEndPointWithPort(int port)
         {
             return new IPEndPoint(LoopbackIP, port);
         }
@@ -564,7 +567,7 @@ namespace OscLib
                 returnString.Append("; Own address: ");
                 returnString.Append(MyEndPoint.ToString());
 
-                if (_mode == LinkMode.Targeted)
+                if (_mode == LinkMode.ToTarget)
                 {
                     returnString.Append("; Target end point: ");
                     returnString.Append(_targetEndPoint.ToString());

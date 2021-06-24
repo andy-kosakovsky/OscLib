@@ -29,7 +29,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts the specified 32-bit integer value into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The value to convert. </param>
         /// <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -92,7 +92,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts the specified 64-bit integer into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The value to convert. </param>
         /// <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -156,7 +156,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts the specified 32-bit float value into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The value to convert. </param>
         /// <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -220,7 +220,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts the specified 64-bit floating-point value into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The value to convert. </param>
         /// <param name="array"> A byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -279,7 +279,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts the specified string into a sequence of ASCII codes and adds it to an existing byte array.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The string to convert. </param>
         /// <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -339,7 +339,7 @@ namespace OscLib
 
         /// <summary>
         /// "Converts" an OscString into ASCII codes and adds them to an existing byte array.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <remarks> This method is just here for consistency. Literally the same thing can be achieved by calling the CopyBytesToArray method of the OscString. </remarks>
         /// <param name="arg"> The string to convert. </param>
@@ -398,7 +398,7 @@ namespace OscLib
 
         /// <summary>
         /// Copies the contents of the specified array into the provided byte array, formatting it as an OSC binary blob.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The byte array to format. </param>
         /// <param name="array"> The byte array (presumably containing OSC binary data) to which the blob will be added. </param>
@@ -464,7 +464,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts the specified OSC Timetag - which is a 64-bit unsigned integer - into a big-endian sequence of bytes, adds it to the provided byte array at the specified index.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The value to convert. </param>
         /// <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -521,7 +521,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts the specified 32-bit, RGBA color - represented by an OscColor struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The OscColor struct to convert. </param>
         /// <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -569,9 +569,10 @@ namespace OscLib
             return result;
         }
 
+
         /// <summary>
         /// Converts the specified MIDI message - represented by an OscMidi struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of added data.
         /// </summary>
         /// <param name="arg"> The OscColor struct to convert. </param>
         /// <param name="array"> The byte array (presumably containing OSC binary data) to which the sequence of bytes will be added. </param>
@@ -583,6 +584,7 @@ namespace OscLib
             array[extPointer++] = arg.Data1;
             array[extPointer++] = arg.Data2;
         }
+
 
         /// <summary>
         /// Converts the specified MIDI message - represented by an OscMidi struct - into a sequence of four bytes, adds them to the provided byte array at the specified index.

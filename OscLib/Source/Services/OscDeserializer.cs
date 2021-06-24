@@ -31,7 +31,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 32-bit integer. 
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -71,7 +71,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts eight bytes of OSC binary data - beginning at the specified index in the provided array - into a 64-bit integer. 
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -110,7 +110,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts eight bytes of OSC binary data - beginning at the specified index in the provided array - into an OSC Timetag.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -149,7 +149,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 32-bit (single-presicion) floating-point number.  
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -188,7 +188,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a 64-bit (double-presicion) floating-point number.  
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <remarks> OSC being a big-endian protocol, this method expects big-endian binary data. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -228,7 +228,7 @@ namespace OscLib
 
         /// <summary>
         /// Retreives a binary blob of OSC data from a larger set, as per OSC specification. Returns it as a separate byte array.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <remarks> This method is chiefly intended for retreiving "blob" arguments from OSC Messages. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -249,7 +249,7 @@ namespace OscLib
 
         #region STRING
         /// <summary>
-        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification. 
+        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string. 
         /// </summary>
         /// <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -262,8 +262,8 @@ namespace OscLib
 
 
         /// <summary>
-        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification. 
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string. 
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -290,7 +290,7 @@ namespace OscLib
 
         #region OSC STRING
         /// <summary>
-        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification.
+        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string.
         /// Returns it as an OscString struct.
         /// </summary>
         /// <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
@@ -304,9 +304,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string, as per OSC specification.
+        /// Converts a sequence of OSC binary data - beginning at the specified index in the provided array - into a string.
         /// Returns it as an OscString struct.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <remarks> Expects a sequence of ASCII bytes, null-terminated. </remarks>
         /// <param name="data"> Byte array containing OSC binary data. </param>
@@ -319,13 +319,12 @@ namespace OscLib
             while (data[pointer] != 0)
             {
                 pointer++;
-                count++;
+                count++;             
             }
 
             pointer = pointer.NextX4();
 
             return new OscString(data, start, count);
-
         }
 
         #endregion // OSC STRING
@@ -348,7 +347,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into a MIDI message, represented by the OscMidi struct.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <param name="data"> Byte array containing OSC binary data. </param>
         /// <param name="pointer"> Points at the index of the first relevant byte. </param>
@@ -378,7 +377,7 @@ namespace OscLib
 
         /// <summary>
         /// Converts four bytes of OSC binary data - beginning at the specified index in the provided array - into an 32-bit RGBA color, represented by the OscColor struct.
-        /// The pointer is a reference, its value is increased according to the size of added data.
+        /// The pointer is passed by reference, its value is increased according to the size of deserialized data.
         /// </summary>
         /// <param name="data"> Byte array containing OSC binary data. </param>
         /// <param name="pointer"> Points at the index of the first relevant byte. </param>
