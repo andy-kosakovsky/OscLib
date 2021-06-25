@@ -6,7 +6,7 @@ This library is in mid- to late-alpha stages - while most of functionality is mo
 ## What's it for
 This library kind of accidentally grew from a personal project that involved trying to make Unity3D and SuperCollider talk to each other. 
 
-The aim is to build a reliable, flexible tool that is capable of sending, receiving and reacting to loads and loads of OSC packets quickly enough - preferably without causing too much strain on the garbage collector, and without eating too much processing power. The plan is for it to be usable with anything that supports Mono - Unity3D and Godot first and foremost, but any other Mono application should be fair game too.   
+The aim is to build a reliable, flexible tool that is capable of sending, receiving and reacting to loads and loads of OSC packets quickly enough - preferably without causing too much strain on the garbage collector, and without eating too much processing power. The plan is for it to be usable with anything that supports Mono/.Net - Unity3D and Godot first and foremost, but any other Mono application should be fair game too.   
 
 ## How it works
 The basic idea behind this library is to provide a series of components, each implementing a part of OSC Protocol - allowing to send, receive and process packets of OSC data in a sort of conveyor-belt-like fashion. These components are more or less independent from each other; they can be linked, de-linked, overwritten and swapped for new, bespoke components as and when required by the task at hand.
