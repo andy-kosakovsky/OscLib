@@ -1,3 +1,4 @@
+# (Future) OscLib manual
 What follows is a quick'n'dirty description of aims, architecture and functionality of this library - just to give a general idea about how it works, really
 
 ## Disclaimer
