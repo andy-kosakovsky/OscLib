@@ -2,12 +2,12 @@
 What follows is a quick'n'dirty description of aims, architecture and functionality of this library - just to give a general idea about how it works, really.
 
 ## Disclaimer
-This library is in mid- to late-alpha stages - while most of functionality is more or less complete, it's all still a tad undercooked; parts of it are still held together by tape, and not all of it is tested thoroughly enough. There's also probably better ways to do at least some of the things it does. It's *functional*, but results may vary. Also, there will probably be changes that break everything.
+This library is in mid- to late-alpha stages - while most of functionality is more or less complete, it's all still a tad undercooked; parts of it are still held together by tape, and not all of it is tested thoroughly enough (or tested at all). There's also probably better ways to do at least some of the things it does. It's *functional*, but results may vary. Also, there will probably be changes that break everything.
 
 ## What's it for
 This library kind of accidentally grew from a personal project that involved trying to make Unity3D and SuperCollider talk to each other. 
 
-The aim is to build a reliable, flexible tool that is capable of sending, receiving and reacting to loads and loads of OSC packets quickly enough - preferably without causing too much strain on the garbage collector, and without eating too much processing power. The plan is for it to be usable with anything that supports Mono/.Net - Unity3D and Godot first and foremost, but any other Mono application should be fair game too.   
+The aim is to build a reliable, flexible tool that is capable of sending, receiving and reacting to loads and loads of OSC packets quickly enough - preferably without causing too much strain on the garbage collector, and without eating too much processing power. The plan is for it to be usable with anything that supports Mono/.Net - Unity3D and Godot first and foremost, but any other Mono/.Net application should be fair game too.   
 
 ## How it works
 The basic idea behind this library is to provide a series of components, each implementing a part of OSC Protocol - allowing to send, receive and process packets of OSC data in a sort of conveyor-belt-like fashion. These components are more or less independent from each other; they can be linked, de-linked, overwritten and swapped for new, bespoke components as and when required by the task at hand.
@@ -33,7 +33,7 @@ Instead, there's a component that is explicitly concerned with converting OscMes
 The idea is that two structs representing deserialized OSC packets - OscMessages and OscBundles - are *OSC Protocol version-agnostic*. They can be serialized into binary data-containing OscPackets by a specific implementation of OscConverter, and then these OscPackets can be sent out to their intended target. Furthermore, the same OscConverter implementation can be used to deserialize the packets received from that same target - converting them into version-agnostic OscMessage and OscBundle structs.
 
 ### Links
-The **OscLink** component is the one actually concerned with both sending and receiving OSC packets, utilising the internal UdpClient object. It can be set up in two ways: either trading OscPackets with only one specified end point, or being open to communications with any and all end points. Upon receiving OSC data, the OscLink instance puts it inside an OscPacket struct and passes it along by invoking the corresponding event.
+The **OscLink** component implements both the OSC Client and the OSC Server. It sends and receives OSC packets utilising the internal UdpClient instance. It can be set up in two ways: either trading OscPackets with only one specified end point, or being open to communications with any and all end points. Upon receiving OSC data, the OscLink instance puts it inside an OscPacket struct and passes it along by invoking the corresponding event.
 
 ### Receivers
 The **OscReceiver** component connects to a single OscLink and does two things. One: it deserializes the OscPackets passed to it by the connected OscLink into either OscMessages or OscBundles (utilising the specified OscConverter) and passes them further down the line by invoking corresponding events. Two: if configured to do so, OscReceiver will delay the incoming OscBundles, holding off passing them down the line until the moment in time specified by their timetags.
