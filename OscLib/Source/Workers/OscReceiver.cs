@@ -59,7 +59,7 @@ namespace OscLib
         public BundleHandler BundleReceived;
 
         /// <summary> Invoked when an exception happens inside the heap-processing task, hopefully preventing it from stopping </summary>
-        public OscTaskExceptionHandler HeapTaskExceptionRaised;
+        public TaskExceptionHandler HeapTaskExceptionRaised;
 
         #endregion // EVENTS
 
@@ -79,12 +79,18 @@ namespace OscLib
             _heapAccess = new Mutex();        
         }
 
-
+        /// <summary>
+        /// Connects this Receiver to the specified OSC Link. 
+        /// Provides an OSC Converter to deserialize incoming packets into messages and bundles.  
+        /// </summary>
+        /// <param name="link"> The OSC Link from which to receive packets. </param>
+        /// <param name="converter"> The OSC Converter with which to convert incoming packets. </param>
+        /// <exception cref="ArgumentNullException"> Thrown when either or both of the provided paremeters are null. </exception>
         public void Connect(OscLink link, OscConverter converter)
         {
             if (_isActive)
             {
-                return;
+                Disconnect();
             }
 
             if (link == null)
@@ -133,9 +139,9 @@ namespace OscLib
         /// Receives an OSC Packet and converts it into either a Message or a Bundle, using the connected Converter. 
         /// Depending on configuration and on the received Bundle's time tag, either invokes it straight away or holds it for the specified period of time.
         /// </summary>
-        /// <typeparam name="TPacket"></typeparam>
-        /// <param name="packet"></param>
-        /// <param name="endPoint"></param>
+        /// <typeparam name="TPacket"> The particular representation of an OSC packet. Should implement the IOscPacket interface. </typeparam>
+        /// <param name="packet"> </param>
+        /// <param name="endPoint"> </param>
         public virtual void ReceivePacket<TPacket>(TPacket packet, IPEndPoint endPoint) where TPacket : IOscPacket
         {
        
@@ -224,7 +230,6 @@ namespace OscLib
         /// <summary>
         /// The bundle heap processing task. Checks each bundle on the heap, starting from the last one and working backwards. Invokes a bundle if its timetag is earlier than the current GlobalTick. 
         /// </summary>
-        /// <returns></returns>
         protected async Task HeapProcessingCycle()
         {
             while (_isActive)
@@ -268,6 +273,9 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Prints the names of this Receiver and the connected OSC Link, the type of OSC Converter currently in use and the total number of currently-held bundles.
+        /// </summary>
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder("OscReveiver: name: ");

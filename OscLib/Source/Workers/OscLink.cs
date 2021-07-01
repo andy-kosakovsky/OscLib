@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 namespace OscLib
 {
     /// <summary>
-    /// Used to send and receive OSC Packets over UDP. Can operate in two modes: targeted to one specific endpoint, or wide-open free-for-all.
+    /// Sends and receives OSC Packets over UDP. Represents both OSC Clients and Servers.
+    /// Can operate in two modes: targeted to one specific endpoint, or wide-open free-for-all.
     /// <para> To Do: Add TCP support. </para>
     /// </summary>
     public class OscLink
@@ -150,7 +151,7 @@ namespace OscLib
         public event BadDataHandler BadDataSent;
         
         /// <summary> Invoked when there is an exception inside the receive task. Allows to catch exceptions without crashing the task, if desired. </summary>
-        public event OscTaskExceptionHandler ReceiveTaskExceptionRaised;
+        public event TaskExceptionHandler ReceiveTaskExceptionRaised;
 
         #endregion
 
@@ -181,11 +182,10 @@ namespace OscLib
 
 
         #region METHODS
-
         /// <summary>
         /// Internal method that takes care of everything that's the same in both modes of operation.
         /// </summary>
-        private void Open()
+        protected void Open()
         {
             _udpClient.Client.ReceiveBufferSize = _udpClientMaxBufferSize * 1024;
 

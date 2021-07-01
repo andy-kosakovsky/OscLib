@@ -1,32 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 
 namespace OscLib
 {
-    // TODO: Add a "OscAdressElement[] GetElements(pattern)" method that would return all elements within this container that match to a pattern
-
     /// <summary>
     /// Represents an OSC Address Space method container - a folder for other address elements.
     /// </summary>
-    public class OscContainer : OscAddressElement
+    public sealed class OscContainer : OscAddressElement
     {
         /// <summary> All child elements inside this container. </summary>
-        protected List<OscAddressElement> _contents;
+        private List<OscAddressElement> _contents;
 
         /// <summary> Connects the names of elements with their indeces in the "contents" list, to ease lookup and pattern-matching. </summary>
-        protected Dictionary<OscString, int> _contentsNames;
+        private Dictionary<OscString, int> _contentsNames;
 
-        /// <summary> The number of elements within this container. </summary>
+        /// <summary> Returns the number of elements within this <see cref="OscContainer"/>. </summary>
         public int Length { get => _contents.Count; }
 
 
         /// <summary>
-        /// Indexer access to the elements of this container, using their names.
+        /// Indexer access to elements inside this <see cref="OscContainer"/>, using their names.
         /// </summary>
         /// <param name="name"> Name of the element. </param>
-        /// <returns> The element with the provided name - or null, if there isn't one. </returns>
+        /// <returns> The <see cref="OscAddressElement"/> with the provided name - or null, if there isn't one. </returns>
         public OscAddressElement this[OscString name] 
         { 
             get
@@ -46,10 +43,10 @@ namespace OscLib
 
 
         /// <summary>
-        /// Indexer access to the elements of this container, using their indices.
+        /// Indexer access to elements inside this <see cref="OscContainer"/>, using their indices.
         /// </summary>
         /// <param name="index"> Index of the element. </param>
-        /// <returns> The element under the provided index - or null, if the index is out of bounds. </returns>
+        /// <returns> The <see cref="OscAddressElement"/> under the provided index - or null, if the index is out of bounds. </returns>
         public OscAddressElement this[int index]
         {
             get
@@ -69,9 +66,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates a new OSC Container.
+        /// Initializes a new instance of the <see cref="OscContainer"/> class, with a specified name.
         /// </summary>
-        /// <param name="name"> The name for this container. Note: no need to include a "/" symbol. </param>
+        /// <param name="name"> The name of this <see cref="OscContainer"/>. Note: no need to include a "/" symbol. </param>
         internal OscContainer(OscString name) 
             :base(name)
         {
@@ -81,9 +78,8 @@ namespace OscLib
 
 
         /// <summary>
-        /// Adds an address element to this container.
+        /// Adds an <see cref="OscAddressElement"/> to this <see cref="OscContainer"/>.
         /// </summary>
-        /// <param name="element"> The element to add. </param>
         /// <exception cref="ArgumentException"> Thrown when this container already contains an element with this name. </exception>
         public void AddElement(OscAddressElement element)
         {
@@ -101,9 +97,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Removes an address element from this container - if it's inside this container.
+        /// Removes an <see cref="OscAddressElement"/> from this <see cref="OscContainer"/> - provided it's present.
         /// </summary>
-        /// <returns> True if an element was removed, false if nothing was found. </returns>
+        /// <returns> "True" if an element was removed, "False" if nothing was found. </returns>
         public bool RemoveElement(OscAddressElement element)
         {
             if (_contents.Contains(element))
@@ -117,14 +113,14 @@ namespace OscLib
             }
 
             return false;
-
         }
 
 
         /// <summary>
-        /// Removes an address element with the specified name from this container, if it's inside this container.
+        /// Removes an <see cref="OscAddressElement"/> with the specified name from this <see cref="OscContainer"/> - provided it's present.
         /// </summary>
-        /// <returns> True if an element was removed, false if nothing was found. </returns>
+        /// <remarks> Doesn't perform pattern-matching. </remarks>
+        /// <returns> "True" if an element was removed, "False" if nothing was found. </returns>
         public bool RemoveElement(OscString elementName)
         {
             if (_contentsNames.ContainsKey(elementName))
@@ -139,13 +135,13 @@ namespace OscLib
             }
 
             return false;
-
         }
 
 
         /// <summary>
-        /// Removes all address elements whose names adhere to the provided pattern from this container.
+        /// Removes every <see cref="OscAddressElement"/> with a name that matches the provided pattern from this <see cref="OscContainer"/>.
         /// </summary>
+        /// <remarks> Does perform pattern-matching. </remarks>
         /// <returns> The total number of removed elements. </returns>
         public int RemoveElements(OscString pattern)
         {
@@ -165,12 +161,11 @@ namespace OscLib
 
             RefreshNames();
             return removed;
-
         }
 
 
         /// <summary>
-        /// Checks if this Container contains the specified address element.
+        /// Checks if this <see cref="OscContainer"/> contains the specified <see cref="OscAddressElement"/>.
         /// </summary>
         public bool ContainsElement(OscAddressElement element)
         {
@@ -179,7 +174,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Checks if this Container contains an OSC Address Element with the provided name (or matching the provided pattern).
+        /// Checks if this <see cref="OscContainer"/> contains an <see cref="OscAddressElement"/> with the provided name, or with a name matching the provided pattern.
         /// </summary>
         public bool ContainsElement(OscString pattern)
         {           
@@ -207,9 +202,9 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns an array of elements in this container that match the specified pattern.
+        /// Returns an array of every <see cref="OscAddressElement"/> in this <see cref="OscContainer"/> with a name that matches the specified pattern.
         /// </summary>
-        public virtual List<OscAddressElement> GetElements(OscString pattern)
+        public List<OscAddressElement> GetElements(OscString pattern)
         {
             List<OscAddressElement> list = new List<OscAddressElement>(_contents.Count);
 
@@ -223,16 +218,16 @@ namespace OscLib
             }
 
             return list;
-
         }
 
+
         /// <summary>
-        /// Returns an element with the specified name.
+        /// Retrieves an <see cref="OscAddressElement"/> with the specified name from this <see cref="OscContainer"/> - provided it's present.
         /// </summary>
         /// <remarks> Pattern-matching won't work with this method - it will likely return a null. </remarks>
         /// <param name="name"> The name of the element. </param>
-        /// <returns> The element with the specified name, or null if nothing was found. </returns>
-        public virtual OscAddressElement GetElement(OscString name)
+        /// <returns> The <see cref="OscAddressElement"/> with the specified name, or null if nothing was found. </returns>
+        public OscAddressElement GetElement(OscString name)
         {
             if (_contentsNames.ContainsKey(name))
             {
@@ -247,12 +242,12 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns the index of an element with the specified name.
+        /// Returns the index of an <see cref="OscAddressElement"/> with the specified name within this <see cref="OscContainer"/> - provided it's present.
         /// </summary>
         /// <remarks> Pattern-matching won't work with this method - it will likely return a negative. </remarks>
         /// <param name="name"> The name of the element. </param>
-        /// <returns> The index of the element with the specified name in this container, or -1 if nothing was found. </returns>
-        public virtual int GetElementIndex(OscString name)
+        /// <returns> The index of the <see cref="OscAddressElement"/> with the specified name in this container, or -1 if nothing was found. </returns>
+        public int GetElementIndex(OscString name)
         {
             if (_contentsNames.ContainsKey(name))
             {
@@ -267,11 +262,11 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns the index of the specified element, if it's contained in this container.
+        /// Returns the index of the specified <see cref="OscAddressElement"/>, if it's contained in this <see cref="OscContainer"/>.
         /// </summary>
         /// <remarks> This method will specificly look for the provided element - other elements with the same name don't count. </remarks>
         /// <returns> The index of the element in this container, or -1 if nothing was found. </returns>
-        public virtual int GetElementIndex(OscAddressElement element)
+        public int GetElementIndex(OscAddressElement element)
         {
             if (_contents.Contains(element))
             {
@@ -288,7 +283,7 @@ namespace OscLib
         /// <summary>
         /// Used to update the element names and the corresponding indices in the name dictionary.
         /// </summary>
-        protected void RefreshNames()
+        private void RefreshNames()
         {
             _contentsNames.Clear();
 
@@ -299,6 +294,10 @@ namespace OscLib
 
         }
 
+
+        /// <summary>
+        /// Returns a string containing the name of this <see cref="OscContainer"/> and the total number of <see cref="OscAddressElement"/> instances inside.
+        /// </summary>
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder();

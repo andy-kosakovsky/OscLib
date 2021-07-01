@@ -9,7 +9,6 @@ namespace OscLib
     /// </summary>
     public class OscConvertScsynth : OscConverter
     {
-
         private const byte _int32 = (byte)'i';
         private const byte _float32 = (byte)'f';
         private const byte _string = (byte)'s';

@@ -1,5 +1,5 @@
 # (Future) OscLib manual
-What follows is a quick'n'dirty description of aims, architecture and functionality of this library - just to give a general idea about how it works, really
+What follows is a quick'n'dirty description of aims, architecture and functionality of this library - just to give a general idea about how it works, really.
 
 ## Disclaimer
 This library is in mid- to late-alpha stages - while most of functionality is more or less complete, it's all still a tad undercooked; parts of it are still held together by tape, and not all of it is tested thoroughly enough. There's also probably better ways to do at least some of the things it does. It's *functional*, but results may vary. Also, there will probably be changes that break everything.

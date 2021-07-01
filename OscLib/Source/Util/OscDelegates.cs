@@ -26,8 +26,7 @@ namespace OscLib
     /// </summary>
     /// <param name="packet"> An OSC Packet, containing serialized data. </param>
     /// <param name="endPoint"> The end point associated with the packet. </param>
-    /// <typeparam name="Packet"> The packet should implement the IOscPacket interface. </typeparam>
-    public delegate void PacketHandler<Packet>(Packet packet, IPEndPoint endPoint) where Packet : IOscPacket;
+    public delegate void PacketHandler<TPacket>(TPacket packet, IPEndPoint endPoint) where TPacket : IOscPacket;
 
 
     /// <summary>
@@ -42,24 +41,39 @@ namespace OscLib
 
 
     #region EXCEPTIONS
-
     /// <summary>
-    /// Used to safely extract exceptions from the tasks, preventing it from stopping.
+    /// Used to safely extract exceptions from tasks, preventing them from stopping prematurely.
     /// </summary>
-    /// <param name="exception"></param>
-    public delegate void OscTaskExceptionHandler(Exception exception);
+    /// <param name="exception"> The exception raised by the task. </param>
+    public delegate void TaskExceptionHandler(Exception exception);
 
     #endregion
 
 
     #region OSC ADDRESS SPACE
-
     /// <summary>
-    /// Used with OSC Methods to 
+    /// Used to attach event handlers to OSC Methods - to be invoked when the encompassing Address Space dispatches a message to the method. 
     /// </summary>
     /// <param name="source"> The source of the arguments - could be the OSC Method, the OSC Receiver, the OSC Message, etc. </param>
     /// <param name="messageArguments"> Arguments attached to the received OSC Message. </param>
-    public delegate void OscMethodEventHandler(object source, object[] messageArguments);
+    public delegate void MethodEventHandler(object source, object[] messageArguments);
+
+    #endregion
+
+
+    #region PACKET MANAGEMENT
+    /// <summary>
+    /// Used with OscSender to specify the methods that will perform checks on OSC packets.
+    /// </summary>
+    /// <param name="packet"> An OSC Packet, containing serialized data. </param>
+    public delegate bool CheckPacketDelegate<TPacket>(TPacket packet);
+
+
+    /// <summary>
+    /// Used with OscSender to specify the source of OSC Timetags. 
+    /// </summary>
+    /// <returns></returns>
+    public delegate OscTimetag GetTimetagDelegate();
 
     #endregion
 }

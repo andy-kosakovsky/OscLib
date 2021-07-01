@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OscLib
 {
@@ -23,7 +22,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Creates a new address element.
+        /// Initializes a new instance of the <see cref="OscAddressElement"/> class, with a specified name.
         /// </summary>
         /// <param name="name"> Name of this element. Can't contain reserved symbols or symbols involved in pattern-matching - no need to start it with a "/". </param>
         /// <exception cref="ArgumentNullException"> Thrown when the provided name is null or empty. </exception>
@@ -46,15 +45,17 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns the name of this address element as string.
+        /// Returns the name of this <see cref="OscAddressElement"/> as a string.
         /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return _name.ToString();
         }
 
 
+        /// <summary>
+        /// Changes this <see cref="OscAddressElement"/>'s parent <see cref="OscContainer"/>.
+        /// </summary>
         internal virtual void ChangeParent(OscContainer newParent)
         {
             _parent = newParent;
@@ -62,23 +63,19 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns the address of this element within the encompassing Address Space.
+        /// Returns the address of this <see cref="OscAddressElement"/> within the encompassing <see cref="OscAddressSpace"/>.
         /// </summary>
-        /// <returns></returns>
         public OscString GetAddress()
         {
             List<OscString> nameList = new List<OscString>();
 
             OscAddressElement currentElement = this;
 
-            while (currentElement != null)
+            while (currentElement.Parent != null)
             {
                 nameList.Add('/' + currentElement.Name);
                 currentElement = currentElement.Parent;
             }
-
-            // remove last element - it'll just be the root container anyway
-            nameList.RemoveAt(nameList.Count - 1);
 
             nameList.Reverse();
 

@@ -7,9 +7,9 @@ using System.Threading;
 namespace OscLib
 {
     /// <summary>
-    /// Represents a tree of OSC Addresses - that is, an OSC Address Space. Can receive Messages and Bundles from multiple OSC Receivers, 
-    /// pattern matching if needed. Provides convenience methods for creating and managing an address tree, allowing to connect event  
-    /// handlers to OSC Methods - to be invoked when a message is dispatched to a particular OSC Method. 
+    /// Represents an OSC Address Space - that is, a tree of OSC Addresses. Can receive Messages and Bundles from multiple OSC Receivers and dispatch
+    /// them to appropriate addresses, pattern-matching if needed. Provides convenience methods for managing the address tree, and for connecting event 
+    /// handlers to OSC Methods.
     /// </summary>
     public class OscAddressSpace
     {
@@ -81,8 +81,8 @@ namespace OscLib
                 if (!_receivers.Contains(receiver))
                 {
                     _receivers.Add(receiver);
-                    receiver.MessageReceived += ReceiveMessage;
-                    receiver.BundleReceived += ReceiveBundle;
+                    receiver.MessageReceived += DispatchMessage;
+                    receiver.BundleReceived += DispatchBundle;
                 }
                 
             }
@@ -113,8 +113,8 @@ namespace OscLib
                 if (_receivers.Contains(receiver))
                 {
                     _receivers.Remove(receiver);
-                    receiver.BundleReceived -= ReceiveBundle;
-                    receiver.MessageReceived -= ReceiveMessage;
+                    receiver.BundleReceived -= DispatchBundle;
+                    receiver.MessageReceived -= DispatchMessage;
                 }
 
             }
@@ -130,11 +130,12 @@ namespace OscLib
 
         #region RECEIVING AND PROCESSING
         /// <summary>
-        /// Processes an incoming bundle. Also invoked when one of the connected OSC Receivers receives a bundle.
+        /// Dispatches the contents of the specified OSC Bundle to addresses within this Space. 
+        /// Invoked when one of the connected OSC Receivers receives a bundle.
         /// </summary>
         /// <param name="bundle"> OSC Bundle to process. </param>
         /// <param name="receivedFrom"> The IP end point from which the bundle was received. </param>
-        public void ReceiveBundle(OscBundle bundle, IPEndPoint receivedFrom)
+        public void DispatchBundle(OscBundle bundle, IPEndPoint receivedFrom)
         {
             try
             {
@@ -163,11 +164,12 @@ namespace OscLib
 
 
         /// <summary>
-        /// Processes an incoming message. Also invoked when one of the connected OSC Receivers receives a message.
+        /// Dispatches the specified OSC Message to addresses within this Space. 
+        /// Invoked when one of the connected OSC Receivers receives a message.
         /// </summary>
         /// <param name="message"> An OSC message to process. </param>
         /// <param name="receivedFrom"> The IP end point from which the message was received. </param>
-        public void ReceiveMessage(OscMessage message, IPEndPoint receivedFrom)
+        public void DispatchMessage(OscMessage message, IPEndPoint receivedFrom)
         {
             try
             {
@@ -188,8 +190,6 @@ namespace OscLib
         /// <param name="messages"> A batch of OSC messages to process. </param>
         protected void Process(OscMessage[] messages)
         {
-            // get pattern elements
-
             for (int i = 0; i < messages.Length; i++)
             {
                 Process(messages[i]);
@@ -199,7 +199,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Processes a single incoming message, invoking the appropriate OSC Methods.
+        /// Processes a single message, invoking the appropriate OSC Methods.
         /// </summary>
         /// <param name="message"> An OSC message to process. </param>
         protected void Process(OscMessage message)
@@ -245,7 +245,7 @@ namespace OscLib
         /// </returns>
         /// <exception cref="ArgumentNullException"> Thrown one of the parameters is null or empty. </exception>
         /// <exception cref="InvalidOperationException"> Thrown when there is a non-container element in the address path. </exception>
-        public OscMethod AddHandlerToMethod(OscString address, OscMethodEventHandler handler)
+        public OscMethod AddHandlerToMethod(OscString address, MethodEventHandler handler)
         {
             OscMethod added = null;
 
@@ -1078,7 +1078,6 @@ namespace OscLib
         /// <summary>
         /// Prints the entire OSC Address Space formatted as an address tree. 
         /// </summary>
-        /// <returns></returns>
         public string PrintAddressTree()
         {
             StringBuilder returnString = new StringBuilder(this.ToString());

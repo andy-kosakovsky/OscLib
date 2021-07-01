@@ -7,10 +7,10 @@ namespace OscLib
     /// <summary>
     /// Represents an OSC Method within an OSC Address Space. Allows connecting event handlers to OSC Methods, to be invoked when an appropriate message is received by the Address Space.
     /// </summary>
-    public class OscMethod : OscAddressElement
+    public sealed class OscMethod : OscAddressElement
     {
         /// <summary>
-        /// How many event handlers are connected to this OSC Method.
+        /// How many event handlers are connected to this <see cref="OscMethod"/>.
         /// </summary>
         public int TotalHandlersConnected
         {
@@ -28,29 +28,28 @@ namespace OscLib
 
 
         /// <summary>
-        /// Invoked when the Address Space receives a message and dispatches it to this OSC Method. 
+        /// Invoked when the encompassing <see cref="OscAddressSpace"/> receives a message and dispatches it to this <see cref="OscMethod"/>. 
         /// </summary>
-        public event OscMethodEventHandler OscMethodInvokedEvent;
+        public event MethodEventHandler OscMethodInvokedEvent;
 
 
         /// <summary>
-        /// Creates a new OSC Method and links it with the provided method.
+        /// Initializes a new instance of the <see cref="OscMethod"/> class, with a specified name.
         /// </summary>
-        /// <param name="name"> The name of the OSC Method. Shouldn't contain reserved symbols, not even the "/" in the beginning. </param>
+        /// <param name="name"> The name of this <see cref="OscMethod"/>. Shouldn't contain reserved symbols, not even the "/" in the beginning. </param>
         /// <exception cref="ArgumentNullException"> Thrown when the provided delegate is null. </exception>
         internal OscMethod(OscString name)
             :base(name)
         {
-  
         }
 
 
         /// <summary>
-        /// Dispatches the arguments from an OSC Message to this OSC Method, triggering it.
+        /// Invokes all event handlers subscribed to this <see cref="OscMethod"/>.
         /// </summary>
-        /// <param name="source"> The source of the arguments. </param>
-        /// <param name="arguments"> An array of arguments to dispatch. </param>
-        public virtual void Invoke(object source, object[] arguments)
+        /// <param name="source"> The source of the invocation. </param>
+        /// <param name="arguments"> The array of arguments to pass on to event handlers. </param>
+        public void Invoke(object source, object[] arguments)
         {
             OscMethodInvokedEvent?.Invoke(source, arguments);
         }
@@ -59,14 +58,14 @@ namespace OscLib
         /// <summary>
         /// Disconnects all event handlers.
         /// </summary>
-        public virtual void ClearEventHandlers()
+        public void ClearEventHandlers()
         {
             OscMethodInvokedEvent = null;
         }
 
 
         /// <summary>
-        /// Returns a string containing the name of this OSC Method and the total number of connected event handlers.
+        /// Returns a string containing the name of this <see cref="OscMethod"/> and the total number of connected event handlers.
         /// </summary>
         public override string ToString()
         {
@@ -84,9 +83,8 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns a formatted string containing the names of all the event handlers connected to this OSC Method.
+        /// Returns a formatted string containing the names of all event handlers connected to this <see cref="OscMethod"/>.
         /// </summary>
-        /// <returns></returns>
         public string GetConnectedEventHandlersNames()
         {
             StringBuilder returnString = new StringBuilder(_name.ToString());

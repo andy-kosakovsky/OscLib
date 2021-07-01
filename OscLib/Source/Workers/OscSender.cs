@@ -9,21 +9,29 @@ using System.Threading.Tasks;
 namespace OscLib
 {
     /// <summary>
-    /// Implements a multi-priority sender queue to work with an OSC Link, for message bundling and orderly sending. 
-    /// 
-    /// The methods deciding whether a packet on the heap is to be sent or discarded can be overriden, as is the timetag-providing method - it is used 
-    /// if the Sender is configured to bundle packets before sending.
-    /// 
-    /// OSC Link needs to be in targeted mode when operating, otherwise nothing will get sent.
+    /// Collects OSC Packets and sends them out through the provided OSC Link according to their priority. May bundle packets if configured to do so.
+    /// May check packets against specified criteria, delaying sending them out or outright removing them if needed.
     /// </summary>
-    /// <typeparam name="TPacket"> The particular type of the OSC Packet used with this Sender. Should implement the IOscPacket interface. </typeparam>
-    public class OscPacketHeap<TPacket> where TPacket : IOscPacket
+    /// <remarks>
+    /// <para>
+    /// The function of this component is twofold: 
+    /// <para> -- One, it allows to automatically bundle outgoing packets, which may be more performant than sending them separately. </para> 
+    /// <para> -- Two, it allows to control the outflow of packets according to specified parameters and changes in state. For example,
+    /// delaying "/playNote" messages to an external synth until there's a confirmation that the synth is initialised. </para>  
+    /// </para>
+    /// <para>
+    /// To this end, OscSender implements two overridable methods that continously check the packets on the heap and decide whether they should be 
+    /// sent out, removed or left alone for now. There's also an overridable method providing 
+    /// </para>
+    /// OSC Link needs to be in ToTarget mode when operating. Otherwise, nothing will get sent.</remarks>
+    /// <typeparam name="TPacket"> The particular representation of an OSC packet used with this Sender. Should implement the IOscPacket interface. </typeparam>
+    public class OscSender<TPacket> where TPacket : IOscPacket
     {
         #region FIELDS
         /// <summary> OSC Link in use with this Sender. </summary>
         protected OscLink _link;
 
-        /// <summary> The total amount of priority levels in this Packet Heap. </summary>
+        /// <summary> The total amount of priority layers in this Packet Heap. </summary>
         protected int _heapTotalLayers;
 
 
@@ -44,7 +52,7 @@ namespace OscLib
         protected byte[] _cycleDataHolder;
 
         /// <summary> Maximum amount of data sent per packet, in bytes. As per UDP spec, sending more than 508 bytes per packet is not advisable. </summary> 
-        protected int _packetBundleMaxSize;
+        protected int _packetMaxSize;
 
         /// <summary> Should this Packet Heap bundle the packets before sending, or just send them as separate messages as they come. </summary>
         protected bool _bundlePacketsBeforeSending;
@@ -52,6 +60,17 @@ namespace OscLib
         /// <summary> Whether this Sender is currently active. </summary>
         protected bool _isActive;
 
+
+        // delegates
+        /// <summary> Decides whether the specified packet should be removed from the packet heap. </summary>
+        protected CheckPacketDelegate<TPacket> _shouldRemovePacket;
+
+        /// <summary> Decides whether the specified packet should be sent out. </summary>
+        protected CheckPacketDelegate<TPacket> _shouldSendPacket;
+
+        /// <summary> Provides OSC Timetags for bundles created by this Sender. </summary>
+        protected GetTimetagDelegate _getTimetag;
+        
         #endregion
 
 
@@ -69,10 +88,9 @@ namespace OscLib
         public bool BundlePacketsBeforeSending { get => _bundlePacketsBeforeSending; set => _bundlePacketsBeforeSending = value; }
 
         /// <summary> The length of the heap check cycle of this Sender - that is, the time between heap checks, in milliseconds. Minimum 1 ms. </summary>
-        public int CycleLengthMs 
+        public int CycleWaitMs 
         { 
-            get => _cycleWaitMs;  
-            
+            get => _cycleWaitMs;           
             set
             {
                 if (value > 1)
@@ -84,9 +102,9 @@ namespace OscLib
         }
 
         /// <summary> Controls the maximum allowed length for outgoing OSC data packets. Minimum 128 bytes. </summary>
-        public int PacketMaxLength 
+        public int PacketMaxSize 
         {
-            get => _packetBundleMaxSize;
+            get => _packetMaxSize;
             set
             {
                 int newLength = value;
@@ -97,14 +115,14 @@ namespace OscLib
                     newLength = 128;
                 }
 
-                if (newLength != _packetBundleMaxSize)
+                if (newLength != _packetMaxSize)
                 {
                     try
                     {
                         // just to be safe, let's wait until cycle bundle data holder is not in use
                         _heapAccess.WaitOne();
-                        _packetBundleMaxSize = newLength;
-                        _cycleDataHolder = new byte[_packetBundleMaxSize];
+                        _packetMaxSize = newLength;
+                        _cycleDataHolder = new byte[_packetMaxSize];
                     }
                     finally
                     {
@@ -122,7 +140,7 @@ namespace OscLib
 
         #region EVENTS
         /// <summary> Invoked when an exception happens inside the heap-processing task, hopefully preventing it from stopping </summary>
-        public event OscTaskExceptionHandler HeapTaskExceptionRaised;
+        public event TaskExceptionHandler HeapTaskExceptionRaised;
 
         #endregion
 
@@ -132,37 +150,40 @@ namespace OscLib
         /// <summary>
         /// Creates a new OSC Packet Heap.
         /// </summary>
-        /// <param name="packetBundleMaxSize"> Maximum amount of data sent per packet when bundling packets, in bytes. As per UDP spec, sending more than 508 bytes per packet is not advisable. </param>
-        /// <param name="cycleLengthMs"> The length of the heap check cycle of this Sender - that is, the time between heap checks, in milliseconds. Shoudln't be less than 1. </param>
+        /// <param name="packetMaxSize"> Maximum amount of data sent per packet when bundling packets, in bytes. As per UDP spec, sending more than 508 bytes per packet is not advisable. </param>
+        /// <param name="cycleWaitMs"> The length of the heap check cycle of this Sender - that is, the time between heap checks, in milliseconds. Shouldn't be less than 1. </param>
         /// <param name="packetHeapTotalLayers"> The total amount of priority levels in this Sender's packet heap. </param>
         /// <param name="bundlePacketsBefureSending"> Should this Sender bundle the packets before sending, or just send them as separate messages as they come. </param>
-        public OscPacketHeap(int packetBundleMaxSize = 508, int cycleLengthMs = 1, int packetHeapTotalLayers = 1, bool bundlePacketsBefureSending = true)
+        public OscSender(int packetMaxSize = 508, int cycleWaitMs = 1, int packetHeapTotalLayers = 1, bool bundlePacketsBefureSending = true)
         {
             _heapAccess = new Mutex();
-            _packetBundleMaxSize = packetBundleMaxSize;
-            _cycleDataHolder = new byte[_packetBundleMaxSize];
+            _packetMaxSize = packetMaxSize;
+            _cycleDataHolder = new byte[_packetMaxSize];
 
             // set options
             _heapTotalLayers = packetHeapTotalLayers.Clamp(1, int.MaxValue);
 
-            _cycleWaitMs = cycleLengthMs;
+            _cycleWaitMs = cycleWaitMs;
             _bundlePacketsBeforeSending = bundlePacketsBefureSending;
+
+            // delegates
+            _shouldSendPacket = ShouldSendPacketDefault;
+            _shouldRemovePacket = ShouldRemovePacketDefault;
+            _getTimetag = GetTimetagDefault;
 
         }
 
         #endregion
 
         #region SYSTEM32
-
         /// <summary>
-        /// Activates the Heap and connects it to an OSC Link.
+        /// Connects this OSC Sender to the specified OSC Link.
         /// The packet heap is wiped on every activation.
         /// </summary>
         /// <param name="oscLink"> The OSC Link this Sender will be sending packets through. </param>
         /// <exception cref="ArgumentNullException"> Is thrown when the provided OSC Link is null. </exception>
         public void Connect(OscLink oscLink)
-        {
-            
+        {           
             if (oscLink == null)
             {
                 throw new ArgumentNullException(nameof(oscLink));
@@ -170,7 +191,7 @@ namespace OscLib
 
             if (_isActive)
             {
-                return;
+                Disconnect();
             }
 
             // get the link
@@ -213,9 +234,8 @@ namespace OscLib
         #region SENDING PACKETS
 
         /// <summary>
-        /// Gets the binary data from the OSC packet and immediately sends it through the OSC Link.
+        /// Immediately sends the specified OSC Packet through the connected OSC Link.
         /// </summary>
-        /// <param name="packet"> A reference to the OSC binary data packet to be sent. </param>
         public void SendPacket(TPacket packet)
         {
             if (_link.Mode == LinkMode.ToTarget)
@@ -227,29 +247,33 @@ namespace OscLib
 
 
         /// <summary>
-        /// Inserts the packet to the beginning of the heap at the specified priority level, passing the packet directly.
-        /// <para> Important to note: heap levels are processed tail-to-head, so the packet added by this method will be last in line.</para>
-        /// <para> Also, this method is slower than adding to heap tail. </para>
+        /// Inserts the packet to the beginning of the heap at the specified priority layer.
         /// </summary>
+        /// <remarks> This is much slower than adding the packet, as the rest of that layer's contents will be shifted forwards.
+        /// Also, heap layers are processed from end to beginning, so the inserted packet will actually be last in line. </remarks>
         /// <param name="packet"> The OSC binary data packet. </param>
         /// <param name="priorityLevel"> The priority level of the packet, with 0 being the highest priority. </param>
-        /// <exception cref="InvalidOperationException"> Thrown when attempting to add data while the sender is not active. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> Thrown when the size of the binary data packet is too large to be sent. </exception>
-        public void AddPacketToHeapHead(TPacket packet, int priorityLevel = 0)
+        /// <exception cref=">ArgumentNullException"> Thrown when the provided OSC packet is null. </exception>
+        public void InsertPacketToHeap(TPacket packet, int priorityLevel = 0)
         {
             if (!_isActive)
             {
-                throw new InvalidOperationException("SC Server Sender Error: Sender is not active.");
+                return;
             }
 
-            if (packet.Size > _packetBundleMaxSize)
+            if (packet == null)
+            {
+                throw new ArgumentNullException(nameof(packet));
+            }
+
+            if (packet.Size > _packetMaxSize)
             {
                 throw new ArgumentOutOfRangeException(nameof(packet), "OSC Sender Error: Too much OSC data to safely send in one message.");
             }
 
             int priority = priorityLevel.Clamp(0, _heap.Length);
 
-            // finally, add data to heap
             try
             {
                 _heapAccess.WaitOne();
@@ -264,35 +288,31 @@ namespace OscLib
 
 
         /// <summary>
-        /// Adds the OSC packet to the end of the heap at the specified priority level, passing the packet directly.
-        /// <para> Important to note: heap levels are processed tail-to-head, so the packet added by this method will be first in line.</para>
-        /// <para> This method is faster than adding to heap head. </para>
-        /// </summary>        
+        /// Inserts the packet to the end of the heap at the specified priority layer.
+        /// </summary>
+        /// <remarks> Heap layers are processed from end to beginning, so this packet will be first in line. </remarks>
         /// <param name="packet"> The OSC binary data packet. </param>
         /// <param name="priorityLevel"> The priority level of the packet, with 0 being the highest priority. </param>
-        /// <exception cref="InvalidOperationException"> Thrown when attempting to add data while the sender is not active. </exception>
         /// <exception cref="ArgumentOutOfRangeException"> Thrown when the size of the binary data packet is too large to be sent. </exception>
-        public void AddPacketToHeapTail(TPacket packet, int priorityLevel = 0)
+        public void AddPacketToHeap(TPacket packet, int priorityLevel = 0)
         {
-
             if (!_isActive)
             {
-                throw new InvalidOperationException("SC Server Sender Error: Sender is not running.");
+                return;
             }
 
-            if (packet.Size > _packetBundleMaxSize)
+            if (packet.Size > _packetMaxSize)
             {
                 throw new ArgumentOutOfRangeException("OSC Sender Error: Too much OSC data to safely send in one message.");
             }
+
             if (packet == null)
             {
                 throw new ArgumentNullException(nameof(packet));
             }
 
-            // make sure priority level is within bounds
             int priority = priorityLevel.Clamp(0, _heap.Length - 1);
             
-            // finally, add data to heap
             try
             {
                 _heapAccess.WaitOne();
@@ -312,11 +332,12 @@ namespace OscLib
         #endregion // SENDING PACKETS
 
 
-
         #region TASKS AND INTERNALS
+        /// <summary>
+        /// The packet heap processing task. Checks whether there are any packets in any of the layers, processes them as needed. 
+        /// </summary>
         protected virtual async Task HeapProcessingCycle()
         {
-
             while (_isActive)
             { 
 
@@ -383,6 +404,7 @@ namespace OscLib
 
         }
 
+
         /// <summary>
         /// Processes one level of data heap and sends either bundles or messages according to the setting.
         /// </summary>
@@ -408,20 +430,20 @@ namespace OscLib
 
                     for (int i = totalPackets - 1; i >= 0; i--)
                     {
-                        if (ShouldRemovePacket(packetHeapLevel[i])) // let's check with the provided remover method delegate whether the message needs deleting and delete if true
+                        if (_shouldRemovePacket(packetHeapLevel[i])) // let's check with the provided remover method delegate whether the message needs deleting and delete if true
                         {
                             packetHeapLevel.RemoveAt(i);
 
                             totalPackets--;
                         } 
-                        else if (ShouldSendPacket(packetHeapLevel[i])) // otherwise, let's check if the data is eligible for sending
+                        else if (_shouldSendPacket(packetHeapLevel[i])) // otherwise, let's check if the data is eligible for sending
                         {
                             // cache stuff
                             packetData = packetHeapLevel[i].GetContents();
                             packetLength = packetHeapLevel[i].Size;
 
                             // check whether this packet will fit (
-                            if ((byteCounter + packetLength + OscBundle.BundleHeaderLength) < _packetBundleMaxSize) 
+                            if ((byteCounter + packetLength + OscBundle.BundleHeaderLength) < _packetMaxSize) 
                             {
                                 // message will be processed and added to the bundle, let's account for that 
                                 totalPackets--;
@@ -455,7 +477,7 @@ namespace OscLib
                     if (byteCounter > OscBundle.BundleHeaderLength)
                     {
                         // add bundle header
-                        OscConverter.AddBundleHeader(_cycleDataHolder, 0, GetTimetag());
+                        OscConverter.AddBundleHeader(_cycleDataHolder, 0, _getTimetag());
                         
                         OscPacket newBundle = new OscPacket(_cycleDataHolder);
 
@@ -469,7 +491,7 @@ namespace OscLib
                     // just send the packet or remove it, or pass it if it's not yet time
                     totalPackets--;
 
-                    if (ShouldSendPacket(packetHeapLevel[totalPackets]))
+                    if (_shouldSendPacket(packetHeapLevel[totalPackets]))
                     {
                         TPacket message = packetHeapLevel[totalPackets];
 
@@ -478,7 +500,7 @@ namespace OscLib
                         packetHeapLevel.RemoveAt(totalPackets);
 
                     }
-                    else if (ShouldRemovePacket(packetHeapLevel[totalPackets]))
+                    else if (_shouldRemovePacket(packetHeapLevel[totalPackets]))
                     {
                         packetHeapLevel.RemoveAt(totalPackets);
                     }
@@ -490,24 +512,29 @@ namespace OscLib
         }
 
 
-        protected virtual bool ShouldSendPacket(TPacket packet)
+        /// <summary>
+        /// The default method for deciding whether to send out a particular OSC packet.
+        /// </summary>
+        /// <returns> True if yes, False if no. This particular method always returns True. </returns>
+        public virtual bool ShouldSendPacketDefault(TPacket packet)
         {
             return true;
         }
 
 
-        protected virtual bool ShouldRemovePacket(TPacket packet)
+        public virtual bool ShouldRemovePacketDefault(TPacket packet)
         {
             return false;
         }
 
 
-        protected virtual OscTimetag GetTimetag()
+        public virtual OscTimetag GetTimetagDefault()
         {
             return OscTime.Immediately;
         }
 
         #endregion
+
 
         /// <summary>
         /// Returns an overview of the packet heap, showing the number of packets per priority level.

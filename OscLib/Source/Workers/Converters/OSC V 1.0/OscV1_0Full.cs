@@ -143,6 +143,11 @@ namespace OscLib
                     // don't add any bytes to the byte array
                     break;
 
+                case object[] argArray:
+                    
+
+                    break;
+
                 default:
                     if (arg == null)
                     {

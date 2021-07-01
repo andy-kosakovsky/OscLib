@@ -6,7 +6,6 @@ namespace OscLib
     /// </summary>
     public interface IOscPacket : IOscBinaryContainer
     {
-
     }
 
 }

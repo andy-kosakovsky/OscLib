@@ -29,10 +29,10 @@ namespace OscLib
         private readonly OscMessage[] _messages;
         private readonly OscBundle[] _bundles;
 
-        /// <summary> The OSC timetag attached to this bundle. </summary>
+        /// <summary> The <see cref="OscTimetag"/> attached to this <see cref="OscBundle"/>. </summary>
         public OscTimetag Timetag { get => _timetag; }
 
-        /// <summary> Messages inside this bundle. </summary>
+        /// <summary> Messages inside this <see cref="OscBundle"/>. </summary>
         public OscMessage[] Messages 
         {
             get
