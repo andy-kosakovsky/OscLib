@@ -88,7 +88,7 @@ namespace OscLib
         /// Retrieves the array of arguments attached to this Message.
         /// </summary>
         /// <remarks> Despite being read-only, one can still change individual values inside this array. This can be both good and bad - and definitely something to be wary of.
-        /// If this behaviour is not explicitly needed, it's probably safer to use the indexer access instead. </remarks>
+        /// If this behaviour is not explicitly required, and neither is having access to the entire argument array, it's probably safer to use indexer access instead. </remarks>
         /// <returns> An array of arguments, or an empty array if there are none. </returns>
         public object[] GetArguments()
         {

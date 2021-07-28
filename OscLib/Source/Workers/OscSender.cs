@@ -15,8 +15,9 @@ namespace OscLib
     /// <remarks>
     /// <para>
     /// The function of this component is twofold: 
-    /// <para> -- One, it allows to automatically bundle outgoing packets, which may be more performant than sending them separately. </para> 
-    /// <para> -- Two, it allows to control the outflow of packets according to specified parameters and changes in state. For example,
+    /// <para> -- One, it allows to automatically bundle outgoing packets, which may be more performant than sending them separately. 
+    /// This can be useful when dealing with large quantities of small packets, for example. </para> 
+    /// <para> -- Two, it allows controlling the outflow of packets according to specified parameters and changes in state. For example,
     /// delaying "/playNote" messages to an external synth until there's a confirmation that the synth is initialised. </para>  
     /// </para>
     /// <para>
@@ -232,7 +233,6 @@ namespace OscLib
 
 
         #region SENDING PACKETS
-
         /// <summary>
         /// Immediately sends the specified OSC Packet through the connected OSC Link.
         /// </summary>
@@ -254,7 +254,6 @@ namespace OscLib
         /// <param name="packet"> The OSC binary data packet. </param>
         /// <param name="priorityLevel"> The priority level of the packet, with 0 being the highest priority. </param>
         /// <exception cref="ArgumentOutOfRangeException"> Thrown when the size of the binary data packet is too large to be sent. </exception>
-        /// <exception cref=">ArgumentNullException"> Thrown when the provided OSC packet is null. </exception>
         public void InsertPacketToHeap(TPacket packet, int priorityLevel = 0)
         {
             if (!_isActive)
@@ -516,19 +515,19 @@ namespace OscLib
         /// The default method for deciding whether to send out a particular OSC packet.
         /// </summary>
         /// <returns> True if yes, False if no. This particular method always returns True. </returns>
-        public virtual bool ShouldSendPacketDefault(TPacket packet)
+        protected virtual bool ShouldSendPacketDefault(TPacket packet)
         {
             return true;
         }
 
 
-        public virtual bool ShouldRemovePacketDefault(TPacket packet)
+        protected virtual bool ShouldRemovePacketDefault(TPacket packet)
         {
             return false;
         }
 
 
-        public virtual OscTimetag GetTimetagDefault()
+        protected virtual OscTimetag GetTimetagDefault()
         {
             return OscTime.Immediately;
         }

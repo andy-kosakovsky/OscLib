@@ -292,7 +292,7 @@ namespace OscLib
             oscString.CopyContentsToArray(array, extPointer);
 
             // shift the external pointer
-            extPointer += oscString.OscLength;
+            extPointer += oscString.OscSize;
         }
 
 
@@ -349,7 +349,7 @@ namespace OscLib
         {
             arg.CopyContentsToArray(array, extPointer);
 
-            extPointer += arg.OscLength;
+            extPointer += arg.OscSize;
         }
 
 
@@ -372,7 +372,7 @@ namespace OscLib
         /// <param name="arg"> The OscString to be measured. </param>
         public static int GetOscLength(OscString arg)
         {
-            return arg.OscLength;
+            return arg.OscSize;
         }
 
         #endregion // OSC STRING

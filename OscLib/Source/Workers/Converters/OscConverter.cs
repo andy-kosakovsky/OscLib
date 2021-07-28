@@ -38,12 +38,32 @@ namespace OscLib
     /// apart from the bare standard int32, float32, OSC-string and OSC-blob. All this can be accounted for in method overloads in the derived classes. 
     /// </remarks>
     public abstract class OscConverter
-    {       
-        /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
-        protected bool _settingEmptyTypeTagStrings;
+    {
+        // array-related type tags
+        protected const byte _arrayOpen = (byte)'[';
+        protected const byte _arrayClose = (byte)']';
 
-        /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
-        public virtual bool SettingEmptyTypeTagStrings { get => _settingEmptyTypeTagStrings; set => _settingEmptyTypeTagStrings = value; }
+        /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) to a message that doesn't contain any arguments. </summary>
+        protected bool _addEmptyTypeTagStrings;
+
+        /// <summary> Controls whether this version of OSC Protocol supports argument arrays, designated by square bracket symbols in the type tag string. </summary>
+        /// <remarks> 
+        /// If set to "False", any arrays found in outgoing messages' arguments will be "flattened" - that is, all arguments contained 
+        /// inside arrays will be added linearly. Argument arrays in incoming messages will similarly be "flattened" - the arguments themselves stay, 
+        /// the encompassing arrays are removed. 
+        /// </remarks>
+        protected bool _supportsArgumentArrays;
+
+        /// <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) to a message that doesn't contain any arguments. </summary>
+        public virtual bool AddEmptyTypeTagStrings { get => _addEmptyTypeTagStrings; set => _addEmptyTypeTagStrings = value; }
+
+        /// <summary> Controls whether this version of OSC Protocol supports argument arrays, designated by square bracket symbols in the type tag string. </summary>
+        /// <remarks> 
+        /// If set to "False", any arrays found in outgoing messages' arguments will be "flattened" - that is, all arguments contained 
+        /// inside arrays will be added linearly. Argument arrays in incoming messages will similarly be "flattened" - the arguments themselves stay, 
+        /// the encompassing arrays are removed. 
+        /// </remarks>
+        public virtual bool SupportsArgumentArrays { get => _supportsArgumentArrays; set => _supportsArgumentArrays = value; }
 
 
         #region ADDING BYTES OF WHOLE MESSAGES / BUNDLES
@@ -56,40 +76,35 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown if the provided data array is too small to fit the message into. </exception>
         protected void AddMessageAsBytes(OscMessage message, byte[] array, ref int extPointer)
         {
-            int addrLength = message.AddressPattern.OscLength;
-
             int msgStart = extPointer;
+            int tagPointer = msgStart + message.AddressPattern.OscSize;
 
-       
             message.AddressPattern.CopyContentsToArray(array, msgStart);
-
-            extPointer += addrLength;
 
             if (message.ArgumentsCount > 0)
             {
                 // add the address pattern comma
-                array[msgStart + addrLength] = OscProtocol.Comma;
+                array[tagPointer] = OscProtocol.Comma;
 
-                // find the length of type tag, " + 1" accounts for the comma
-                int typeTagLength = OscUtil.NextX4(message.ArgumentsCount + 1);
+                // +1 is for the comma, account for padding null bytes
+                int typeTagLength = GetTypeTagStringLength(message.GetArguments()) + 1;
+                extPointer = tagPointer + typeTagLength.NextX4();
 
-                extPointer = msgStart + addrLength + typeTagLength;
+                // move the tag pointer 1 byte forward
+                tagPointer++;
 
-                for (int i = 0; i < message.ArgumentsCount; i++)
-                {
-                    AddArgAsBytes(message[i], array, ref extPointer, out array[msgStart + addrLength + 1 + i]);
-                }
+                AddArgArrayAsBytes(message.GetArguments(), array, ref extPointer, ref tagPointer);
 
             }
             else
             {
-                if (_settingEmptyTypeTagStrings)
+                if (_addEmptyTypeTagStrings)
                 {
                     // add the address pattern comma
-                    array[msgStart + addrLength] = OscProtocol.Comma;
+                    array[tagPointer] = OscProtocol.Comma;
 
                     // shift pointer forward by 4 bytes - the comma plus three null bytes
-                    extPointer += OscProtocol.Chunk32;
+                    extPointer = tagPointer + OscProtocol.Chunk32;
                 }
 
             }
@@ -215,7 +230,7 @@ namespace OscLib
         /// <returns></returns>
         public OscPacket GetPacket(OscMessage message)
         {
-            byte[] binaryData = new byte[GetMessageOscLength(message)];
+            byte[] binaryData = new byte[GetMessageOscSize(message)];
 
             int fakePointer = 0;
 
@@ -236,7 +251,7 @@ namespace OscLib
             // create a message out of the provided stuff first
             OscMessage message = new OscMessage(addressPattern, arguments);
 
-            byte[] binaryData = new byte[GetMessageOscLength(message)];
+            byte[] binaryData = new byte[GetMessageOscSize(message)];
 
             int fakePointer = 0;
 
@@ -248,7 +263,7 @@ namespace OscLib
 
         public OscPacket GetPacket(OscBundle bundle)
         {
-            byte[] binaryData = new byte[GetBundleOscLength(bundle)];
+            byte[] binaryData = new byte[GetBundleOscSize(bundle)];
 
             int fakePointer = 0;
 
@@ -315,8 +330,8 @@ namespace OscLib
         /// <exception cref="InvalidOperationException"> Thrown when the message can't be parsed or has errors. </exception>
         public OscMessage GetMessage(byte[] data, ref int extPointer, int length)
         {
-            // should start with an '/'
-            if (!data.IsValidOscData(extPointer, length))
+            // should actually contain a message
+            if (data.CheckOscContents(extPointer) != PacketContents.Message)
             {
                 throw new ArgumentException("OSC Deserializer ERROR: No OSC Message found at pointer position, expecting a '/' symbol. Pointer at: " + extPointer);
             }
@@ -330,34 +345,7 @@ namespace OscLib
             int msgStart = extPointer;
 
             // find the address pattern
-            while (extPointer < msgStart + length)
-            {
-                // move pointer forward by a chunk
-                extPointer += OscProtocol.Chunk32;
-
-                // preceding chunk ending in a 0 means the pattern ends somewhere within it, or right at the end of the chunk before it.
-                if (data[extPointer - 1] == 0)
-                {
-                    for (int i = extPointer - 2; i >= extPointer - OscProtocol.Chunk32; i--)
-                    {
-                        if (data[i] != 0)
-                        {
-                            addressPatternLength = i - msgStart + 1;
-                            break;
-                        }
-
-                    }
-
-                    // if not yet found, the pattern's end is the last byte of the chunk behind
-                    if (addressPatternLength < 0)
-                    {
-                        addressPatternLength = extPointer - msgStart - OscProtocol.Chunk32;
-                    }
-
-                    break;
-                }
-
-            }
+            addressPatternLength = OscUtil.FindLengthOfOscString(data, msgStart);
 
             // if address pattern's length is unknown at this point, something's gone very wrong
             if (addressPatternLength < 0)
@@ -369,11 +357,13 @@ namespace OscLib
                 addressPattern = new OscString(data, msgStart, addressPatternLength);
             }
 
+            // move pointer
+            extPointer += addressPattern.OscSize;
 
             if (extPointer >= msgStart + length)
             {
                 // if we've reached the end of a a message already, and we don't expect an empty type tag string, we might as well return it 
-                if (!_settingEmptyTypeTagStrings)
+                if (!_addEmptyTypeTagStrings)
                 {
                     return new OscMessage(addressPattern);
                 }
@@ -389,36 +379,20 @@ namespace OscLib
             {
                 typeTagStart = extPointer;
 
-                // find the end of it
-                while (data[extPointer] != 0)
-                {
-                    extPointer++;
-                }
+                int typeTagLength = OscUtil.FindLengthOfOscString(data, typeTagStart);
 
-                // - 1 is to accomodate for the "," in the beginning
-                int typeTagsTotal = extPointer - typeTagStart - 1;
+                // shift forwards 
+                extPointer += typeTagLength.NextX4();
 
-                arguments = new object[typeTagsTotal];
+                // get the arguments
+                arguments = BytesToArgArray(data, ref extPointer, ref typeTagStart);
 
-                // move the pointer to the next 4-byte point after the end of the type tags
-                extPointer = extPointer.NextX4();
-
-                if (typeTagsTotal > 0)
-                {
-                    // the first element in the array will be the "," type tag separator
-                    for (int i = 0; i < typeTagsTotal; i++)
-                    {
-                        arguments[i] = BytesToArg(data, ref extPointer, data[typeTagStart + 1 + i]);
-                        
-                        if (extPointer > msgStart + length)
-                        {
-                            throw new InvalidOperationException("OSC Converter ERROR: Pointer went beyond the end of message. ");
-                        }
-
-                    }
-
-                }
-
+            }
+            else
+            {
+                // TODO: Add something to try and decypher arguments in a typetag-less message
+                // for now though, we'll just go ahead and fail :(
+                throw new ArgumentException("OSC Converter ERROR: Cannot deserialize OSC Packet - expecting a type tag string, found none. ");
             }
 
             return new OscMessage(addressPattern, arguments);
@@ -579,7 +553,8 @@ namespace OscLib
 
 
         /// <summary>
-        /// Converts OSC 
+        /// Converts an array of OSC binary containing at least one bundle into a "flat" array of OSC Bundles. That is, this method extracts 
+        /// all bundles from their encompassing bundles and presents them all as equal-level elements that only contain OSC Messages.
         /// </summary>
         /// <param name="data"> A byte array containing at least one OSC Bundle. </param>
         /// <returns> An array of OSC Bundles. </returns>
@@ -648,7 +623,7 @@ namespace OscLib
 
             int bundleIndex = 0;
 
-            // the recursive horror that will extract the bundles. hidden away inside this method to hopefully avoid the shame of it
+            // the recursive horror that will extract the bundles. it shamefully hides itself inside this method, in hope to avoid prying, cruel gazes and unkind words, a sad monster shambling in the dark 
             void GetBundleRecursive(int length, ref int externalPointer, byte[] binaryData, OscBundle[] bndArray, ref int currentBundleIndex, OscTimetag[] timestampStack, ref int currentTimestampIndex)
             {
                 int thisBundleIndex = currentBundleIndex;
@@ -713,54 +688,47 @@ namespace OscLib
         #endregion
 
 
-
         #region GETTING ELEMENT LENGTH
-
         /// <summary>
-        /// Calculates the byte length of the provided OSC Message according to this OSC Protocol implementation's specifics.
+        /// Calculates the binary size of the provided OSC Message according to this OSC Protocol implementation's specifics.
         /// </summary>
         /// <param name="message"> The message to measure. </param>
         /// <returns> The length of the provided message in bytes. </returns>
-        public int GetMessageOscLength(OscMessage message)
+        public int GetMessageOscSize(OscMessage message)
         {
-            int length = message.AddressPattern.OscLength;
+            object[] args = message.GetArguments();
 
-            for (int i = 0; i < message.ArgumentsCount; i++)
+            int size = message.AddressPattern.OscSize;
+
+            if (args.Length > 0)
             {
-                length += GetArgLength(message[i]);
+                size += GetArgArrayOscSize(args);
+
+                // add type tag string length, including the comma and null byte padding
+                size += (GetTypeTagStringLength(args) + 1).NextX4();
+            }
+            else if (_addEmptyTypeTagStrings)
+            {
+                // add a 4-byte chunk - a comma and three null bytes for padding
+                size += OscProtocol.Chunk32;
             }
 
-            // account for the argument string length
-            if (message.ArgumentsCount > 0)
-            {
-                length += OscUtil.NextX4(message.ArgumentsCount + 1);
-            }
-            else
-            {
-                if (_settingEmptyTypeTagStrings)
-                {
-                    // add space for a comma plus 3 empty bytes (how wasteful)
-                    length += OscProtocol.Chunk32;
-                }
-
-            }
-
-            return length;
+            return size;
         }
 
 
         /// <summary>
-        /// Calculates the byte length of the provided OSC Bundle according to this OSC Protocol implementation's specifics.
+        /// Calculates the binary size of the provided OSC Bundle according to this OSC Protocol implementation's specifics.
         /// </summary>
         /// <param name="bundle"> The bundle to measure. </param>
         /// <returns> The length of the provided message in bytes. </returns>
-        public int GetBundleOscLength(OscBundle bundle)
+        public int GetBundleOscSize(OscBundle bundle)
         {
             int length = OscBundle.BundleHeaderLength;
 
             for (int i = 0; i < bundle.Messages.Length; i++)
             {
-                length += GetMessageOscLength(bundle.Messages[i]);
+                length += GetMessageOscSize(bundle.Messages[i]);
 
                 // account for length's bytes as well
                 length += OscProtocol.Chunk32;
@@ -768,7 +736,7 @@ namespace OscLib
 
             for (int i = 0; i < bundle.Bundles.Length; i++)
             {
-                length += GetBundleOscLength(bundle.Bundles[i]);
+                length += GetBundleOscSize(bundle.Bundles[i]);
 
                 // account for length's bytes as well
                 length += OscProtocol.Chunk32;
@@ -792,7 +760,7 @@ namespace OscLib
         /// <exception cref="ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
         protected virtual byte[] GetArgAsBytes<T>(T arg, out byte typeTag)
         {
-            int length = GetArgLength(arg);
+            int length = GetArgOscSize(arg);
             int pointer = 0;
 
             byte[] data = new byte[length];
@@ -815,11 +783,123 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns the provided argument's OSC byte length.
+        /// Serializes the provided argument array into OSC byte data and adds it to the provided byte array.  
+        /// </summary>
+        /// <param name="argArray"> </param>
+        /// <param name="targetArray"> </param>
+        /// <param name="argPointer"> Points to the index from which the argument byte data should be added. Will be shifted forwards accordingly. </param>
+        /// <param name="tagPointer"> Points to the index from which the type tag string begins - not counting the comma. </param>
+        protected virtual void AddArgArrayAsBytes(object[] argArray, byte[] targetArray, ref int argPointer, ref int tagPointer)
+        {
+            // should be null, if not, something's gone wrong
+            if (targetArray[tagPointer] != 0)
+            {
+                throw new InvalidOperationException("OscConverter ERROR: Cannot serialize argument array, type tag string doesn't fit into target byte array.");
+            }
+
+            for (int i = 0; i < argArray.Length; i++)
+            {
+                if (argArray[i] is object[] array)
+                {
+                    if (_supportsArgumentArrays)
+                    {
+                        targetArray[tagPointer++] = _arrayOpen;
+                        AddArgArrayAsBytes(array, targetArray, ref argPointer, ref tagPointer);
+                        targetArray[tagPointer++] = _arrayClose;
+                    }
+                    else
+                    {
+                        // just add the contents of the array, ignore the brackets
+                        AddArgArrayAsBytes(array, targetArray, ref argPointer, ref tagPointer);
+                    }
+                }
+                else
+                {
+                    AddArgAsBytes(argArray[i], targetArray, ref argPointer, out targetArray[tagPointer++]);
+                }
+
+            }
+
+        }
+
+
+        /// <summary>
+        /// Calculates the binary size of the provided argument array according to this OSC Protocol implementation's specifics.
+        /// </summary>
+        protected virtual int GetArgArrayOscSize(object[] argArray)
+        {
+            if ((argArray == null) || (argArray.Length == 0))
+            {
+                return 0;
+            }
+
+            int length = 0;
+
+            for (int i = 0; i < argArray.Length; i++)
+            {
+                if (argArray[i] is object[] internalArray)
+                {
+                    length += GetArgArrayOscSize(internalArray);
+                }
+                else
+                {
+                    length += GetArgOscSize(argArray[i]);
+                }
+
+            }
+
+            // should already be a multiple of 4, but just in case
+            length = length.ThisOrNextX4();
+
+            return length;
+        }
+
+
+        /// <summary>
+        /// Returns the length of an OSC type tag string corresponding to the provided argument array. Includes array brackets if necessary. *Doesn't* include null byte padding or the comma symbol.
+        /// </summary>
+        /// <param name="argArray"> An array of arguments. </param>
+        /// <returns></returns>
+        protected virtual int GetTypeTagStringLength(object[] argArray)
+        {
+            if ((argArray == null) || (argArray.Length == 0))
+            {
+                return 0;          
+            }
+                       
+            int length = 0;
+
+            for (int i = 0; i < argArray.Length; i++)
+            {
+                if (argArray[i] is object[] internalArray)
+                {
+                    // if argument arrays aren't supported, the internal array will be added as a "flat" sequence of arguments; otherwise, we need to accomodate the opening and closing brackets
+                    length += GetTypeTagStringLength(internalArray);
+
+                    if (_supportsArgumentArrays)
+                    {
+                        length += 2;
+                    }
+
+                }
+                else
+                {
+                    // just a single type tag-carrying byte per argument
+                    length++;
+                }
+
+            }
+
+            return length;
+        }
+
+
+        /// <summary>
+        /// Calculates the binary size of the provided argument, according to this OSC Protocol implementation's specifics.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="arg"></param>
-        protected abstract int GetArgLength<T>(T arg);
+        protected abstract int GetArgOscSize<T>(T arg);
 
 
         /// <summary>
@@ -833,8 +913,123 @@ namespace OscLib
         /// <param name="array"> The byte array containing OSC byte data. </param>
         /// <param name="extPointer"> The external pointer designating the position from which the relevant data starts. </param>
         /// <param name="typeTag"> The type tag of the argument contained in the data. </param>
-        /// <returns></returns>
         protected abstract object BytesToArg(byte[] array, ref int extPointer, byte typeTag);
+
+
+        protected virtual object[] BytesToArgArray(byte[] sourceArray, ref int argPointer, ref int tagPointer)
+        {
+            int tagStart = tagPointer;
+            int argStart = argPointer;
+
+            int totalArgs = 0;
+            int openBrackets = 0;
+            
+            // tally up the number of args
+            while ((tagPointer < sourceArray.Length) && (sourceArray[tagPointer] != 0))
+            {
+                if (sourceArray[tagPointer] == OscProtocol.Comma)
+                {
+                    tagPointer++;
+                    continue;
+                }
+
+                if (!_supportsArgumentArrays)
+                {
+                    // don't count brackets, count every type tag as the argument array will be flat
+                    if ((sourceArray[tagPointer] != _arrayOpen) && (sourceArray[tagPointer] != _arrayClose))
+                    {
+                        totalArgs++;
+                    }
+
+                    tagPointer++;
+
+                }
+                else
+                {               
+                    if (sourceArray[tagPointer] == _arrayOpen)
+                    {
+                        openBrackets++;
+                    }
+                    else if (sourceArray[tagPointer] == _arrayClose)
+                    {
+                        openBrackets--;
+                    }
+
+                    tagPointer++;
+
+                    // don't count anything within brackets
+                    if (openBrackets == 0)
+                    {
+                        totalArgs++;
+                    }
+                    else if (openBrackets < 0)
+                    {
+                        // if this method's been started from inside an array, this should stop it at the right position 
+                        break;
+                    }
+                                          
+                }
+
+            }
+
+            if (openBrackets > 0)
+            {
+                throw new ArgumentException("OscConverter ERROR: Cannot convert bytes into arguments, type tag string seems to include unclosed arrays.");
+            }
+
+            // and now for filling the argument array
+            object[] arguments = new object[totalArgs];
+
+            tagPointer = tagStart;
+
+            int argCounter = 0;
+
+            while (argCounter < totalArgs)
+            {
+                // move over any commas, just in case
+                if (sourceArray[tagPointer] == OscProtocol.Comma)
+                {
+                    tagPointer++;
+                    continue;
+                }
+
+                if (!_supportsArgumentArrays)
+                {
+                    if ((sourceArray[tagPointer] == _arrayOpen) || (sourceArray[tagPointer] == _arrayClose))
+                    {
+                        // ignore brackets
+                        tagPointer++;
+                        continue;     
+                    }
+
+                    arguments[argCounter] = BytesToArg(sourceArray, ref argPointer, sourceArray[tagPointer]);
+                    argCounter++;
+                    tagPointer++;
+                }
+                else
+                {
+                    if (sourceArray[tagPointer] == _arrayOpen)
+                    {
+                        tagPointer++;
+                        arguments[argCounter] = BytesToArgArray(sourceArray, ref argPointer, ref tagPointer);
+                    }
+                    else
+                    {
+                        arguments[argCounter] = BytesToArg(sourceArray, ref argPointer, sourceArray[tagPointer]);
+
+                    }
+
+                    tagPointer++;
+                    argCounter++;
+
+                }
+
+            }
+
+            return arguments;
+
+        }
+
 
         #endregion // ABSTRACT METHODS
 

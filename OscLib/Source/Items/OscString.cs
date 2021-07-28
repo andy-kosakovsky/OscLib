@@ -6,7 +6,7 @@ namespace OscLib
     /// <summary>
     /// Implements an OSC Protocol-compliant string (ASCII-based, null-terminated, length a multiple of 4) that can be used with and easily converted to and from standard .NET strings.  
     /// </summary>
-    public struct OscString : IOscBinaryContainer
+    public struct OscString : IOscByteData
     {
         private static readonly OscString _nullString = new OscString("\0");
 
@@ -25,7 +25,7 @@ namespace OscLib
         private readonly byte[] _chars;
 
         /// <summary> The "OSC Protocol-compliant" length of this string - including the null terminator and extra null bytes at the end to make it a multiple of 4. </summary>
-        public readonly int OscLength;
+        public readonly int OscSize;
 
         private Trit _containsPatternMatching;
         private Trit _containsSpecialSymbols;
@@ -91,7 +91,7 @@ namespace OscLib
                 }
             }
 
-            OscLength = _chars.Length.NextX4();
+            OscSize = _chars.Length.NextX4();
 
             _containsPatternMatching = Trit.Maybe;
             _containsSpecialSymbols = Trit.Maybe;
@@ -106,7 +106,7 @@ namespace OscLib
         {
             _chars = Encoding.ASCII.GetBytes(sourceString);
 
-            OscLength = _chars.Length.NextX4();
+            OscSize = _chars.Length.NextX4();
 
             _containsPatternMatching = Trit.Maybe;
             _containsSpecialSymbols = Trit.Maybe;
@@ -160,7 +160,7 @@ namespace OscLib
             }
 
             _chars = data;
-            OscLength = OscUtil.NextX4(data.Length);
+            OscSize = OscUtil.NextX4(data.Length);
 
         }
 
@@ -171,7 +171,7 @@ namespace OscLib
         private OscString(byte[] bytes, Trit hasSpecialSymbols, Trit hasPatternMatching)
         {
             _chars = bytes;
-            OscLength = _chars.Length.NextX4();
+            OscSize = _chars.Length.NextX4();
 
             _containsPatternMatching = hasPatternMatching;
             _containsSpecialSymbols = hasSpecialSymbols;
@@ -196,7 +196,7 @@ namespace OscLib
         /// </summary>
         public byte[] GetCopyOfContents()
         {
-            byte[] copy = new byte[OscLength];
+            byte[] copy = new byte[OscSize];
             _chars.CopyTo(copy, 0);
             return copy;
         }

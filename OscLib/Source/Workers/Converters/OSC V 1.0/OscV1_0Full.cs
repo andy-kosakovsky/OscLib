@@ -9,7 +9,7 @@ namespace OscLib
     /// </summary>
     public class OscV1_0Full : OscConverter
     {
-        //TODO: ADD ARRAYS TO OSC V 1.0
+        //TODO: ADD ARRAYS TO OSC V1.0
 
         // standard types
         private const byte _int32 = (byte)'i';
@@ -33,15 +33,11 @@ namespace OscLib
         private const byte _false = (byte)'F';
         private const byte _nil = (byte)'N';
         private const byte _inf = (byte)'I';
-
-        // arrays
-        private const byte _arrayOpen = (byte)'[';
-        private const byte _arrayClose = (byte)']';
-        
+      
         public OscV1_0Full()
         {
             // set the settings
-            _settingEmptyTypeTagStrings = true;
+            _addEmptyTypeTagStrings = true;
         }
 
 
@@ -218,7 +214,7 @@ namespace OscLib
         }
 
         
-        protected override int GetArgLength<T>(T arg)
+        protected override int GetArgOscSize<T>(T arg)
         {
             switch (arg)
             {
@@ -264,11 +260,10 @@ namespace OscLib
                     else
                         throw new ArgumentException("OSC Converter ERROR: Can't deserialize argument, argument type is not supported.");
 
-                    
-
             }
 
         }
 
     }
+
 }

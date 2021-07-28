@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace OscLib
 {
@@ -23,6 +24,29 @@ namespace OscLib
 
             return output;
         }
+
+
+        /// <summary>
+        /// Clamps a ulong to fit into an int.
+        /// </summary>
+        public static int ClampToInt(this ulong input)
+        {
+            int output;
+
+            if (input > int.MaxValue)
+                output = int.MaxValue;
+            else
+                output = (int)input;
+
+            return output;
+        }
+
+
+        public static int GetFirst32Bits(this ulong input)
+        {
+            return (int)(input >> 32); 
+        }
+
 
         /// <summary>
         /// Clamps an integer value to be within the two specified values, inclusive. 
@@ -150,7 +174,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns the next multiple of four that is larger than the input.
+        /// Returns the closest multiple of four that is larger than the input value.
         /// </summary>
         public static int NextX4(this int number)
         {
@@ -159,7 +183,7 @@ namespace OscLib
 
 
         /// <summary>
-        /// Returns the nearest multiple of four larger or equal to the input.
+        /// Returns either the closest larger multiple of four, or the input value (if it's already a multiple of four).
         /// </summary>
         public static int ThisOrNextX4(this int number)
         {
@@ -167,6 +191,54 @@ namespace OscLib
                 return number;
             else
                 return number.NextX4(); 
+        }
+
+        /// <summary>
+        /// Searches for an end to the OSC String inside a byte array, that starts at the provided index, returns its length.
+        /// </summary>
+        /// <remarks>
+        /// The start index has to be a multiple of 4, as per OSC Protocol spec. 
+        /// Expects the oscData array to be a multiple of 4 in length too, if it's not bad things might happen. 
+        /// OSC Strings are null-terminated, which is why this method expects a null terminator at the end of a string.  
+        /// </remarks>
+        /// <returns> Length of the string, or -1 if null terminator isn't present. </returns>
+        public static int FindLengthOfOscString(byte[] oscData, int startIndex)
+        {
+            if (startIndex % 4 != 0)
+            {
+                throw new ArgumentException("ERROR: Cannot check OSC data, provided starting index (" + startIndex + ") is not a multiple of four.");
+            }
+
+            int pointer = startIndex;
+
+            while (pointer < oscData.Length)
+            {
+                // move pointer forward by a chunk
+                pointer += OscProtocol.Chunk32;
+
+                // preceding chunk ending in a 0 means the string ends somewhere within it, or right at the end of the chunk before it.
+                if (oscData[pointer - 1] == 0)
+                {
+                    for (int i = pointer - 2; i >= pointer - OscProtocol.Chunk32; i--)
+                    {
+                        if (oscData[i] != 0)
+                        {
+                            return i - startIndex + 1;
+                        }
+
+                    }
+
+                    // if not yet found, the pattern's end is the last byte of the chunk behind
+                    return pointer - startIndex - OscProtocol.Chunk32;
+ 
+                }
+
+            }
+
+            // if still not found, there is no null terminator, and we should indicate that something went wrong
+            // we *could* return the length of the oscData array minus startIndex or something, but that might lead to silent failures and i don't know if that's any good
+            return -1;
+
         }
 
 

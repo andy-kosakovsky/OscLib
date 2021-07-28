@@ -5,9 +5,9 @@ using System.Text;
 namespace OscLib
 {
     /// <summary>
-    /// Specifies common methods for structures holding OSC binary data.
+    /// Specifies common methods for structures holding OSC byte data.
     /// </summary>
-    public interface IOscBinaryContainer
+    public interface IOscByteData
     {
         /// <summary> The total number of bytes in this container. Should be a multiple of 4. </summary>
         int Size { get; }

@@ -196,33 +196,59 @@
             Returns a formatted string containing the names of all event handlers connected to this <see cref="T:OscLib.OscMethod"/>.
             </summary>
         </member>
-        <member name="T:OscLib.IOscBinaryContainer">
+        <member name="T:OscLib.IOscBlobbable">
             <summary>
-            Specifies common methods for structures holding OSC binary data.
+            Specifies common methods for data structures that can be converted into binary OSC-blobs, as per OSC Protocol spec.
             </summary>
         </member>
-        <member name="P:OscLib.IOscBinaryContainer.Size">
+        <member name="P:OscLib.IOscBlobbable.SizeAsBlob">
+            <summary>
+            Returns the size of this data structure in bytes, when represented as an OSC-blob. This includes the bytes containing the blob length.
+            </summary>
+        </member>
+        <member name="M:OscLib.IOscBlobbable.GetAsBlob">
+            <summary>
+            Creates a byte array containing this data structure represented as an OSC-blob.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.IOscBlobbable.AddAsBlob(System.Byte[],System.Int32)">
+            <summary>
+            Converts this data structure into an OSC-blob and adds it to the specified byte array.
+            </summary>
+        </member>
+        <member name="M:OscLib.IOscBlobbable.AddAsBlob(System.Byte[],System.Int32@)">
+            <summary>
+            Converts this data structure into an OSC-blob and adds it to the specified byte array. Shifts the pointer forwards accordingly.
+            </summary>
+        </member>
+        <member name="T:OscLib.IOscByteData">
+            <summary>
+            Specifies common methods for structures holding OSC byte data.
+            </summary>
+        </member>
+        <member name="P:OscLib.IOscByteData.Size">
             <summary> The total number of bytes in this container. Should be a multiple of 4. </summary>
         </member>
-        <member name="P:OscLib.IOscBinaryContainer.Item(System.Int32)">
+        <member name="P:OscLib.IOscByteData.Item(System.Int32)">
             <summary>
             Indexer access to the binary data inside this container.
             </summary>
             <param name="index"> Byte index. </param>
             <returns></returns>
         </member>
-        <member name="M:OscLib.IOscBinaryContainer.GetContents">
+        <member name="M:OscLib.IOscByteData.GetContents">
             <summary>
             Retrieves the array containing binary data from this container.
             </summary>
             <returns></returns>
         </member>
-        <member name="M:OscLib.IOscBinaryContainer.GetCopyOfContents">
+        <member name="M:OscLib.IOscByteData.GetCopyOfContents">
             <summary>
             Returns a copy of the byte array containing OSC data.
             </summary>
         </member>
-        <member name="M:OscLib.IOscBinaryContainer.CopyContentsToArray(System.Byte[],System.Int32)">
+        <member name="M:OscLib.IOscByteData.CopyContentsToArray(System.Byte[],System.Int32)">
             <summary>
             Copies the contents of this container to the provided byte array.
             </summary>
@@ -247,9 +273,27 @@
         <member name="F:OscLib.OscColor.Alpha">
             <summary> Value of alpha channel. </summary>
         </member>
+        <member name="P:OscLib.OscColor.SizeAsBlob">
+            <summary> Returns the total size of this struct when represented as an OSC-blob. </summary>
+        </member>
         <member name="M:OscLib.OscColor.#ctor(System.Byte,System.Byte,System.Byte,System.Byte)">
             <summary>
             Creates a new struct containing OSC Color.
+            </summary>
+        </member>
+        <member name="M:OscLib.OscColor.AddAsBlob(System.Byte[],System.Int32@)">
+            <summary>
+            Adds this <see cref="T:OscLib.OscColor"/> struct, formatted as an OSC-blob, to the provided byte array at the specified position. Moves the pointer forward. 
+            </summary>
+        </member>
+        <member name="M:OscLib.OscColor.AddAsBlob(System.Byte[],System.Int32)">
+            <summary>
+            Adds this <see cref="T:OscLib.OscColor"/> struct, formatted as an OSC-blob, to the provided byte array at the specified position.  
+            </summary>
+        </member>
+        <member name="M:OscLib.OscColor.GetAsBlob">
+            <summary>
+            Returns this <see cref="T:OscLib.OscColor"/> struct as a properly-formatted OSC-blob.
             </summary>
         </member>
         <member name="M:OscLib.OscColor.ToString">
@@ -275,9 +319,27 @@
         <member name="F:OscLib.OscMidi.Data2">
             <summary> The second data byte. </summary>
         </member>
+        <member name="P:OscLib.OscMidi.SizeAsBlob">
+            <summary> Returns the total size of this struct when represented as an OSC-blob. </summary>
+        </member>
         <member name="M:OscLib.OscMidi.#ctor(System.Byte,System.Byte,System.Byte,System.Byte)">
             <summary>
             Creates a new MIDI message struct that can interact with OSC.
+            </summary>
+        </member>
+        <member name="M:OscLib.OscMidi.AddAsBlob(System.Byte[],System.Int32@)">
+            <summary>
+            Adds this <see cref="T:OscLib.OscMidi"/> struct, formatted as an OSC-blob, to the provided byte array at the specified position. Moves the pointer forward. 
+            </summary>
+        </member>
+        <member name="M:OscLib.OscMidi.AddAsBlob(System.Byte[],System.Int32)">
+            <summary>
+            Adds this <see cref="T:OscLib.OscMidi"/> struct, formatted as an OSC-blob, to the provided byte array at the specified position.  
+            </summary>
+        </member>
+        <member name="M:OscLib.OscMidi.GetAsBlob">
+            <summary>
+            Returns this <see cref="T:OscLib.OscMidi"/> struct as a properly-formatted OSC-blob.
             </summary>
         </member>
         <member name="M:OscLib.OscMidi.ToString">
@@ -296,7 +358,7 @@
         <member name="F:OscLib.OscString._chars">
             <summary> Contains all characters making up this string, recorded as ASCII codes. </summary>
         </member>
-        <member name="F:OscLib.OscString.OscLength">
+        <member name="F:OscLib.OscString.OscSize">
             <summary> The "OSC Protocol-compliant" length of this string - including the null terminator and extra null bytes at the end to make it a multiple of 4. </summary>
         </member>
         <member name="P:OscLib.OscString.Size">
@@ -518,6 +580,14 @@
             </summary>
             <param name="ntpTimestamp"> An ulong containing a 64-bit fixed-point NTP-format timestamp. </param>
         </member>
+        <member name="M:OscLib.OscTimetag.#ctor(System.UInt32,System.UInt32)">
+            <summary>
+            Creates an OSC Timetag that occurs after the specified number of seconds from the epoch's start.
+            </summary>
+            <remarks>
+            
+            </remarks>
+        </member>
         <member name="M:OscLib.OscTimetag.GetDateTime">
             <summary> 
             Returns this timetag represented as a DateTime struct, corresponding to the current time zone of the system.
@@ -671,7 +741,7 @@
             Retrieves the array of arguments attached to this Message.
             </summary>
             <remarks> Despite being read-only, one can still change individual values inside this array. This can be both good and bad - and definitely something to be wary of.
-            If this behaviour is not explicitly needed, it's probably safer to use the indexer access instead. </remarks>
+            If this behaviour is not explicitly required, and neither is having access to the entire argument array, it's probably safer to use indexer access instead. </remarks>
             <returns> An array of arguments, or an empty array if there are none. </returns>
         </member>
         <member name="M:OscLib.OscMessage.ToString">
@@ -1500,6 +1570,11 @@
             Clamps a long to fit into an int.
             </summary>
         </member>
+        <member name="M:OscLib.OscUtil.ClampToInt(System.UInt64)">
+            <summary>
+            Clamps a ulong to fit into an int.
+            </summary>
+        </member>
         <member name="M:OscLib.OscUtil.Clamp(System.Int32,System.Int32,System.Int32)">
             <summary>
             Clamps an integer value to be within the two specified values, inclusive. 
@@ -1521,13 +1596,24 @@
         </member>
         <member name="M:OscLib.OscUtil.NextX4(System.Int32)">
             <summary>
-            Returns the next multiple of four that is larger than the input.
+            Returns the closest multiple of four that is larger than the input value.
             </summary>
         </member>
         <member name="M:OscLib.OscUtil.ThisOrNextX4(System.Int32)">
             <summary>
-            Returns the nearest multiple of four larger or equal to the input.
+            Returns either the closest larger multiple of four, or the input value (if it's already a multiple of four).
             </summary>
+        </member>
+        <member name="M:OscLib.OscUtil.FindLengthOfOscString(System.Byte[],System.Int32)">
+            <summary>
+            Searches for an end to the OSC String inside a byte array, that starts at the provided index, returns its length.
+            </summary>
+            <remarks>
+            The start index has to be a multiple of 4, as per OSC Protocol spec. 
+            Expects the oscData array to be a multiple of 4 in length too, if it's not bad things might happen. 
+            OSC Strings are null-terminated, which is why this method expects a null terminator at the end of a string.  
+            </remarks>
+            <returns> Length of the string, or -1 if null terminator isn't present. </returns>
         </member>
         <member name="M:OscLib.OscUtil.IsNullOrEmpty(OscLib.OscString)">
             <summary>
@@ -1583,12 +1669,13 @@
         </member>
         <member name="T:OscLib.OscV1_0Mini">
             <summary>
-            An implementation of a basic, bare-bones version of OSC Protocol, version 1.0 - only supporting Int32, Float32, Osc-String and Osc-Blob as arguments.
+            Implements a basic, bare-bones version of OSC Protocol, version 1.0 - only supporting Int32, Float32, Osc-String and Osc-Blob as arguments.
             <remarks>
             When sending out packets, arguments will be converted into one of the four supported data types:
-            <para> Any integer (both ints and uints) will be converted to int32, clamping its value accordingly; </para>
+            <para> Any integer value (both ints and uints) will be converted to int32, getting clamped accordingly; </para>
+            <para> OSC Timetags will be clamped to an int32 value containing the integer part of the underlying NTP timestamp. </para>
             <para> Any floating-point value will be converted to float32; </para>
-            <para> Any OSC Protocol-designated types (OscColor, etc) will be converted into binary blobs; </para>
+            <para> Any OSC Protocol-designated types (OscColor, etc) will be converted into binary OSC-blobs where possible; </para>
             <para> Anything else will be converted to ASCII strings. </para>
             </remarks>
             </summary>
@@ -1609,11 +1696,27 @@
             apart from the bare standard int32, float32, OSC-string and OSC-blob. All this can be accounted for in method overloads in the derived classes. 
             </remarks>
         </member>
-        <member name="F:OscLib.OscConverter._settingEmptyTypeTagStrings">
-            <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
+        <member name="F:OscLib.OscConverter._addEmptyTypeTagStrings">
+            <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) to a message that doesn't contain any arguments. </summary>
         </member>
-        <member name="P:OscLib.OscConverter.SettingEmptyTypeTagStrings">
-            <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) when there aren't any arguments. </summary>
+        <member name="F:OscLib.OscConverter._supportsArgumentArrays">
+            <summary> Controls whether this version of OSC Protocol supports argument arrays, designated by square bracket symbols in the type tag string. </summary>
+            <remarks> 
+            If set to "False", any arrays found in outgoing messages' arguments will be "flattened" - that is, all arguments contained 
+            inside arrays will be added linearly. Argument arrays in incoming messages will similarly be "flattened" - the arguments themselves stay, 
+            the encompassing arrays are removed. 
+            </remarks>
+        </member>
+        <member name="P:OscLib.OscConverter.AddEmptyTypeTagStrings">
+            <summary> Controls whether this version of OSC Protocol demands adding an empty type tag string (that is, a comma followed by three null bytes) to a message that doesn't contain any arguments. </summary>
+        </member>
+        <member name="P:OscLib.OscConverter.SupportsArgumentArrays">
+            <summary> Controls whether this version of OSC Protocol supports argument arrays, designated by square bracket symbols in the type tag string. </summary>
+            <remarks> 
+            If set to "False", any arrays found in outgoing messages' arguments will be "flattened" - that is, all arguments contained 
+            inside arrays will be added linearly. Argument arrays in incoming messages will similarly be "flattened" - the arguments themselves stay, 
+            the encompassing arrays are removed. 
+            </remarks>
         </member>
         <member name="M:OscLib.OscConverter.AddMessageAsBytes(OscLib.OscMessage,System.Byte[],System.Int32@)">
             <summary>
@@ -1724,21 +1827,22 @@
         </member>
         <member name="M:OscLib.OscConverter.GetBundles(System.Byte[])">
             <summary>
-            Converts OSC 
+            Converts an array of OSC binary containing at least one bundle into a "flat" array of OSC Bundles. That is, this method extracts 
+            all bundles from their encompassing bundles and presents them all as equal-level elements that only contain OSC Messages.
             </summary>
             <param name="data"> A byte array containing at least one OSC Bundle. </param>
             <returns> An array of OSC Bundles. </returns>
         </member>
-        <member name="M:OscLib.OscConverter.GetMessageOscLength(OscLib.OscMessage)">
+        <member name="M:OscLib.OscConverter.GetMessageOscSize(OscLib.OscMessage)">
             <summary>
-            Calculates the byte length of the provided OSC Message according to this OSC Protocol implementation's specifics.
+            Calculates the binary size of the provided OSC Message according to this OSC Protocol implementation's specifics.
             </summary>
             <param name="message"> The message to measure. </param>
             <returns> The length of the provided message in bytes. </returns>
         </member>
-        <member name="M:OscLib.OscConverter.GetBundleOscLength(OscLib.OscBundle)">
+        <member name="M:OscLib.OscConverter.GetBundleOscSize(OscLib.OscBundle)">
             <summary>
-            Calculates the byte length of the provided OSC Bundle according to this OSC Protocol implementation's specifics.
+            Calculates the binary size of the provided OSC Bundle according to this OSC Protocol implementation's specifics.
             </summary>
             <param name="bundle"> The bundle to measure. </param>
             <returns> The length of the provided message in bytes. </returns>
@@ -1762,9 +1866,30 @@
             <param name="typeTag"> Corresponding OSC type tag. </param>
             <exception cref="T:System.ArgumentException"> Thrown when the argument is of an unsupported type. </exception>
         </member>
-        <member name="M:OscLib.OscConverter.GetArgLength``1(``0)">
+        <member name="M:OscLib.OscConverter.AddArgArrayAsBytes(System.Object[],System.Byte[],System.Int32@,System.Int32@)">
             <summary>
-            Returns the provided argument's OSC byte length.
+            Serializes the provided argument array into OSC byte data and adds it to the provided byte array.  
+            </summary>
+            <param name="argArray"> </param>
+            <param name="targetArray"> </param>
+            <param name="argPointer"> Points to the index from which the argument byte data should be added. Will be shifted forwards accordingly. </param>
+            <param name="tagPointer"> Points to the index from which the type tag string begins - not counting the comma. </param>
+        </member>
+        <member name="M:OscLib.OscConverter.GetArgArrayOscSize(System.Object[])">
+            <summary>
+            Calculates the binary size of the provided argument array according to this OSC Protocol implementation's specifics.
+            </summary>
+        </member>
+        <member name="M:OscLib.OscConverter.GetTypeTagStringLength(System.Object[])">
+            <summary>
+            Returns the length of an OSC type tag string corresponding to the provided argument array. Includes array brackets if necessary. *Doesn't* include null byte padding or the comma symbol.
+            </summary>
+            <param name="argArray"> An array of arguments. </param>
+            <returns></returns>
+        </member>
+        <member name="M:OscLib.OscConverter.GetArgOscSize``1(``0)">
+            <summary>
+            Calculates the binary size of the provided argument, according to this OSC Protocol implementation's specifics.
             </summary>
             <typeparam name="T"></typeparam>
             <param name="arg"></param>
@@ -1781,7 +1906,6 @@
             <param name="array"> The byte array containing OSC byte data. </param>
             <param name="extPointer"> The external pointer designating the position from which the relevant data starts. </param>
             <param name="typeTag"> The type tag of the argument contained in the data. </param>
-            <returns></returns>
         </member>
         <member name="M:OscLib.OscConverter.AddBundleHeader(System.Byte[],System.Int32)">
             <summary>
@@ -2350,8 +2474,9 @@
             <remarks>
             <para>
             The function of this component is twofold: 
-            <para> -- One, it allows to automatically bundle outgoing packets, which may be more performant than sending them separately. </para> 
-            <para> -- Two, it allows to control the outflow of packets according to specified parameters and changes in state. For example,
+            <para> -- One, it allows to automatically bundle outgoing packets, which may be more performant than sending them separately. 
+            This can be useful when dealing with large quantities of small packets, for example. </para> 
+            <para> -- Two, it allows controlling the outflow of packets according to specified parameters and changes in state. For example,
             delaying "/playNote" messages to an external synth until there's a confirmation that the synth is initialised. </para>  
             </para>
             <para>
@@ -2457,7 +2582,6 @@
             <param name="packet"> The OSC binary data packet. </param>
             <param name="priorityLevel"> The priority level of the packet, with 0 being the highest priority. </param>
             <exception cref="T:System.ArgumentOutOfRangeException"> Thrown when the size of the binary data packet is too large to be sent. </exception>
-            <exception cref="!:>ArgumentNullException"> Thrown when the provided OSC packet is null. </exception>
         </member>
         <member name="M:OscLib.OscSender`1.AddPacketToHeap(`0,System.Int32)">
             <summary>

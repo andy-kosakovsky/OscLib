@@ -8,31 +8,20 @@ namespace OscLib
     /// Represens an OSC Timetag, both as a 64 bit fixed-point NTP timestamp and a tick value compatible with .Net classes like DateTime and TimeSpan.
     /// </summary>
     public readonly struct OscTimetag
-    {   
+    {
         /// <summary> This timetag represented as a NTP-compliant fixed-point 64 bit timestamp. </summary>
         public readonly ulong NtpTimestamp;
 
         /// <summary> This timetag represented as ticks - compatible with DateTime and TimeSpan classes, based on Coordinated Universal Time (UTC). </summary>
-        public readonly long Ticks;     
+        public readonly long Ticks;
 
         /// <summary>
         /// Creates an OSC Timetag out of the provided DateTime object.
         /// </summary>
         /// <param name="time"> The source DateTime object. </param>
         public OscTimetag(DateTime time)
+            : this(time.Ticks)
         {
-            Ticks = time.ToUniversalTime().Ticks;
-       
-            long tickMinusEpoch = Ticks - OscTime.NtpEpochStart;
-
-            // get the seconds out of ticks
-            uint seconds = (uint)(tickMinusEpoch / TimeSpan.TicksPerSecond);
-
-            uint tickFraction = (uint)(tickMinusEpoch - (seconds * TimeSpan.TicksPerSecond));
-
-            uint fraction = (uint)(uint.MaxValue * ((double)tickFraction / TimeSpan.TicksPerSecond));
-
-            NtpTimestamp = (ulong)seconds << 32 | fraction;
         }
 
         /// <summary>
@@ -53,10 +42,11 @@ namespace OscLib
 
             uint fraction = (uint)(uint.MaxValue * ((double)tickFraction / TimeSpan.TicksPerSecond));
 
-            // bitshift and add to a neat 64-bit ulong containing the result timestamp
+            // bitshift and add to a neat 64-bit ulong containing the resultant timestamp
             NtpTimestamp = (ulong)seconds << 32 | fraction;
 
         }
+
 
         /// <summary>
         /// Creates an OSC Timetag out of an NTP-format timestamp. 
@@ -78,6 +68,35 @@ namespace OscLib
         }
 
 
+        /// <summary>
+        /// Creates an OSC Timetag that occurs after the specified number of seconds from the epoch's start.
+        /// </summary>
+        /// <remarks>
+        /// 
+        /// </remarks>
+        public OscTimetag(uint seconds, uint fraction = 0)
+        {
+            // TODO: FINISH THIS
+
+            NtpTimestamp = (ulong)seconds << 32 | fraction;
+            Ticks = OscTime.NtpEpochStart + (seconds * TimeSpan.TicksPerSecond) + 1;
+
+            //Ticks = OscTime.NtpEpochStart + (seconds * TimeSpan.TicksPerSecond) + tickFraction + 1;
+        }
+
+
+        public OscTimetag(float seconds)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public OscTimetag(double seconds)
+        {
+            throw new NotImplementedException();
+        }
+
+
         /// <summary> 
         /// Returns this timetag represented as a DateTime struct, corresponding to the current time zone of the system.
         /// </summary>
@@ -93,6 +112,18 @@ namespace OscLib
         public DateTime GetDateTimeUtc()
         {
             return new DateTime(Ticks);
+        }
+
+
+        public float ToFloat()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public double ToDouble()
+        {
+            throw new NotImplementedException();
         }
 
 
@@ -177,7 +208,7 @@ namespace OscLib
         /// </summary>
         public override int GetHashCode()
         {
-            return this.NtpTimestamp.GetHashCode();
+            return NtpTimestamp.GetHashCode();
         }
 
     }

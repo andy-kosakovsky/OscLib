@@ -22,7 +22,7 @@ namespace OscLib
         public OscConvertScsynth()
         {
             // set it to add empty address strings by default
-            _settingEmptyTypeTagStrings = true;
+            _addEmptyTypeTagStrings = true;
         }
 
 
@@ -111,7 +111,7 @@ namespace OscLib
         }
 
 
-        protected override int GetArgLength<T>(T arg)
+        protected override int GetArgOscSize<T>(T arg)
         {
             switch (arg)
             {

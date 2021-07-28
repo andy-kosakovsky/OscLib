@@ -75,5 +75,8 @@ namespace OscLib
     /// <returns></returns>
     public delegate OscTimetag GetTimetagDelegate();
 
+
+    public delegate TArg GetArgFunc<TArg>(byte[] data, ref int extPointer);
+
     #endregion
 }

@@ -31,7 +31,6 @@ namespace OscLib
         private bool _settingUseFloat64 = true;
 
 
-
         protected override void AddArgAsBytes<T>(T arg, byte[] array, ref int extPointer, out byte typeTag)
         {
             switch (arg)
@@ -182,7 +181,7 @@ namespace OscLib
         }
 
 
-        protected override int GetArgLength<T>(T arg)
+        protected override int GetArgOscSize<T>(T arg)
         {
             switch (arg)
             {
